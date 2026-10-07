@@ -11,6 +11,16 @@ namespace TopDownGame
         [Tooltip("Require player to be moving upwards (WASD W or Joystick Up) to enter")]
         [SerializeField] private bool requireUpwardMovement = true;
 
+        [Header("Scene Transition Destination")]
+        [Tooltip("Target scene to load upon teleporting (e.g. AltLobby, Lobby)")]
+        [SerializeField] private string targetSceneName = "AltLobby";
+
+        [Tooltip("Spawn position in the target scene")]
+        [SerializeField] private Vector2 targetSpawnPosition = new Vector2(0f, 2.5f);
+
+        [Tooltip("Facing direction upon appearing in the target scene")]
+        [SerializeField] private CharacterAnimator2D.FacingDirection targetFacing = CharacterAnimator2D.FacingDirection.Down;
+
         [Header("Teleport Animation")]
         [SerializeField] private float suctionDuration = 0.8f;
         [SerializeField] private float spinRotations = 2f;
@@ -20,6 +30,13 @@ namespace TopDownGame
         public UnityEvent onTeleportComplete;
 
         private bool _isTeleporting = false;
+
+        public void SetConfig(string sceneName, Vector2 spawnPos, CharacterAnimator2D.FacingDirection facing)
+        {
+            targetSceneName = sceneName;
+            targetSpawnPosition = spawnPos;
+            targetFacing = facing;
+        }
 
         private void OnTriggerStay2D(Collider2D other)
         {
@@ -80,21 +97,34 @@ namespace TopDownGame
 
             player.transform.localScale = Vector3.zero;
             onTeleportComplete?.Invoke();
-            Debug.Log("Player successfully traveled through the Portal!");
+            Debug.Log($"[PortalController] Player traveled through the Portal to {targetSceneName}!");
 
-            // Brief pause, then reset or transition
-            yield return new WaitForSeconds(0.5f);
-            
-            // Re-spawn or re-enable for now so player can keep playing/testing
-            player.transform.position = new Vector3(0f, -2.5f, 0f);
-            player.transform.rotation = Quaternion.identity;
-            player.transform.localScale = startScale;
+            yield return new WaitForSeconds(0.3f);
 
-            if (rb != null) rb.simulated = true;
-            if (col != null) col.enabled = true;
-            if (movement != null) movement.enabled = true;
+            if (!string.IsNullOrEmpty(targetSceneName))
+            {
+                RoomTransitionManager.ReturnSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+                RoomTransitionManager.ReturnPosition = targetSpawnPosition;
+                RoomTransitionManager.HasReturnPosition = true;
+                RoomTransitionManager.ReturnFacing = targetFacing;
+                RoomTransitionManager.HasReturnFacing = true;
 
-            _isTeleporting = false;
+                UnityEngine.SceneManagement.SceneManager.LoadScene(targetSceneName);
+            }
+            else
+            {
+                // Fallback local respawn
+                player.transform.position = new Vector3(targetSpawnPosition.x, targetSpawnPosition.y, 0f);
+                player.transform.rotation = Quaternion.identity;
+                player.transform.localScale = startScale;
+
+                if (rb != null) rb.simulated = true;
+                if (col != null) col.enabled = true;
+                if (movement != null) movement.enabled = true;
+
+                _isTeleporting = false;
+            }
         }
     }
 }
+
