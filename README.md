@@ -52,13 +52,27 @@ Assets/
 
 ---
 
-## Installation & Setup
+## Play in Browser (WebGL)
+
+### 1. Live Online (GitHub Pages)
+Once GitHub Pages is activated on the repository, the game is playable directly in any modern desktop or mobile web browser with zero installation:
+- **Live URL**: `https://nouzen214.github.io/PAMANA/`
+
+### 2. Offline / Local Testing
+To launch and play the built WebGL version locally on your machine without opening Unity:
+- Double-click [`Run_WebGL_Game.bat`](file:///Run_WebGL_Game.bat) in the root directory.
+- This boots an optimized local web server and opens your default browser at `http://localhost:8000`.
+
+---
+
+## Installation & Setup (Unity Editor)
 
 1. **Prerequisites**:
-   - Install **Unity Hub** and **Unity 6.0 (6000.0.54f1)**.
-   - Modules: Universal Windows Platform / Standalone Support.
+   - Install **Unity Hub** and **Unity 6 (6000.0.54f1)**.
+   - Required Modules: Universal Windows Platform / Standalone Support / WebGL Build Support.
 2. **Open Project**:
    - In Unity Hub, click **Add** > select this project folder.
    - Open with Unity 6.0.54f1.
-3. **Play**:
+3. **Play in Editor**:
    - Open `Assets/Scenes/MainMenu.unity` and click **Play** (or press Play from any scene; `MainMenu` will automatically run as configured in `GameStartupConfig.cs`).
+
