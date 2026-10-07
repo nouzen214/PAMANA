@@ -1,4 +1,4 @@
-# PAMANA - Philippine Historical & Cultural Heritage Adventure
+# PAMANA 
 
 **PAMANA** is a 2D top-down educational adventure game developed as a Capstone Project for the **College of Computer Studies at the University of Perpetual Help System Laguna (UPHSL)**. Players navigate a museum of ancient halls and chambers, discover pre-colonial and historic Philippine artifacts, inspect historical plaques, and engage with cultural lore through interactive gameplay.
 
@@ -9,7 +9,7 @@
 - **Title**: PAMANA
 - **Engine**: Unity 6 (6000.0.54f1)
 - **Render Pipeline**: Universal Render Pipeline (2D Core / URP)
-- **Target Platform**: PC (Windows / macOS / Linux) & Mobile
+- **Target Platform**: PC Windows & Mobile
 - **Language**: C# (.NET / Mono)
 - **Institution**: University of Perpetual Help System Laguna – College of Computer Studies
 
