@@ -1,6 +1,6 @@
 # PAMANA 
 
-**PAMANA** is a 2D top-down educational adventure game developed as a Capstone Project for the **College of Computer Studies at the University of Perpetual Help System Laguna (UPHSL)**. Players navigate a museum of ancient halls and chambers, discover pre-colonial and historic Philippine artifacts, inspect historical plaques, and engage with cultural lore through interactive gameplay.
+**PAMANA** is a 2D top-down educational adventure game developed as a Capstone Project for the **College of Computer Studies at the University of Perpetual Help System Laguna (UPHSL)**.
 
 ---
 
