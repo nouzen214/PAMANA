@@ -18,10 +18,11 @@
 ## Key Features
 
 1. **Dual Character Selection**: Choose between **Darrel** and **Darla** with custom 4-directional animations and dialogue avatars.
-2. **Interactive Museum Hub**: Central lobby connecting to Left and Right museum wings with 12 distinct artifact exhibition rooms.
+2. **Interactive Museum Hub & Alterworld**: Central lobby connecting to Left and Right museum wings with 12 distinct artifact exhibition rooms, plus a mysterious portal to the alternate realm (`AltLobby`, `AltLeftHallway`, `AltRightHallway`).
 3. **Artifact Inspection & Lore**: Proximity-based interaction system featuring ornate dialogue banners, silhouette inspection, and educational historical plaques.
-4. **Adaptive Controls**: Dual-support for keyboard (WASD/Arrows) and touch controls via dynamic on-screen Virtual Joystick.
-5. **Interactive HUD**: Clean in-game interface with Heart health container, Settings gear button, Backpack inventory button, Book journal button, and In-Game Pause modal.
+4. **Turn-Based Quiz Combat**: Educational monster encounters in the Alterworld where players answer Philippine history trivia to recover stolen relics.
+5. **Inventory & Progression Service**: Persistent backpack inventory (`PlayerInventory`) and global state machine (`GameProgression`) tracking room completions, unlocked portals, and relic returns.
+6. **Adaptive Controls & HUD**: Support for keyboard (WASD/Arrows) and touch controls via dynamic on-screen Virtual Joystick, alongside Heart health container, notification toasts, and bag modal.
 
 ---
 
@@ -29,26 +30,44 @@
 
 ```text
 Assets/
-├── Prefabs/              # Reusable game objects (InGameCanvas, Player, Joystick)
-├── Scenes/               # All game levels and menu scenes
+├── Prefabs/                  # Reusable game objects (InGameCanvas, Player, Joystick)
+├── Scenes/                   # All 16 playable game levels and menu scenes
 │   ├── MainMenu.unity
 │   ├── CharacterSelect.unity
-│   ├── Lobby.unity
-│   ├── LeftHallway.unity
-│   ├── RightHallway.unity
-│   └── Room_1.unity ... Room_12.unity
-├── Scripts/              # C# game systems and architecture
-│   ├── Editor/           # Scene generators, build & UI automation tools
-│   ├── Movement & Input  # PlayerMovement, PlayerInputHandler, VirtualJoystick
-│   ├── Animation & Select# CharacterAnimator2D, CharacterSelectManager
-│   ├── Exploration & Room# RoomController, RoomDoor, PortalController
-│   ├── Health & Hazards  # Health, HealthUI, HeartHealthUI, Hazard
-│   └── UI & Menus        # MainMenuController, InGameMenuController, ArtifactInspectionUI
-├── Settings/             # Universal Render Pipeline (URP) assets and quality profiles
-├── Sprites/              # 2D visual assets (Characters, Artifacts, Environment)
-├── TextMesh Pro/         # Dynamic typography assets and shaders
-└── UI/                   # User interface graphics (Frames, Dialogue boxes, Icons)
+│   ├── Lobby.unity / AltLobby.unity
+│   ├── LeftHallway.unity / AltLeftHallway.unity
+│   ├── RightHallway.unity / AltRightHallway.unity
+│   ├── Room_1.unity ... Room_12.unity
+│   └── BattleScene.unity     # Monster encounter & historical quiz arena
+├── Scripts/                  # C# Game Architecture & Components
+│   ├── Controllers/          # Orchestration, scene transition & battle flow
+│   │   ├── RoomTransitionManager.cs, LobbySpawnHandler.cs, LobbyPortalManager.cs
+│   │   └── CharacterSelectManager.cs, MonsterBattleController.cs
+│   ├── Gameplay/             # Locomotion, player mechanics & level triggers
+│   │   ├── PlayerMovement.cs, PlayerInputHandler.cs, CharacterAnimator2D.cs
+│   │   ├── DoorController.cs, DoorInteractor.cs, RoomDoor.cs, RoomController.cs
+│   │   └── PortalController.cs, PortalAnimation.cs, QuizBattleManager.cs, Hazard.cs
+│   ├── Models/               # Data structures & relic attributes
+│   │   ├── Health.cs, ArtifactInteractable.cs, ArtifactItemData.cs
+│   ├── Services/             # State machines, persistence & inventory
+│   │   ├── GameProgression.cs, PlayerInventory.cs
+│   ├── UI/                   # Visual presentations, HUD & modals
+│   │   ├── ArtifactInspectionUI.cs, HeartHealthUI.cs, HealthUI.cs
+│   │   ├── NotificationBannerUI.cs, BagModalUI.cs, TutorialModalUI.cs
+│   │   └── MainMenuController.cs, InGameMenuController.cs, VirtualJoystick.cs
+│   ├── Utilities/            # Rendering & depth sorting helpers
+│   │   ├── CameraFollow2D.cs, YSort.cs, TableItemSort.cs
+│   └── Editor/               # Automation & scene generation tools
+│       ├── AltRealmSetup.cs, ArtifactUISetup.cs, BattleSceneGenerator.cs, InGameUISetup.cs
+├── Settings/                 # Universal Render Pipeline (URP) 2D assets & profiles
+├── Sprites/                  # 2D visual assets (Characters, Enemies, 25+ Artifacts, Environments)
+├── TextMesh Pro/             # Dynamic typography assets and shaders
+└── UI/                       # Philippine-themed frames, dialogue boxes, backpack & icons
 ```
+
+<p align="center">
+  <img src="Updated_Project_Structure_Compact.png" alt="PAMANA Architecture Structure" width="850">
+</p>
 
 ---
 
