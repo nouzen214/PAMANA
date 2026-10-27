@@ -53,6 +53,20 @@ namespace TopDownGame
                 // Consume the return position
                 RoomTransitionManager.HasReturnPosition = false;
             }
+
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Lobby")
+            {
+                if (GameProgression.HasRetrievedRoom1Artifact && !GameProgression.HasReturnedRoom1ArtifactToRealWorld)
+                {
+                    NotificationBannerUI.Show(
+                        "RETURN ARTIFACTS TO ROOM 1",
+                        "Head down the West Wing to Room 1 to return the relics and unlock Alterworld Room 2!",
+                        5.5f,
+                        new Color(0.95f, 0.85f, 0.35f, 1f),
+                        "★"
+                    );
+                }
+            }
         }
     }
 }

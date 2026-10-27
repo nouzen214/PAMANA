@@ -11,6 +11,7 @@ namespace TopDownGame
 
         [Header("Panels")]
         [SerializeField] private GameObject settingsPanel;
+        [SerializeField] private BagModalUI bagModal;
 
         [Header("Audio (Optional)")]
         [SerializeField] private Slider volumeSlider;
@@ -22,6 +23,11 @@ namespace TopDownGame
                 settingsPanel.SetActive(false);
             }
 
+            if (bagModal == null)
+            {
+                bagModal = FindFirstObjectByType<BagModalUI>(FindObjectsInactive.Include);
+            }
+
             if (volumeSlider != null)
             {
                 volumeSlider.value = AudioListener.volume;
@@ -31,6 +37,11 @@ namespace TopDownGame
 
         public void OnSettingsClicked()
         {
+            if (bagModal != null && bagModal.IsOpen)
+            {
+                bagModal.CloseBag();
+            }
+
             if (settingsPanel != null)
             {
                 bool willOpen = !settingsPanel.activeSelf;
@@ -55,12 +66,56 @@ namespace TopDownGame
 
         public void OnBagClicked()
         {
-            Debug.Log("[InGameMenuController] Bag / Inventory button clicked!");
+            if (settingsPanel != null && settingsPanel.activeSelf)
+            {
+                settingsPanel.SetActive(false);
+                Time.timeScale = 1f;
+            }
+
+            if (bagModal == null)
+            {
+                bagModal = FindFirstObjectByType<BagModalUI>(FindObjectsInactive.Include);
+            }
+
+            if (bagModal == null)
+            {
+                bagModal = BagModalUI.CreateBagModal(transform);
+            }
+
+            if (bagModal != null)
+            {
+                if (bagModal.IsOpen)
+                {
+                    bagModal.CloseBag();
+                }
+                else
+                {
+                    bagModal.OpenBag();
+                }
+            }
         }
 
         public void OnBookClicked()
         {
-            Debug.Log("[InGameMenuController] Book / Journal button clicked!");
+            if (bagModal != null && bagModal.IsOpen)
+            {
+                bagModal.CloseBag();
+            }
+
+            TutorialModalUI.Show();
+        }
+
+        public void OnTutorialClicked()
+        {
+            if (settingsPanel != null)
+            {
+                settingsPanel.SetActive(false);
+            }
+            if (bagModal != null && bagModal.IsOpen)
+            {
+                bagModal.CloseBag();
+            }
+            TutorialModalUI.Show();
         }
 
         public void SetVolume(float volume)
@@ -81,4 +136,3 @@ namespace TopDownGame
         }
     }
 }
-

@@ -38,6 +38,41 @@ namespace TopDownGame
 
         public override void Interact()
         {
+            // Check if interacting in Room 1
+            string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            if (sceneName == "Room_1" || RoomTransitionManager.CurrentRoomNumber == 1)
+            {
+                if (GameProgression.HasRetrievedRoom1Artifact && !GameProgression.HasReturnedRoom1ArtifactToRealWorld)
+                {
+                    bool justReturned = GameProgression.ReturnRoom1ArtifactToRealWorld();
+                    if (justReturned)
+                    {
+                        NotificationBannerUI.Show(
+                            "ARTIFACTS RETURNED TO ROOM 1!",
+                            "You brought the artifacts back inside Room 1! Alterworld Room 2 is now UNLOCKED!",
+                            6.0f,
+                            new Color(0.2f, 0.95f, 0.4f, 1f),
+                            "★"
+                        );
+                    }
+                }
+
+                if (!GameProgression.IsPortalUnlocked)
+                {
+                    bool justUnlocked = GameProgression.UnlockPortal();
+                    if (justUnlocked)
+                    {
+                        NotificationBannerUI.Show(
+                            "PORTAL OPENED",
+                            "A mysterious portal has opened somewhere in the museum!",
+                            5.5f,
+                            new Color(0.2f, 0.9f, 0.9f, 1f),
+                            "!"
+                        );
+                    }
+                }
+            }
+
             var ui = ArtifactInspectionUI.Instance;
             if (ui == null)
             {

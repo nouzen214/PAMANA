@@ -187,7 +187,21 @@ namespace TopDownGame
 
             if (dialogueText != null)
             {
-                dialogueText.text = artifact != null ? artifact.InitialDialogue : "what should i do";
+                string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+                if ((activeScene == "Room_1" || RoomTransitionManager.CurrentRoomNumber == 1) && GameProgression.HasReturnedRoom1ArtifactToRealWorld)
+                {
+                    dialogueText.text = "The artifact has been safely returned to its pedestal! The Alterworld portal shifts as Room 2 unlocks!";
+                }
+                else if ((activeScene == "Room_1" || RoomTransitionManager.CurrentRoomNumber == 1) && PlayerPrefs.GetInt("HasAcknowledgedPortalInDialogue", 0) == 0)
+                {
+                    PlayerPrefs.SetInt("HasAcknowledgedPortalInDialogue", 1);
+                    PlayerPrefs.Save();
+                    dialogueText.text = "As I touched the artifact, the floor trembled... A mysterious portal has opened somewhere in the museum!";
+                }
+                else
+                {
+                    dialogueText.text = artifact != null ? artifact.InitialDialogue : "what should i do";
+                }
                 dialogueText.color = new Color(0.18f, 0.18f, 0.18f, 1f);
             }
 
@@ -236,7 +250,15 @@ namespace TopDownGame
                 if (artifactDetailImage != null && _currentArtifact != null)
                 {
                     artifactDetailImage.sprite = _currentArtifact.ArtifactSprite;
-                    artifactDetailImage.color = Color.black; // Silhouette effect per reference image
+                    // If returned to Room 1, display full vibrant color! Otherwise solid black silhouette
+                    if (GameProgression.HasReturnedRoom1ArtifactToRealWorld)
+                    {
+                        artifactDetailImage.color = Color.white;
+                    }
+                    else
+                    {
+                        artifactDetailImage.color = Color.black; // Silhouette effect per reference image
+                    }
                 }
                 if (artifactDetailTitleText != null)
                     artifactDetailTitleText.gameObject.SetActive(false);
@@ -246,10 +268,17 @@ namespace TopDownGame
 
             if (dialogueText != null)
             {
-                string diag = (_currentArtifact != null && !string.IsNullOrEmpty(_currentArtifact.ArtifactDialogue) && _currentArtifact.ArtifactDialogue != "what could this artifact be")
-                    ? _currentArtifact.ArtifactDialogue
-                    : "i wonder what this artifact looks like";
-                dialogueText.text = diag;
+                if (GameProgression.HasReturnedRoom1ArtifactToRealWorld)
+                {
+                    dialogueText.text = "The sacred relic rests peacefully in the museum. Room 2 in the Alterworld is now open!";
+                }
+                else
+                {
+                    string diag = (_currentArtifact != null && !string.IsNullOrEmpty(_currentArtifact.ArtifactDialogue) && _currentArtifact.ArtifactDialogue != "what could this artifact be")
+                        ? _currentArtifact.ArtifactDialogue
+                        : "i wonder what this artifact looks like";
+                    dialogueText.text = diag;
+                }
             }
         }
 

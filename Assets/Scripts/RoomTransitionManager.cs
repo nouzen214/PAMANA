@@ -15,6 +15,8 @@ namespace TopDownGame
         public static string ReturnSceneName { get; set; } = "Lobby";
         public static CharacterAnimator2D.FacingDirection ReturnFacing { get; set; } = CharacterAnimator2D.FacingDirection.Down;
         public static bool HasReturnFacing { get; set; } = false;
+        public static string CurrentRoomDisplayName { get; set; } = "Room 1";
+        public static int CurrentRoomNumber { get; set; } = 1;
 
         public static void EnterRoom(string roomSceneName, string doorName, Vector2 returnPos)
         {

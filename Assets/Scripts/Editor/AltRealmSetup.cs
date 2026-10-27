@@ -155,6 +155,17 @@ namespace TopDownGame.Editor
                 }
             }
 
+            // 4. Redirect room doors to BattleScene with Room 1 unlocked, Rooms 2-6 locked
+            var leftDoors = Object.FindObjectsByType<RoomDoor>(FindObjectsSortMode.None);
+            foreach (var d in leftDoors)
+            {
+                var offsetField = typeof(RoomDoor).GetField("returnOffset", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                Vector2 currentOffset = offsetField != null ? (Vector2)offsetField.GetValue(d) : new Vector2(0f, 1.8f);
+                bool startLocked = (d.GetRoomNumber() != 1);
+                d.SetConfig("BattleScene", d.RoomDisplayName, currentOffset, startLocked);
+                EditorUtility.SetDirty(d);
+            }
+
             EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene(), "Assets/Scenes/AltLeftHallway.unity");
             Debug.Log("[AltRealmSetup] Saved Assets/Scenes/AltLeftHallway.unity successfully!");
         }
@@ -203,6 +214,16 @@ namespace TopDownGame.Editor
                 }
             }
 
+            // 4. Redirect room doors to BattleScene with all right hallway rooms locked
+            var rightDoors = Object.FindObjectsByType<RoomDoor>(FindObjectsSortMode.None);
+            foreach (var d in rightDoors)
+            {
+                var offsetField = typeof(RoomDoor).GetField("returnOffset", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                Vector2 currentOffset = offsetField != null ? (Vector2)offsetField.GetValue(d) : new Vector2(0f, 1.8f);
+                d.SetConfig("BattleScene", d.RoomDisplayName, currentOffset, true);
+                EditorUtility.SetDirty(d);
+            }
+
             EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene(), "Assets/Scenes/AltRightHallway.unity");
             Debug.Log("[AltRealmSetup] Saved Assets/Scenes/AltRightHallway.unity successfully!");
         }
@@ -219,6 +240,7 @@ namespace TopDownGame.Editor
                 "Assets/Scenes/AltLobby.unity",
                 "Assets/Scenes/AltLeftHallway.unity",
                 "Assets/Scenes/AltRightHallway.unity",
+                "Assets/Scenes/BattleScene.unity",
                 "Assets/Scenes/Room_1.unity",
                 "Assets/Scenes/Room_2.unity",
                 "Assets/Scenes/Room_3.unity",
@@ -244,6 +266,63 @@ namespace TopDownGame.Editor
 
             EditorBuildSettings.scenes = sceneList.ToArray();
             Debug.Log($"[AltRealmSetup] Build Settings updated with {sceneList.Count} scenes (including AltLobby, AltLeftHallway, and AltRightHallway)!");
+        }
+
+        [MenuItem("Tools/Setup/Lock Real World Rooms (Keep Room 1 Open) and Configure Portal")]
+        public static void ConfigureRealWorldLockedRoomsAndPortal()
+        {
+            // 1. LeftHallway: Room 1 open, Rooms 2..6 locked
+            if (File.Exists("Assets/Scenes/LeftHallway.unity"))
+            {
+                var scene = EditorSceneManager.OpenScene("Assets/Scenes/LeftHallway.unity", OpenSceneMode.Single);
+                var leftDoors = Object.FindObjectsByType<RoomDoor>(FindObjectsSortMode.None);
+                foreach (var d in leftDoors)
+                {
+                    bool isRoom1 = d.TargetSceneName == "Room_1" || d.RoomDisplayName == "Room 1";
+                    d.IsLocked = !isRoom1;
+                    EditorUtility.SetDirty(d);
+                }
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
+                Debug.Log($"[AltRealmSetup] LeftHallway configured: Room 1 unlocked, {leftDoors.Length - 1} doors locked.");
+            }
+
+            // 2. RightHallway: Rooms 7..12 all locked
+            if (File.Exists("Assets/Scenes/RightHallway.unity"))
+            {
+                var scene = EditorSceneManager.OpenScene("Assets/Scenes/RightHallway.unity", OpenSceneMode.Single);
+                var rightDoors = Object.FindObjectsByType<RoomDoor>(FindObjectsSortMode.None);
+                foreach (var d in rightDoors)
+                {
+                    d.IsLocked = true;
+                    EditorUtility.SetDirty(d);
+                }
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
+                Debug.Log($"[AltRealmSetup] RightHallway configured: {rightDoors.Length} doors locked.");
+            }
+
+            // 3. Lobby: Setup LobbyPortalManager on Canvas or Portal
+            if (File.Exists("Assets/Scenes/Lobby.unity"))
+            {
+                var scene = EditorSceneManager.OpenScene("Assets/Scenes/Lobby.unity", OpenSceneMode.Single);
+                var portal = GameObject.Find("Portal");
+                var canvas = GameObject.Find("Canvas") ?? GameObject.Find("InGameCanvas");
+                if (canvas != null)
+                {
+                    var lpm = canvas.GetComponent<LobbyPortalManager>();
+                    if (lpm == null)
+                    {
+                        lpm = canvas.AddComponent<LobbyPortalManager>();
+                    }
+                    var f = typeof(LobbyPortalManager).GetField("portalObject", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (f != null) f.SetValue(lpm, portal);
+                    EditorUtility.SetDirty(canvas);
+                }
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
+                Debug.Log("[AltRealmSetup] Lobby configured with LobbyPortalManager.");
+            }
         }
     }
 }

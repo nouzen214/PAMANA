@@ -21,6 +21,10 @@ namespace TopDownGame
         [Tooltip("Facing direction upon appearing in the target scene")]
         [SerializeField] private CharacterAnimator2D.FacingDirection targetFacing = CharacterAnimator2D.FacingDirection.Down;
 
+        [Header("Progression Condition")]
+        [Tooltip("If true and target is AltLobby, this portal is only enabled when GameProgression.IsPortalUnlocked is true.")]
+        [SerializeField] private bool requireProgressionUnlock = true;
+
         [Header("Teleport Animation")]
         [SerializeField] private float suctionDuration = 0.8f;
         [SerializeField] private float spinRotations = 2f;
@@ -38,9 +42,19 @@ namespace TopDownGame
             targetFacing = facing;
         }
 
+        private void Start()
+        {
+            if (requireProgressionUnlock && targetSceneName == "AltLobby")
+            {
+                bool unlocked = GameProgression.IsPortalUnlocked;
+                gameObject.SetActive(unlocked);
+            }
+        }
+
         private void OnTriggerStay2D(Collider2D other)
         {
             if (_isTeleporting) return;
+            if (requireProgressionUnlock && targetSceneName == "AltLobby" && !GameProgression.IsPortalUnlocked) return;
 
             if (other.CompareTag("Player"))
             {

@@ -33,6 +33,8 @@ namespace TopDownGame
         {
             Debug.Log("Starting Game...");
             Time.timeScale = 1f;
+            GameProgression.ResetProgression();
+            PlayerInventory.Clear();
             SceneManager.LoadScene(gameSceneName);
         }
 

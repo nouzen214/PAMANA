@@ -131,6 +131,8 @@ namespace TopDownGame
         {
             PlayerPrefs.SetString("SelectedCharacter", selectedCharacter);
             PlayerPrefs.Save();
+            GameProgression.ResetProgression();
+            PlayerInventory.Clear();
             Debug.Log($"Character chosen: {selectedCharacter}. Starting game...");
             SceneManager.LoadScene(nextSceneName);
         }

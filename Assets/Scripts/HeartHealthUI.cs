@@ -21,6 +21,17 @@ namespace TopDownGame
 
         private readonly List<Image> _heartImages = new List<Image>();
 
+        private void Awake()
+        {
+            string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            // The player does not have a health bar outside of battle.
+            // It only shows when the user enters the battle (BattleScene).
+            if (!activeScene.Equals("BattleScene", System.StringComparison.OrdinalIgnoreCase))
+            {
+                gameObject.SetActive(false);
+            }
+        }
+
         private void Start()
         {
             if (targetHealth == null)

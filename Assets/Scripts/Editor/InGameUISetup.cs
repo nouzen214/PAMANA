@@ -41,6 +41,13 @@ namespace TopDownGame.Editor
                     oldHome.gameObject.SetActive(false);
                 }
 
+                // Deactivate HeartContainer outside of battle
+                var heartCont = prefabRoot.transform.Find("HeartContainer");
+                if (heartCont != null)
+                {
+                    heartCont.gameObject.SetActive(false);
+                }
+
                 var sprSettings = AssetDatabase.LoadAssetAtPath<Sprite>(SprSettingsPath);
                 var sprBackpack = AssetDatabase.LoadAssetAtPath<Sprite>(SprBackpackPath);
                 var sprBook = AssetDatabase.LoadAssetAtPath<Sprite>(SprBookPath);
@@ -71,11 +78,18 @@ namespace TopDownGame.Editor
                 // 4. Settings Modal Panel
                 var settingsPanel = BuildSettingsModal(prefabRoot.transform, menuCtrl, sprParchment, sprBtnFrame);
 
+                // 5. Bag Modal Panel
+                var bagModalObj = BuildBagModal(prefabRoot.transform, sprParchment, sprBtnFrame);
+                var bagModalComp = bagModalObj.GetComponent<BagModalUI>();
+
                 // Connect serialized references on InGameMenuController
                 var so = new SerializedObject(menuCtrl);
                 so.Update();
                 var spSettingsPanel = so.FindProperty("settingsPanel");
                 if (spSettingsPanel != null) spSettingsPanel.objectReferenceValue = settingsPanel;
+
+                var spBagModal = so.FindProperty("bagModal");
+                if (spBagModal != null) spBagModal.objectReferenceValue = bagModalComp;
 
                 var sliderComp = settingsPanel.GetComponentInChildren<Slider>(true);
                 var spVolumeSlider = so.FindProperty("volumeSlider");
@@ -84,7 +98,7 @@ namespace TopDownGame.Editor
                 so.ApplyModifiedProperties();
 
                 PrefabUtility.SaveAsPrefabAsset(prefabRoot, PrefabPath);
-                Debug.Log("[InGameUISetup] InGameCanvas.prefab updated successfully!");
+                Debug.Log("[InGameUISetup] InGameCanvas.prefab updated successfully with BagModal and deactivated hearts!");
             }
             finally
             {
@@ -280,6 +294,192 @@ namespace TopDownGame.Editor
             return panelObj;
         }
 
+        private static GameObject BuildBagModal(Transform parent, Sprite sprParchment, Sprite sprBtnFrame)
+        {
+            var modalObj = GetOrCreateChild(parent, "BagModal");
+            modalObj.SetActive(false);
+
+            var modalRt = modalObj.GetComponent<RectTransform>();
+            modalRt.anchorMin = Vector2.zero;
+            modalRt.anchorMax = Vector2.one;
+            modalRt.offsetMin = Vector2.zero;
+            modalRt.offsetMax = Vector2.zero;
+
+            // Translucent Dimmer Background
+            var dimmerObj = GetOrCreateChild(modalObj.transform, "Dimmer");
+            var dimmerRt = dimmerObj.GetComponent<RectTransform>();
+            dimmerRt.anchorMin = Vector2.zero;
+            dimmerRt.anchorMax = Vector2.one;
+            dimmerRt.offsetMin = Vector2.zero;
+            dimmerRt.offsetMax = Vector2.zero;
+
+            var dimmerImg = dimmerObj.GetComponent<Image>();
+            if (dimmerImg == null) dimmerImg = dimmerObj.AddComponent<Image>();
+            dimmerImg.color = new Color(0f, 0f, 0f, 0.75f);
+            dimmerImg.raycastTarget = true;
+
+            var dimmerBtn = dimmerObj.GetComponent<Button>();
+            if (dimmerBtn == null) dimmerBtn = dimmerObj.AddComponent<Button>();
+            dimmerBtn.transition = Selectable.Transition.None;
+
+            // Modal Dialog Frame
+            var dialogObj = GetOrCreateChild(modalObj.transform, "DialogBox");
+            var dialogRt = dialogObj.GetComponent<RectTransform>();
+            dialogRt.anchorMin = new Vector2(0.5f, 0.5f);
+            dialogRt.anchorMax = new Vector2(0.5f, 0.5f);
+            dialogRt.pivot = new Vector2(0.5f, 0.5f);
+            dialogRt.anchoredPosition = Vector2.zero;
+            dialogRt.sizeDelta = new Vector2(850f, 540f);
+
+            var dialogImg = dialogObj.GetComponent<Image>();
+            if (dialogImg == null) dialogImg = dialogObj.AddComponent<Image>();
+            if (sprParchment != null)
+            {
+                dialogImg.sprite = sprParchment;
+                dialogImg.type = Image.Type.Sliced;
+                dialogImg.color = Color.white;
+            }
+            else
+            {
+                dialogImg.color = new Color(0.97f, 0.94f, 0.88f, 1f);
+            }
+
+            // Header Title
+            var titleObj = GetOrCreateChild(dialogObj.transform, "TitleText");
+            var titleRt = titleObj.GetComponent<RectTransform>();
+            titleRt.anchorMin = new Vector2(0.5f, 1f);
+            titleRt.anchorMax = new Vector2(0.5f, 1f);
+            titleRt.pivot = new Vector2(0.5f, 1f);
+            titleRt.anchoredPosition = new Vector2(0f, -25f);
+            titleRt.sizeDelta = new Vector2(500f, 40f);
+
+            var titleTmp = titleObj.GetComponent<TextMeshProUGUI>();
+            if (titleTmp == null) titleTmp = titleObj.AddComponent<TextMeshProUGUI>();
+            titleTmp.text = "BAG / INVENTORY";
+            titleTmp.fontSize = 28f;
+            titleTmp.fontStyle = FontStyles.Bold;
+            titleTmp.alignment = TextAlignmentOptions.Center;
+            titleTmp.color = new Color(0.24f, 0.16f, 0.08f, 1f);
+
+            // Count Text
+            var countObj = GetOrCreateChild(dialogObj.transform, "CountText");
+            var countRt = countObj.GetComponent<RectTransform>();
+            countRt.anchorMin = new Vector2(0.5f, 1f);
+            countRt.anchorMax = new Vector2(0.5f, 1f);
+            countRt.pivot = new Vector2(0.5f, 1f);
+            countRt.anchoredPosition = new Vector2(0f, -65f);
+            countRt.sizeDelta = new Vector2(500f, 30f);
+
+            var countTmp = countObj.GetComponent<TextMeshProUGUI>();
+            if (countTmp == null) countTmp = countObj.AddComponent<TextMeshProUGUI>();
+            countTmp.text = "ARTIFACTS COLLECTED: 0";
+            countTmp.fontSize = 18f;
+            countTmp.fontStyle = FontStyles.Bold;
+            countTmp.alignment = TextAlignmentOptions.Center;
+            countTmp.color = new Color(0.45f, 0.35f, 0.2f, 1f);
+
+            // Grid Container
+            var gridObj = GetOrCreateChild(dialogObj.transform, "ItemsGrid");
+            var gridRt = gridObj.GetComponent<RectTransform>();
+            gridRt.anchorMin = new Vector2(0.5f, 0.5f);
+            gridRt.anchorMax = new Vector2(0.5f, 0.5f);
+            gridRt.pivot = new Vector2(0.5f, 0.5f);
+            gridRt.anchoredPosition = new Vector2(0f, -20f);
+            gridRt.sizeDelta = new Vector2(760f, 360f);
+
+            var glg = gridObj.GetComponent<GridLayoutGroup>();
+            if (glg == null) glg = gridObj.AddComponent<GridLayoutGroup>();
+            glg.cellSize = new Vector2(360f, 95f);
+            glg.spacing = new Vector2(20f, 15f);
+            glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            glg.constraintCount = 2;
+
+            // Empty Notice
+            var emptyNoticeObj = GetOrCreateChild(dialogObj.transform, "EmptyNotice");
+            var enRt = emptyNoticeObj.GetComponent<RectTransform>();
+            enRt.anchorMin = new Vector2(0.5f, 0.5f);
+            enRt.anchorMax = new Vector2(0.5f, 0.5f);
+            enRt.pivot = new Vector2(0.5f, 0.5f);
+            enRt.anchoredPosition = Vector2.zero;
+            enRt.sizeDelta = new Vector2(600f, 100f);
+
+            var enTmp = emptyNoticeObj.GetComponent<TextMeshProUGUI>();
+            if (enTmp == null) enTmp = emptyNoticeObj.AddComponent<TextMeshProUGUI>();
+            enTmp.text = "No artifacts in your bag yet.\nAnswer quizzes correctly to recover the artifacts!";
+            enTmp.fontSize = 20f;
+            enTmp.alignment = TextAlignmentOptions.Center;
+            enTmp.color = new Color(0.45f, 0.35f, 0.2f, 0.85f);
+
+            // Close Button
+            var closeBtnObj = GetOrCreateChild(dialogObj.transform, "CloseButton");
+            var closeRt = closeBtnObj.GetComponent<RectTransform>();
+            closeRt.anchorMin = new Vector2(1f, 1f);
+            closeRt.anchorMax = new Vector2(1f, 1f);
+            closeRt.pivot = new Vector2(1f, 1f);
+            closeRt.anchoredPosition = new Vector2(-20f, -20f);
+            closeRt.sizeDelta = new Vector2(45f, 45f);
+
+            var closeImg = closeBtnObj.GetComponent<Image>();
+            if (closeImg == null) closeImg = closeBtnObj.AddComponent<Image>();
+            closeImg.color = new Color(0.7f, 0.2f, 0.2f, 1f);
+
+            var closeBtn = closeBtnObj.GetComponent<Button>();
+            if (closeBtn == null) closeBtn = closeBtnObj.AddComponent<Button>();
+
+            var closeTxtObj = GetOrCreateChild(closeBtnObj.transform, "Text");
+            var closeTxtRt = closeTxtObj.GetComponent<RectTransform>();
+            closeTxtRt.anchorMin = Vector2.zero;
+            closeTxtRt.anchorMax = Vector2.one;
+            closeTxtRt.offsetMin = Vector2.zero;
+            closeTxtRt.offsetMax = Vector2.zero;
+
+            var closeTmp = closeTxtObj.GetComponent<TextMeshProUGUI>();
+            if (closeTmp == null) closeTmp = closeTxtObj.AddComponent<TextMeshProUGUI>();
+            closeTmp.text = "X";
+            closeTmp.fontSize = 22f;
+            closeTmp.fontStyle = FontStyles.Bold;
+            closeTmp.alignment = TextAlignmentOptions.Center;
+            closeTmp.color = Color.white;
+
+            // BagModalUI component
+            var bagModalComp = modalObj.GetComponent<BagModalUI>();
+            if (bagModalComp == null) bagModalComp = modalObj.AddComponent<BagModalUI>();
+
+            var soModal = new SerializedObject(bagModalComp);
+            soModal.Update();
+            var spModalRoot = soModal.FindProperty("modalRoot");
+            if (spModalRoot != null) spModalRoot.objectReferenceValue = modalObj;
+
+            var spGrid = soModal.FindProperty("itemsGridContainer");
+            if (spGrid != null) spGrid.objectReferenceValue = gridObj.transform;
+
+            var spTitle = soModal.FindProperty("titleText");
+            if (spTitle != null) spTitle.objectReferenceValue = titleTmp;
+
+            var spCount = soModal.FindProperty("countText");
+            if (spCount != null) spCount.objectReferenceValue = countTmp;
+
+            var spEmpty = soModal.FindProperty("emptyNoticeText");
+            if (spEmpty != null) spEmpty.objectReferenceValue = enTmp;
+
+            var spClose = soModal.FindProperty("closeButton");
+            if (spClose != null) spClose.objectReferenceValue = closeBtn;
+
+            var spDimmer = soModal.FindProperty("dimmerButton");
+            if (spDimmer != null) spDimmer.objectReferenceValue = dimmerBtn;
+
+            soModal.ApplyModifiedProperties();
+
+            closeBtn.onClick = new Button.ButtonClickedEvent();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(closeBtn.onClick, bagModalComp.CloseBag);
+
+            dimmerBtn.onClick = new Button.ButtonClickedEvent();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(dimmerBtn.onClick, bagModalComp.CloseBag);
+
+            modalObj.SetActive(false);
+            return modalObj;
+        }
+
         private static GameObject CreateModalButton(string name, string text, Vector2 pos, Transform parent, Sprite sprBtnFrame)
         {
             var btnObj = GetOrCreateChild(parent, name);
@@ -323,7 +523,10 @@ namespace TopDownGame.Editor
             string[] standaloneScenes = new string[] {
                 "Assets/Scenes/Lobby.unity",
                 "Assets/Scenes/LeftHallway.unity",
-                "Assets/Scenes/RightHallway.unity"
+                "Assets/Scenes/RightHallway.unity",
+                "Assets/Scenes/AltLobby.unity",
+                "Assets/Scenes/AltLeftHallway.unity",
+                "Assets/Scenes/AltRightHallway.unity"
             };
 
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
@@ -331,17 +534,24 @@ namespace TopDownGame.Editor
 
             foreach (var scenePath in standaloneScenes)
             {
+                if (!System.IO.File.Exists(scenePath)) continue;
+
                 var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
                 var existingCanvas = GameObject.Find("Canvas");
                 if (existingCanvas != null)
                 {
-                    // Copy buttons or instantiate prefab
-                    // If existing Canvas is not a prefab, let's wire up the buttons on it
                     var menuCtrl = existingCanvas.GetComponent<InGameMenuController>();
                     if (menuCtrl == null) menuCtrl = existingCanvas.AddComponent<InGameMenuController>();
 
                     var oldHome = existingCanvas.transform.Find("HomeButton");
                     if (oldHome != null) oldHome.gameObject.SetActive(false);
+
+                    // Deactivate HeartContainer outside of battle
+                    var heartCont = existingCanvas.transform.Find("HeartContainer");
+                    if (heartCont != null)
+                    {
+                        heartCont.gameObject.SetActive(false);
+                    }
 
                     var sprSettings = AssetDatabase.LoadAssetAtPath<Sprite>(SprSettingsPath);
                     var sprBackpack = AssetDatabase.LoadAssetAtPath<Sprite>(SprBackpackPath);
@@ -368,11 +578,16 @@ namespace TopDownGame.Editor
                     UnityEditor.Events.UnityEventTools.AddPersistentListener(btnBookComp.onClick, menuCtrl.OnBookClicked);
 
                     var settingsPanel = BuildSettingsModal(existingCanvas.transform, menuCtrl, sprParchment, sprBtnFrame);
+                    var bagModalObj = BuildBagModal(existingCanvas.transform, sprParchment, sprBtnFrame);
+                    var bagModalComp = bagModalObj.GetComponent<BagModalUI>();
 
                     var so = new SerializedObject(menuCtrl);
                     so.Update();
                     var spSettingsPanel = so.FindProperty("settingsPanel");
                     if (spSettingsPanel != null) spSettingsPanel.objectReferenceValue = settingsPanel;
+
+                    var spBagModal = so.FindProperty("bagModal");
+                    if (spBagModal != null) spBagModal.objectReferenceValue = bagModalComp;
 
                     var sliderComp = settingsPanel.GetComponentInChildren<Slider>(true);
                     var spVolumeSlider = so.FindProperty("volumeSlider");
