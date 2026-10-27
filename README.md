@@ -69,6 +69,37 @@ Assets/
   <img src="Updated_Project_Structure_Compact.png" alt="PAMANA Architecture Structure" width="850">
 </p>
 
+### Architecture & Design Patterns
+
+The codebase is built following clean **Software Architecture Fundamentals** to ensure modularity, maintainability, and ease of expansion:
+
+1. **Layered Architecture & Separation of Concerns (SoC)**
+   - **Presentation Layer (UI)**: Pure visual components (`ArtifactInspectionUI`, `NotificationBannerUI`, `HeartHealthUI`, `BagModalUI`) that display gameplay feedback and listen to event subscriptions without manipulating player physics or calling raw storage APIs.
+   - **Controller Layer**: Coordinates interaction between inputs and state (`RoomTransitionManager`, `MonsterBattleController`, `PlayerInputHandler`, `DoorInteractor`).
+   - **Model & Service Layer**: Stores and serializes in-memory and persistent game state (`ArtifactItemData`, `Health`, `PlayerInventory`, `GameProgression`).
+
+2. **Observer Pattern (Event-Driven Architecture)**
+   - Components communicate via decoupled C# `event Action` delegates rather than direct polling or tight object references.
+   - Examples:
+     - `PlayerInventory.OnInventoryChanged` dynamically refreshes backpack slots when new artifacts are collected.
+     - `GameProgression.OnPortalUnlocked` triggers environmental world shifts and notification banners.
+     - `Health.OnHealthChanged` notifies heart HUD containers to trigger damage shake animations.
+
+3. **Hybrid Input System**
+   - The locomotion engine leverages Unity's New Input System (`InputSystem_Actions`) alongside an onscreen touch-responsive `VirtualJoystick`, allowing seamless gameplay across PC (keyboard/mouse/gamepad) and mobile browsers.
+
+---
+
+### Core Gameplay Subsystems
+
+| Subsystem | Key Components | Technical Description |
+| :--- | :--- | :--- |
+| **Museum Exploration** | `RoomTransitionManager`, `DoorController`, `RoomDoor`, `LobbySpawnHandler` | Manages directional transitions across 12 distinct museum exhibition rooms, hallway wings, and player spawn orientation. |
+| **Alterworld & Portals** | `PortalController`, `LobbyPortalManager`, `PortalAnimation` | Coordinates vortex suction animations, camera transitions, and state checks linking the real museum with alternate realm levels (`AltLobby`, `AltLeftHallway`, `AltRightHallway`). |
+| **Turn-Based Combat** | `QuizBattleManager`, `MonsterBattleController`, `BattleSceneGenerator` | Orchestrates educational battle sequences where players answer Philippine history trivia to dispel monsters and reclaim stolen artifacts. |
+| **Artifact & Lore System** | `ArtifactInteractable`, `ArtifactInspectionUI`, `TableItemSort` | Proximity-based pedestal triggers supporting silhouette previews, ornate plaques, and 25+ curated pre-colonial and historic artifacts. |
+| **Inventory & Quests** | `PlayerInventory`, `BagModalUI`, `GameProgression` | Persistent session tracking for collected relics, pedestal returns, Alterworld door prerequisites, and player progression flags. |
+
 ---
 
 ## Play in Browser (WebGL)
