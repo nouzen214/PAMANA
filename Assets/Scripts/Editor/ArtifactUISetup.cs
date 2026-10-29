@@ -56,8 +56,8 @@ namespace TopDownGame.Editor
                 "Ancient Seal of Tondo",
                 "Sacred Doctrina Manuscript",
                 "Illustrado Quill Nib",
-                "Scholar's Wire Spectacles",
-                "Heirloom Portrait Locket"
+                "Wire-rimmed Spectacles",
+                "Gold Locket Pendant"
             };
             Sprite[] sprites = new Sprite[] { sprStamp, sprBook, sprPen, sprGlasses, sprLocket };
             string[] plaqueTexts = new string[]
@@ -100,11 +100,11 @@ namespace TopDownGame.Editor
 
             BuildArtifactInspectionCanvasUI(canvas);
 
-            var sprPot       = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_Pot.png");
-            var sprJournal   = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_Journal.png");
-            var sprFeather   = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_Feather.png");
-            var sprPamphlets = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_Pamphlets.png");
-            var sprGarrote   = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_Garrote.png");
+            var sprGalley   = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_GalleyProofSheets.png");
+            var sprFeather  = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_FeatherQuillPen.png");
+            var sprPress    = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_PrintingPressMatrix.png");
+            var sprFili     = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_FirstEditionNovelCopy.png");
+            var sprStove    = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_AlcoholCookingStove.png");
 
             string[] tables = new string[]
             {
@@ -116,36 +116,36 @@ namespace TopDownGame.Editor
             };
             string[] artifactObjectNames = new string[]
             {
-                "Artifact_Pot",
-                "Artifact_Journal",
-                "Artifact_Feather",
-                "Artifact_Pamphlets",
-                "Artifact_Garrote"
+                "Artifact_GalleyProofSheets",
+                "Artifact_FeatherQuillPen",
+                "Artifact_PrintingPressMatrix",
+                "Artifact_FirstEditionNovelCopy",
+                "Artifact_AlcoholCookingStove"
             };
             string[] names = new string[]
             {
-                "Ceremonial Bronze Chafing Pot",
-                "Propagandist's Secret Journal",
-                "Patriot's Feather Quill",
-                "Clandestine Propaganda Leaflets",
-                "Memorial Garrote Chair"
+                "Galley Proof Sheets",
+                "Feather Quill Pen",
+                "Printing Press Matrix",
+                "First Edition Novel Copy",
+                "Alcohol Cooking Stove"
             };
-            Sprite[] sprites = new Sprite[] { sprPot, sprJournal, sprFeather, sprPamphlets, sprGarrote };
+            Sprite[] sprites = new Sprite[] { sprGalley, sprFeather, sprPress, sprFili, sprStove };
             string[] plaqueTexts = new string[]
             {
-                "A rare pre-colonial bronze vessel and burner used for royal banquets and ceremonial offerings in ancient Luzon.",
-                "A leather-bound journal containing coded entries, clandestine articles, and records from the Philippine Propaganda Movement.",
-                "A preserved goose feather quill pen used by 19th-century Filipino reformists to compose influential patriotic writings.",
-                "Fanned copies of clandestine political leaflets and reformist essays covertly smuggled into the Philippines during the Propaganda Movement.",
-                "A solemn memorial replica of the Spanish garrote chair used at Bagumbayan in 1872, whose martyrdom galvanized the Philippine reform movement."
+                "Annotated proof sheets from the original print run of Noli Me Tángere, printed in Berlin through the generosity of Dr. Maximo Viola.",
+                "A preserved writing quill pen used to author the emotional and patriotic chapters of José Rizal's novels.",
+                "A historical wooden printing press bed used in Ghent to set and print the initial edition of El Filibusterismo in 1891.",
+                "An original preserved first edition volume of El Filibusterismo, rescued and printed through Valentin Ventura's urgent financial support.",
+                "The historic brass alcohol cooking stove from Fort Santiago inside which José Rizal concealed the manuscript of Mi Último Adiós."
             };
             string[] inspectTexts = new string[]
             {
-                "Crafted with sturdy side handles and mounted on a heated tripod brazier. Soot and copper patina line the underside.",
-                "Bound in weathered brown leather with tight cross-stitching. The pages are dense with covert revolutionary ciphers.",
-                "A long, graceful feather trimmed to a fine writing point. Traces of sepia gall ink linger near the nib.",
-                "Printed on delicate pulp paper by underground reform presses. Faint annotations and patriotic slogans line the edges.",
-                "Sturdy aged hardwood with a tall central post and metal collar bracket. A solemn historical testament to the sacrifice of Fathers Gomez, Burgos, and Zamora."
+                "Printed on thin European paper with handwritten marginal notations and corrections made during the Berlin printing in 1887.",
+                "A trimmed maroon feather quill attached to an ornate golden ferrule. Delicate ink residue remains preserved at the tip.",
+                "Sturdy seasoned timber and iron screw mechanism. Worn wooden platen bearing ink stains from early revolutionary publications.",
+                "Bound volume opened to the title page of El Filibusterismo, bearing the historic dedication to the martyrdom of GOMBURZA.",
+                "Forged brass cylindrical burner with side brackets and a stable base. The hidden fuel chamber housed Rizal's final farewell verses."
             };
 
             SetupTableArtifacts(tables, names, sprites, plaqueTexts, inspectTexts);
@@ -171,11 +171,11 @@ namespace TopDownGame.Editor
 
             BuildArtifactInspectionCanvasUI(canvas);
 
-            var sprOpenBook        = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_OpenBook.png");
-            var sprBoundNovel      = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_BoundNovel.png");
-            var sprManuscriptSheet = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_ManuscriptSheet.png");
-            var sprPrintedFolios   = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_PrintedFolios.png");
-            var sprCopperTablet    = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_CopperTablet.png");
+            var sprGomburza = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_GomburzaFolio.png");
+            var sprCentury  = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_PhilippinesCenturyHence.png");
+            var sprMalolos  = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_LetterToWomenOfMalolos.png");
+            var sprSoli     = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_LaSolidaridad.png");
+            var sprDiario   = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_DiariongTagalog.png");
 
             string[] tables = new string[]
             {
@@ -187,36 +187,36 @@ namespace TopDownGame.Editor
             };
             string[] artifactObjectNames = new string[]
             {
-                "Artifact_OpenBook",
-                "Artifact_BoundNovel",
-                "Artifact_ManuscriptSheet",
-                "Artifact_PrintedFolios",
-                "Artifact_CopperTablet"
+                "Artifact_GomburzaFolio",
+                "Artifact_PhilippinesCenturyHence",
+                "Artifact_LetterToWomenOfMalolos",
+                "Artifact_LaSolidaridad",
+                "Artifact_DiariongTagalog"
             };
             string[] names = new string[]
             {
-                "Manuscript of Noli Me Tángere",
-                "First Edition of El Filibusterismo",
-                "Original Draft of Mi Último Adiós",
-                "Galley Proofs of Sucesos de las Islas Filipinas",
-                "Laguna Copperplate Legal Document"
+                "GOMBURZA Memorial Leaflet",
+                "Century Hence Serial Article",
+                "Malolos Letter Leaflet",
+                "La Solidaridad Newspaper Issue",
+                "Diariong Tagalog Broadsheet"
             };
-            Sprite[] sprites = new Sprite[] { sprOpenBook, sprBoundNovel, sprManuscriptSheet, sprPrintedFolios, sprCopperTablet };
+            Sprite[] sprites = new Sprite[] { sprGomburza, sprCentury, sprMalolos, sprSoli, sprDiario };
             string[] plaqueTexts = new string[]
             {
-                "José Rizal's original handwritten manuscript of Noli Me Tángere, completed in Berlin in 1887 to expose the social cancer of colonial Philippines.",
-                "A rare first edition copy of El Filibusterismo, published in Ghent in 1891 and dedicated to the martyrdom of Gomburza.",
-                "The historic farewell poem composed by José Rizal on the eve of his execution at Fort Santiago, concealed inside an alcohol cooking lamp.",
-                "Annotated galley print sheets from Antonio de Morga's historical chronicle, meticulously edited by Rizal in the British Museum in 1890.",
-                "The oldest known written legal document found in the Philippines (900 CE), inscribed in Kawi script documenting the clearance of an ancient debt."
+                "A historic tribute folio commemorating Fathers Gomez, Burgos, and Zamora, whose 1872 execution ignited the Philippine revolution.",
+                "An original serialized essay by José Rizal analyzing the historical decline and predicting the eventual liberation of the Philippines.",
+                "José Rizal's celebrated 1889 letter written to praise and empower the young women of Malolos for courageously pursuing education.",
+                "The premier reformist newspaper published in Spain advocating civil rights, freedom of speech, and Filipino parliamentary representation.",
+                "The historic first bilingual newspaper published in Tagalog and Spanish, co-founded by Marcelo H. del Pilar in 1882."
             };
             string[] inspectTexts = new string[]
             {
-                "Penned in flowing cursive on German parchment with Rizal's handwritten corrections and dedications to Maximo Viola.",
-                "Bound in dark buckram cloth with gold-embossed lettering. The interior title page bears the solemn dedication to Gomez, Burgos, and Zamora.",
-                "Written on a folded leaf of lined paper without a title or erasure. The verses radiate unwavering patriotism and dignity.",
-                "Heavy typographic paper with marginal commentary in Rizal's hand, demonstrating the rich civilization of pre-colonial Filipinos.",
-                "A thin blackened copper plate incised with delicate ancient Malayan characters, proving the sophisticated civil systems of pre-colonial Luzon."
+                "A folded folio with aged borders, displaying portraits of the three martyred secular priests along with solemn accounts of the Cavite Mutiny.",
+                "Broadsheet periodical opened to Rizal's philosophical treatise, exploring Spanish colonial policies and foreseeing future Philippine independence.",
+                "Inscribed on weathered parchment with elaborate calligraphic headings in Tagalog, urging Filipino women to reject ignorance and champion enlightenment.",
+                "Folded issues of the Propaganda Movement's organ in Barcelona, featuring bold editorials and articles by Del Pilar, Rizal, and López Jaena.",
+                "Wide newspaper pages printed with side-by-side columns of Tagalog and Spanish text, featuring nationalistic essays such as Rizal's 'Amor Patrio'."
             };
 
             SetupTableArtifacts(tables, names, sprites, plaqueTexts, inspectTexts);
@@ -242,11 +242,11 @@ namespace TopDownGame.Editor
 
             BuildArtifactInspectionCanvasUI(canvas);
 
-            var sprDoc              = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_Document.png");
-            var sprInkwell          = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_Inkwell.png");
-            var sprParchment        = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_Parchment.png");
-            var sprConstitutionBook = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_ConstitutionBook.png");
-            var sprCharterWithSeal  = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_CharterWithSeal.png");
+            var sprOath     = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_MembershipOathCertificate.png");
+            var sprWarrant  = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_ArrestWarrantDecree.png");
+            var sprLedger   = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_SecretMemberLedger.png");
+            var sprCharter  = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_ReorganizedCouncilCharter.png");
+            var sprManifest = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_SplitResolutionManifesto.png");
 
             string[] tables = new string[]
             {
@@ -258,36 +258,36 @@ namespace TopDownGame.Editor
             };
             string[] artifactObjectNames = new string[]
             {
-                "Artifact_Document",
-                "Artifact_Inkwell",
-                "Artifact_Parchment",
-                "Artifact_ConstitutionBook",
-                "Artifact_CharterWithSeal"
+                "Artifact_MembershipOathCertificate",
+                "Artifact_ArrestWarrantDecree",
+                "Artifact_SecretMemberLedger",
+                "Artifact_ReorganizedCouncilCharter",
+                "Artifact_SplitResolutionManifesto"
             };
             string[] names = new string[]
             {
-                "Revolutionary Draft Decree",
-                "Scholar's Brass Inkwell",
-                "Declaration of Sovereignty",
-                "Malolos Constitution Records",
-                "Charter of the First Philippine Republic"
+                "Membership Oath Certificate",
+                "Arrest Warrant Decree",
+                "Secret Member Ledger",
+                "Reorganized Council Charter",
+                "Split Resolution Manifesto"
             };
-            Sprite[] sprites = new Sprite[] { sprDoc, sprInkwell, sprParchment, sprConstitutionBook, sprCharterWithSeal };
+            Sprite[] sprites = new Sprite[] { sprOath, sprWarrant, sprLedger, sprCharter, sprManifest };
             string[] plaqueTexts = new string[]
             {
-                "A handwritten draft of a historical decree laying out principles of sovereignty and freedom during the revolutionary era.",
-                "A weighted traveling inkpot used by 19th-century Filipino intellectuals to hold indelible iron gall ink during secret correspondence.",
-                "A ceremonial parchment proclamation drafted to herald national autonomy and unity among the archipelago's provinces.",
-                "An official bound ledger documenting the debates, articles, and ratification of the Malolos Constitution in Barasoain Church (1899).",
-                "A monumental state proclamation bearing an official pendant wax seal suspended by tricolor silk ribbon, certifying the sovereignty of the revolutionary government."
+                "An official induction certificate defining the civic duties, mutual defense, and moral code of La Liga Filipina members.",
+                "A Spanish vice-royal decree ordering the immediate arrest and four-year banishment of José Rizal to Dapitan.",
+                "A clandestine registry containing the pseudonyms and records of early reformists, including Katipunan founder Andres Bonifacio.",
+                "A scroll charter signed during the 1893 restructuring of the Supreme Council under secretary Apolinario Mabini.",
+                "A historical manifesto penned when La Liga fractured into the moderate Cuerpo de Compromisarios and the revolutionary Katipunan."
             };
             string[] inspectTexts = new string[]
             {
-                "Authored in clear, deliberate strokes with an ink-tipped feather resting across the margin. The ink remains remarkably dark and legible.",
-                "Crafted with an angled reservoir and pen rest. Hardened black residue from centuries-old ink still coats the bottom.",
-                "Heavy vellum inscribed with elaborate flourishes and adorned with official corner ribbons. Wax seals validate its historic authority.",
-                "Heavy bound volume opened across formal articles. The parchment is inscribed in meticulous Spanish script, establishing Asia's first democratic republic.",
-                "Heavy parchment with ornate calligraphic headings. A lead-cased red beeswax seal hangs from the bottom margin, pressed with the official republican sun emblem."
+                "Illuminated certificate framed with ornate gold filigree borders, sunburst insignia, and signed with a goose quill.",
+                "Parchment warrant clamped with a steel brass paperclip and accompanied by a polished molave wood magistrate gavel.",
+                "Bound in thick marbled calfskin with numbered registry columns detailing the deliberations and members of the society.",
+                "Rolled with delicate turned wooden spindles and adorned with official wax crests validating sovereign decree.",
+                "Weathered vellum with hand-stitched ribbon threads and a leaded wax seal bearing the revolutionary emblem."
             };
 
             SetupTableArtifacts(tables, names, sprites, plaqueTexts, inspectTexts);
@@ -313,11 +313,11 @@ namespace TopDownGame.Editor
 
             BuildArtifactInspectionCanvasUI(canvas);
 
-            var sprFlask         = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_Flask.png");
-            var sprJar           = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_Jar.png");
-            var sprScissors      = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_Scissors.png");
-            var sprMedicalManual = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_MedicalManual.png");
-            var sprPharmacopeia  = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_Pharmacopeia.png");
+            var sprForceps = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_SurgicalEyeForceps.png");
+            var sprRoll    = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_SchoolRollBook.png");
+            var sprJar     = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_SpecimenJarWithBeetle.png");
+            var sprLamp    = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_CoconutOilLamp.png");
+            var sprApp     = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_MilitaryDoctorApplication.png");
 
             string[] tables = new string[]
             {
@@ -329,36 +329,36 @@ namespace TopDownGame.Editor
             };
             string[] artifactObjectNames = new string[]
             {
-                "Artifact_Flask",
-                "Artifact_Jar",
-                "Artifact_Scissors",
-                "Artifact_MedicalManual",
-                "Artifact_Pharmacopeia"
+                "Artifact_SurgicalEyeForceps",
+                "Artifact_SchoolRollBook",
+                "Artifact_SpecimenJarWithBeetle",
+                "Artifact_CoconutOilLamp",
+                "Artifact_MilitaryDoctorApplication"
             };
             string[] names = new string[]
             {
-                "Apothecary's Spherical Flask",
-                "Vintage Apothecary Jar",
-                "Rizal's Surgical Forceps",
-                "Ophthalmic Case Record Book",
-                "Codex of Botanical Therapeutics"
+                "Surgical Eye Forceps",
+                "School Roll Book",
+                "Specimen Jar with Beetle",
+                "Coconut Oil Lamp",
+                "Military Doctor Application"
             };
-            Sprite[] sprites = new Sprite[] { sprFlask, sprJar, sprScissors, sprMedicalManual, sprPharmacopeia };
+            Sprite[] sprites = new Sprite[] { sprForceps, sprRoll, sprJar, sprLamp, sprApp };
             string[] plaqueTexts = new string[]
             {
-                "A thick-walled glass spherical flask used by 19th-century medical practitioners to distill antiseptics and essential herbal tinctures.",
-                "A glazed ceramic apothecary jar designed to preserve healing balms, poultices, and powdered botanical remedies.",
-                "Curved stainless surgical forceps preserved from historical Philippine medical clinics and ophthalmic procedures.",
-                "A pocket casebook used by 19th-century physicians to record patient diagnoses, eye surgical procedures, and herbal prescriptions in rural clinics.",
-                "A comprehensive medical reference treatise documenting native Philippine medicinal plants and European pharmacopeia remedies."
+                "Curved ophthalmic surgical forceps used by Dr. José Rizal to successfully remove cataracts for patients in Dapitan.",
+                "A student attendance and grade ledger from Rizal's tuition-free community school established in Talisay, Dapitan.",
+                "A sealed glass specimen jar preserving biological specimens discovered by Rizal, including the Apogonia rizali beetle.",
+                "A spherical municipal streetlamp introduced by Rizal using native coconut oil to illuminate the streets of Dapitan at night.",
+                "An official military doctor application submitted by Rizal to volunteer as an army surgeon in Cuba."
             };
             string[] inspectTexts = new string[]
             {
-                "Blown from heavy tinted glass with an integrated hanging loop. Dried amber herbal residue remains along the internal curvature.",
-                "Finished with a fitted airtight lid and wide base. Faint apothecary labels and measuring gradations are visible along the ceramic rim.",
-                "Finely balanced surgical steel with ribbed finger loops and a precision serrated curved jaw, engineered for delicate field operations.",
-                "Bound in durable dark oilcloth with hand-ruled diagnosis columns. Several pages document delicate cataract surgeries performed in Dapitan.",
-                "Heavy embossed morocco leather binding. The printed folios contain botanical classifications alongside native remedies compiled by early Filipino doctors."
+                "Finely balanced surgical steel with ribbed finger loops and precision curved jaws, engineered for delicate ophthalmic procedures.",
+                "Bound in durable dark oilcloth with hand-ruled student columns detailing the curriculum taught to sixteen young scholars.",
+                "A heavy glass jar sealed with crimson beeswax and thread, housing a preserved horned beetle specimen of Apogonia rizali.",
+                "Blown from heavy tinted glass with an integrated hanging loop and copper oil burner engineered for municipal street illumination.",
+                "Aged Spanish clinical admission parchment bearing patient biodata, volunteer requests, and official vice-royal stamps."
             };
 
             SetupTableArtifacts(tables, names, sprites, plaqueTexts, inspectTexts);
@@ -384,11 +384,11 @@ namespace TopDownGame.Editor
 
             BuildArtifactInspectionCanvasUI(canvas);
 
-            var sprGavel           = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_Gavel.png");
-            var sprLawTome         = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_LawTome.png");
-            var sprSpectacles      = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_Spectacles.png");
-            var sprJudicialBaton   = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_JudicialBaton.png");
-            var sprScalesOfJustice = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_ScalesOfJustice.png");
+            var sprBaton = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_RoyalGovernorBaton.png");
+            var sprGavel = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_TribunalCourtGavel.png");
+            var sprScale = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_BandalaQuotaScale.png");
+            var sprBook  = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_ParishRegistryBook.png");
+            var sprCoin  = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Artifacts/Artifact_SilverColumnarCoin.png");
 
             string[] tables = new string[]
             {
@@ -400,36 +400,36 @@ namespace TopDownGame.Editor
             };
             string[] artifactObjectNames = new string[]
             {
-                "Artifact_Gavel",
-                "Artifact_LawTome",
-                "Artifact_Spectacles",
-                "Artifact_JudicialBaton",
-                "Artifact_ScalesOfJustice"
+                "Artifact_RoyalGovernorBaton",
+                "Artifact_TribunalCourtGavel",
+                "Artifact_BandalaQuotaScale",
+                "Artifact_ParishRegistryBook",
+                "Artifact_SilverColumnarCoin"
             };
             string[] names = new string[]
             {
-                "Magistrate's Hardwood Gavel",
-                "Codex of Philippine Jurisprudence",
-                "Jurist's Reading Spectacles",
-                "Magistrate's Baton of Authority",
-                "Brass Scales of Equity"
+                "Royal Governor Baton",
+                "Tribunal Court Gavel",
+                "Bandala Quota Scale",
+                "Parish Registry Book",
+                "Silver Columnar Coin"
             };
-            Sprite[] sprites = new Sprite[] { sprGavel, sprLawTome, sprSpectacles, sprJudicialBaton, sprScalesOfJustice };
+            Sprite[] sprites = new Sprite[] { sprBaton, sprGavel, sprScale, sprBook, sprCoin };
             string[] plaqueTexts = new string[]
             {
-                "A ceremonial gavel and striking block carved from native molave hardwood, used in the early judicial courts of the Philippine archipelago.",
-                "A monumental bound compendium containing early civil statutes, decrees, and constitutional drafts from the First Philippine Republic.",
-                "A pair of antique round reading spectacles once belonging to a prominent 19th-century Filipino jurist and scholar.",
-                "A polished hardwood staff carried by colonial judges and civil magistrates as an emblem of judicial authority and lawful order.",
-                "A dual-pan balance scale representing impartiality and fair judgment in historic Philippine civil courts and commercial tribunals."
+                "A gold-tipped baton carried by colonial governors as the emblem of supreme vice-royal executive authority.",
+                "A ceremonial hardwood gavel and striking block used in the highest appellate court in colonial Manila.",
+                "A dual-pan balance scale used by colonial administrators to weigh and enforce compulsory agricultural quotas on native farmers.",
+                "A thick, leather-bound parish codex containing civil records and symbolizing the friars' profound political dominance.",
+                "Spanish colonial silver columnar coins dispatched annually from the Viceroyalty of New Spain to subsidize the archipelago."
             };
             string[] inspectTexts = new string[]
             {
+                "Turned from indigenous kamagong ironwood with gold-banded ends. Carried during formal court sessions and vice-royal ceremonies.",
                 "Dense dark molave wood with an ergonomic turned handle. Indentations on the sounding block bear witness to historic verdicts rendered.",
-                "Bound in embossed dark cowhide with gilt-edged leaves. Heavily annotated margins reflect the constitutional debates of early Filipino jurists.",
-                "Tightly curved nose bridge and polished circular lenses. Faint scratches on the dark glass testify to countless hours spent examining historic legal briefs.",
-                "Turned from indigenous kamagong ironwood with silver-banded ends. Carried during formal court sessions and public tribunals.",
-                "Solid cast brass with counterbalanced pans suspended from a central pivot pillar. The base is weighted with lead for precision balance."
+                "Solid cast brass with counterbalanced pans suspended from a central pivot pillar. The base is weighted with lead for precision balance.",
+                "Bound in embossed dark cowhide with brass locking clasp and gilt-edged leaves. Heavily annotated margins reflect church governance.",
+                "Minted silver columnar coins bearing Spanish colonial crests, representing the annual Real Situado financial subsidy from Mexico."
             };
 
             SetupTableArtifacts(tables, names, sprites, plaqueTexts, inspectTexts);

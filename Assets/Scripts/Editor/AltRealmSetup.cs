@@ -161,8 +161,10 @@ namespace TopDownGame.Editor
             {
                 var offsetField = typeof(RoomDoor).GetField("returnOffset", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 Vector2 currentOffset = offsetField != null ? (Vector2)offsetField.GetValue(d) : new Vector2(0f, 1.8f);
-                bool startLocked = (d.GetRoomNumber() != 1);
-                d.SetConfig("BattleScene", d.RoomDisplayName, currentOffset, startLocked);
+                int rNum = d.GetRoomNumber();
+                string target = rNum == 1 ? "BattleScene" : $"BattleScene_{rNum}";
+                bool startLocked = (rNum != 1);
+                d.SetConfig(target, d.RoomDisplayName, currentOffset, startLocked);
                 EditorUtility.SetDirty(d);
             }
 
@@ -241,6 +243,11 @@ namespace TopDownGame.Editor
                 "Assets/Scenes/AltLeftHallway.unity",
                 "Assets/Scenes/AltRightHallway.unity",
                 "Assets/Scenes/BattleScene.unity",
+                "Assets/Scenes/BattleScene_2.unity",
+                "Assets/Scenes/BattleScene_3.unity",
+                "Assets/Scenes/BattleScene_4.unity",
+                "Assets/Scenes/BattleScene_5.unity",
+                "Assets/Scenes/BattleScene_6.unity",
                 "Assets/Scenes/Room_1.unity",
                 "Assets/Scenes/Room_2.unity",
                 "Assets/Scenes/Room_3.unity",

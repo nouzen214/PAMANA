@@ -25,7 +25,7 @@ namespace TopDownGame
 
         private void Start()
         {
-            if (SceneManager.GetActiveScene().name == "BattleScene" && !string.IsNullOrEmpty(RoomTransitionManager.CurrentRoomDisplayName))
+            if (SceneManager.GetActiveScene().name.StartsWith("BattleScene") && !string.IsNullOrEmpty(RoomTransitionManager.CurrentRoomDisplayName))
             {
                 roomTitle = RoomTransitionManager.CurrentRoomDisplayName;
                 roomNumber = RoomTransitionManager.CurrentRoomNumber;
@@ -60,36 +60,26 @@ namespace TopDownGame
             }
 
             // Real World Rooms
-            if (!sceneName.StartsWith("Alt") && sceneName != "BattleScene" && currentRoom > 0)
+            if (!sceneName.StartsWith("Alt") && !sceneName.StartsWith("BattleScene") && currentRoom > 0)
             {
-                if (currentRoom == 1)
+                if (GameProgression.HasRetrievedRoomArtifact(currentRoom) && !GameProgression.HasReturnedRoomArtifactsToRealWorld(currentRoom))
                 {
-                    if (GameProgression.HasRetrievedRoom1Artifact && !GameProgression.HasReturnedRoom1ArtifactToRealWorld)
+                    bool justReturned = GameProgression.ReturnRoomArtifactsToRealWorld(currentRoom);
+                    if (justReturned)
                     {
-                        bool justReturned = GameProgression.ReturnRoom1ArtifactToRealWorld();
-                        if (justReturned)
-                        {
-                            NotificationBannerUI.Show(
-                                "ARTIFACTS RETURNED TO ROOM 1!",
-                                "You brought the artifacts back inside Room 1! Alterworld Room 2 is now UNLOCKED!",
-                                6.0f,
-                                new Color(0.2f, 0.95f, 0.4f, 1f),
-                                "★"
-                            );
-                        }
-                    }
-
-                    if (GameProgression.HasReturnedRoom1ArtifactToRealWorld || GameProgression.HasRetrievedRoom1Artifact)
-                    {
-                        RestoreTableArtifactVisuals();
+                        NotificationBannerUI.Show(
+                            $"ARTIFACTS RETURNED TO ROOM {currentRoom}!",
+                            $"You brought the artifacts back inside Room {currentRoom}! Alterworld Room {currentRoom + 1} is now UNLOCKED!",
+                            6.0f,
+                            new Color(0.2f, 0.95f, 0.4f, 1f),
+                            "★"
+                        );
                     }
                 }
-                else
+
+                if (GameProgression.HasReturnedRoomArtifactsToRealWorld(currentRoom) || GameProgression.HasRetrievedRoomArtifact(currentRoom))
                 {
-                    if (GameProgression.HasReturnedRoomArtifactsToRealWorld(currentRoom))
-                    {
-                        RestoreTableArtifactVisuals();
-                    }
+                    RestoreTableArtifactVisuals();
                 }
             }
         }

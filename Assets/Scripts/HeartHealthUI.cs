@@ -26,7 +26,7 @@ namespace TopDownGame
             string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
             // The player does not have a health bar outside of battle.
             // It only shows when the user enters the battle (BattleScene).
-            if (!activeScene.Equals("BattleScene", System.StringComparison.OrdinalIgnoreCase))
+            if (!activeScene.StartsWith("BattleScene", System.StringComparison.OrdinalIgnoreCase))
             {
                 gameObject.SetActive(false);
             }

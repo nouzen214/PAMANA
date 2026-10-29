@@ -41,6 +41,30 @@ namespace TopDownGame
             }
         }
 
+        public static bool IsRoomBattleCompleted(int roomNum)
+        {
+            if (roomNum == 1) return IsRoom1BattleCompleted;
+            return PlayerPrefs.GetInt($"GameProgression_Room{roomNum}BattleCompleted", 0) == 1;
+        }
+
+        public static void CompleteRoomBattle(int roomNum)
+        {
+            if (roomNum == 1)
+            {
+                CompleteRoom1Battle();
+                return;
+            }
+            string key = $"GameProgression_Room{roomNum}BattleCompleted";
+            bool wasCompleted = PlayerPrefs.GetInt(key, 0) == 1;
+            PlayerPrefs.SetInt(key, 1);
+            PlayerPrefs.Save();
+            if (!wasCompleted)
+            {
+                Debug.Log($"[GameProgression] Room {roomNum} Battle completed! Room {roomNum} locked, cannot re-enter.");
+                OnRoom1BattleCompleted?.Invoke();
+            }
+        }
+
         public static bool HasCompletedTutorial
         {
             get => PlayerPrefs.GetInt(KEY_TUTORIAL_COMPLETED, 0) == 1;
@@ -81,6 +105,7 @@ namespace TopDownGame
                     PlayerInventory.HasArtifact("Room1_TravelNotebook") ||
                     PlayerInventory.HasArtifact("Room1_WireSpectacles") ||
                     PlayerInventory.HasArtifact("Room1_KeepsakeLocket") ||
+                    PlayerInventory.HasArtifact("Room1_GoldLocketPendant") ||
                     PlayerInventory.Count > 0)
                 {
                     return true;
@@ -156,6 +181,28 @@ namespace TopDownGame
             return false;
         }
 
+        public static bool HasRetrievedRoomArtifact(int roomNum)
+        {
+            if (roomNum == 1) return HasRetrievedRoom1Artifact;
+            return PlayerPrefs.GetInt($"GameProgression_Room{roomNum}ArtifactRetrieved", 0) == 1;
+        }
+
+        public static bool RetrieveRoomArtifact(int roomNum)
+        {
+            if (roomNum == 1) return RetrieveRoom1Artifact();
+            string key = $"GameProgression_Room{roomNum}ArtifactRetrieved";
+            bool wasRetrieved = PlayerPrefs.GetInt(key, 0) == 1;
+            PlayerPrefs.SetInt(key, 1);
+            PlayerPrefs.Save();
+            if (!wasRetrieved)
+            {
+                Debug.Log($"[GameProgression] Player retrieved at least 1 artifact from Room {roomNum} monster! Must return it inside Room {roomNum} in Real World to unlock Room {roomNum + 1}.");
+                OnRoom1ArtifactRetrieved?.Invoke();
+                return true;
+            }
+            return false;
+        }
+
         public static bool UnlockPortal()
         {
             bool wasUnlocked = IsPortalUnlocked;
@@ -182,10 +229,12 @@ namespace TopDownGame
             PlayerPrefs.DeleteKey(KEY_ROOM1_ARTIFACT_RETURNED);
             for (int i = 1; i <= 12; i++)
             {
+                PlayerPrefs.DeleteKey($"GameProgression_Room{i}BattleCompleted");
+                PlayerPrefs.DeleteKey($"GameProgression_Room{i}ArtifactRetrieved");
                 PlayerPrefs.DeleteKey($"GameProgression_Room{i}ArtifactReturnedToRealWorld");
             }
             PlayerPrefs.Save();
-            Debug.Log("[GameProgression] Progression reset. Portal and Room 2 locked.");
+            Debug.Log("[GameProgression] Progression reset. All rooms reset.");
         }
     }
 }

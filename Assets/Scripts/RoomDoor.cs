@@ -64,16 +64,15 @@ namespace TopDownGame
             if (isAltScene)
             {
                 // In Alter World:
-                // Room 1 is LOCKED once the battle is completed (player cannot re-enter).
-                // Room 2 is UNLOCKED only after Room 1 artifacts are brought inside Room 1 in the Real World!
-                // Subsequent rooms unlock after bringing the preceding room's artifacts inside that room in the Real World.
-                if (roomNum == 1)
+                // Completed room battle: LOCKED (player cannot re-enter).
+                // Next room: UNLOCKED only after previous room artifacts are brought inside that room in the Real World!
+                if (GameProgression.IsRoomBattleCompleted(roomNum))
                 {
-                    isLocked = GameProgression.IsRoom1BattleCompleted;
+                    isLocked = true;
                 }
-                else if (roomNum == 2)
+                else if (roomNum == 1)
                 {
-                    isLocked = !GameProgression.HasReturnedRoom1ArtifactToRealWorld;
+                    isLocked = false;
                 }
                 else
                 {
@@ -83,15 +82,15 @@ namespace TopDownGame
             else
             {
                 // In Normal World:
-                // Room 1 is UNLOCKED.
-                // Rooms 2 to 12 are LOCKED.
+                // Room 1 is UNLOCKED from the start.
+                // Rooms 2..12 unlock when the player has retrieved their artifacts from the Alterworld or already returned them.
                 if (roomNum == 1)
                 {
                     isLocked = false;
                 }
                 else
                 {
-                    isLocked = true;
+                    isLocked = !GameProgression.HasRetrievedRoomArtifact(roomNum) && !GameProgression.HasReturnedRoomArtifactsToRealWorld(roomNum);
                 }
             }
         }
@@ -119,30 +118,26 @@ namespace TopDownGame
                 string lockMessage;
                 if (isAltScene)
                 {
-                    if (roomNum == 1 && GameProgression.IsRoom1BattleCompleted)
+                    if (GameProgression.IsRoomBattleCompleted(roomNum))
                     {
-                        lockMessage = "Room 1 trial is already finished!\nYou cannot re-enter.";
-                    }
-                    else if (roomNum == 2 && !GameProgression.HasReturnedRoom1ArtifactToRealWorld)
-                    {
-                        if (GameProgression.HasRetrievedRoom1Artifact)
-                        {
-                            lockMessage = "Room 2 is locked!\nEnter the portal and bring the recovered artifacts inside Room 1 in the Real World first!";
-                        }
-                        else
-                        {
-                            lockMessage = "Room 2 is locked!\nConquer Room 1 trial in the Alterworld first!";
-                        }
+                        lockMessage = $"{roomDisplayName} trial is already finished!\nYou cannot re-enter.";
                     }
                     else
                     {
                         int prevRoom = roomNum - 1;
-                        lockMessage = $"{roomDisplayName} is currently locked.\nRecover Room {prevRoom} artifacts and bring them inside Room {prevRoom} in the Real World first!";
+                        if (GameProgression.HasRetrievedRoomArtifact(prevRoom))
+                        {
+                            lockMessage = $"{roomDisplayName} is locked!\nEnter the portal and bring the recovered artifacts inside Room {prevRoom} in the Real World first!";
+                        }
+                        else
+                        {
+                            lockMessage = $"{roomDisplayName} is locked!\nConquer Room {prevRoom} trial in the Alterworld first!";
+                        }
                     }
                 }
                 else
                 {
-                    lockMessage = $"{roomDisplayName} is currently locked.\nExplore Room 1 first!";
+                    lockMessage = $"{roomDisplayName} is currently locked.\nConquer Room {roomNum} trial in the Alterworld to recover its artifacts first!";
                 }
 
                 NotificationBannerUI.Show(

@@ -485,7 +485,7 @@ namespace TopDownGame
             if (monsterController != null)
             {
                 bool animDone = false;
-                monsterController.TakeDamage(2, () => animDone = true);
+                monsterController.TakeDamage(1, () => animDone = true);
                 while (!animDone) yield return null;
             }
 
@@ -494,19 +494,16 @@ namespace TopDownGame
             _retrievedCount++;
             PlayerInventory.AddArtifact(slot.artifactId, slot.artifactName, slot.artifactSprite, slot.artifactDescription);
 
-            if (roomNumber == 1)
+            bool justRetrieved = GameProgression.RetrieveRoomArtifact(roomNumber);
+            if (justRetrieved)
             {
-                bool justRetrieved = GameProgression.RetrieveRoom1Artifact();
-                if (justRetrieved)
-                {
-                    NotificationBannerUI.Show(
-                        "ARTIFACT RECOVERED!",
-                        "You recovered an artifact! Bring it back inside Room 1 in the Real World to open Room 2!",
-                        5.5f,
-                        new Color(0.2f, 0.9f, 0.4f, 1f),
-                        "!"
-                    );
-                }
+                NotificationBannerUI.Show(
+                    "ARTIFACT RECOVERED!",
+                    $"You recovered an artifact! Bring it back inside Room {roomNumber} in the Real World to open Room {roomNumber + 1}!",
+                    5.5f,
+                    new Color(0.2f, 0.9f, 0.4f, 1f),
+                    "!"
+                );
             }
 
             // Update slot visuals
@@ -632,13 +629,10 @@ namespace TopDownGame
             if (MonsterPortraitContainerGO != null) MonsterPortraitContainerGO.SetActive(false);
             if (choicesContainer != null) choicesContainer.SetActive(false);
 
-            if (roomNumber == 1)
+            GameProgression.CompleteRoomBattle(roomNumber);
+            if (_retrievedCount > 0)
             {
-                GameProgression.CompleteRoom1Battle();
-                if (_retrievedCount > 0)
-                {
-                    GameProgression.RetrieveRoom1Artifact();
-                }
+                GameProgression.RetrieveRoomArtifact(roomNumber);
             }
 
             if (_retrievedCount > 0 || (monsterController != null && monsterController.IsDefeated))
@@ -648,7 +642,10 @@ namespace TopDownGame
                     var bodyText = victoryModal.transform.Find("Window/Body")?.GetComponent<TMP_Text>();
                     if (bodyText != null)
                     {
-                        bodyText.text = $"You completed the battle and retrieved {_retrievedCount} of {artifactSlots.Count} artifact(s)!\nTake the portal back and bring them inside Room 1 in the Real World to open Alterworld Room 2!";
+                        string nextUnlock = (roomNumber < 6)
+                            ? $"Take the portal back and bring them inside Room {roomNumber} in the Real World to open Alterworld Room {roomNumber + 1}!"
+                            : $"Take the portal back and bring them inside Room {roomNumber} in the Real World to restore the realm!";
+                        bodyText.text = $"You completed the battle and retrieved {_retrievedCount} of {artifactSlots.Count} artifact(s)!\n{nextUnlock}";
                     }
                     victoryModal.SetActive(true);
                 }
@@ -683,13 +680,10 @@ namespace TopDownGame
             if (MonsterPortraitContainerGO != null) MonsterPortraitContainerGO.SetActive(false);
             if (choicesContainer != null) choicesContainer.SetActive(false);
 
-            if (roomNumber == 1)
+            GameProgression.CompleteRoomBattle(roomNumber);
+            if (_retrievedCount > 0)
             {
-                GameProgression.CompleteRoom1Battle();
-                if (_retrievedCount > 0)
-                {
-                    GameProgression.RetrieveRoom1Artifact();
-                }
+                GameProgression.RetrieveRoomArtifact(roomNumber);
             }
 
             if (defeatModal != null)
@@ -701,7 +695,7 @@ namespace TopDownGame
                 {
                     if (_retrievedCount > 0)
                     {
-                        bodyText.text = $"You fell in battle, but managed to keep {_retrievedCount} recovered artifact(s)!\nRoom 2 in the Alterworld is open.";
+                        bodyText.text = $"You fell in battle, but managed to keep {_retrievedCount} recovered artifact(s)!\nBring them back inside Room {roomNumber} in the Real World.";
                     }
                     else
                     {
@@ -730,13 +724,10 @@ namespace TopDownGame
 
         public void OnReturnToHallwayClicked()
         {
-            if (roomNumber == 1)
+            GameProgression.CompleteRoomBattle(roomNumber);
+            if (_retrievedCount > 0)
             {
-                GameProgression.CompleteRoom1Battle();
-                if (_retrievedCount > 0)
-                {
-                    GameProgression.RetrieveRoom1Artifact();
-                }
+                GameProgression.RetrieveRoomArtifact(roomNumber);
             }
             RoomTransitionManager.ExitToLobby();
         }
