@@ -187,20 +187,25 @@ namespace TopDownGame
 
             if (dialogueText != null)
             {
-                string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-                if ((activeScene == "Room_1" || RoomTransitionManager.CurrentRoomNumber == 1) && GameProgression.HasReturnedRoom1ArtifactToRealWorld)
+                int rNum = artifact != null ? artifact.RoomNumber : 1;
+                bool isReturned = GameProgression.HasReturnedRoomArtifactsToRealWorld(rNum);
+                bool allRead = GameProgression.AreAllPlaquesRead(rNum);
+                int readCount = GameProgression.GetPlaquesReadCount(rNum);
+
+                if (isReturned)
                 {
-                    dialogueText.text = "The artifact has been safely returned to its pedestal! The Alterworld portal shifts as Room 2 unlocks!";
+                    dialogueText.text = $"The artifacts in Room {rNum} have been safely returned to their pedestals! Real World Room {rNum + 1} is open!";
                 }
-                else if ((activeScene == "Room_1" || RoomTransitionManager.CurrentRoomNumber == 1) && PlayerPrefs.GetInt("HasAcknowledgedPortalInDialogue", 0) == 0)
+                else if (allRead)
                 {
-                    PlayerPrefs.SetInt("HasAcknowledgedPortalInDialogue", 1);
-                    PlayerPrefs.Save();
-                    dialogueText.text = "As I touched the artifact, the floor trembled... A mysterious portal has opened somewhere in the museum!";
+                    if (rNum == 1)
+                        dialogueText.text = "I have studied all 5 plaques in Room 1! The mysterious portal in the museum lobby is now awakened!";
+                    else
+                        dialogueText.text = $"I have studied all 5 plaques in Room {rNum}! The Alterworld trial for Room {rNum} is now unlocked!";
                 }
                 else
                 {
-                    dialogueText.text = artifact != null ? artifact.InitialDialogue : "what should i do";
+                    dialogueText.text = $"I need to study all 5 historical plaques in this room ({readCount}/5 studied). What should I do?";
                 }
                 dialogueText.color = new Color(0.18f, 0.18f, 0.18f, 1f);
             }
@@ -232,12 +237,61 @@ namespace TopDownGame
             {
                 dialogueText.text = _currentArtifact.PlaqueDialogue;
             }
+
+            // Record plaque read and check completion
+            if (_currentArtifact != null)
+            {
+                int rNum = _currentArtifact.RoomNumber;
+                string pId = !string.IsNullOrEmpty(_currentArtifact.ArtifactName) ? _currentArtifact.ArtifactName : _currentArtifact.gameObject.name;
+                bool isNew = GameProgression.RecordPlaqueRead(rNum, pId);
+                int totalRead = GameProgression.GetPlaquesReadCount(rNum);
+
+                if (isNew)
+                {
+                    if (totalRead >= 5)
+                    {
+                        if (rNum == 1)
+                        {
+                            NotificationBannerUI.Show(
+                                "PORTAL AWAKENED!",
+                                "All 5 plaques in Room 1 studied!\nA mysterious portal has opened in the museum lobby!",
+                                6.0f,
+                                new Color(0.2f, 0.95f, 0.95f, 1f),
+                                "★"
+                            );
+                        }
+                        else
+                        {
+                            NotificationBannerUI.Show(
+                                $"BATTLE {rNum} UNLOCKED!",
+                                $"All 5 plaques in Room {rNum} studied!\nThe Alterworld trial for Room {rNum} is now open!",
+                                6.0f,
+                                new Color(0.2f, 0.95f, 0.4f, 1f),
+                                "★"
+                            );
+                        }
+                    }
+                    else
+                    {
+                        NotificationBannerUI.Show(
+                            "PLAQUE STUDIED",
+                            $"Plaques studied: {totalRead}/5 in Room {rNum}",
+                            2.5f,
+                            new Color(1f, 0.85f, 0.35f, 1f),
+                            "i"
+                        );
+                    }
+                }
+            }
         }
 
         public void OnInspectArtifactClicked()
         {
             if (choiceContainer != null) choiceContainer.SetActive(false);
             if (plaquePopup != null) plaquePopup.SetActive(false);
+
+            int rNum = _currentArtifact != null ? _currentArtifact.RoomNumber : 1;
+            bool isReturned = GameProgression.HasReturnedRoomArtifactsToRealWorld(rNum);
 
             if (artifactPopup != null)
             {
@@ -250,8 +304,8 @@ namespace TopDownGame
                 if (artifactDetailImage != null && _currentArtifact != null)
                 {
                     artifactDetailImage.sprite = _currentArtifact.ArtifactSprite;
-                    // If returned to Room 1, display full vibrant color! Otherwise solid black silhouette
-                    if (GameProgression.HasReturnedRoom1ArtifactToRealWorld)
+                    // If returned to Real World, display full vibrant color! Otherwise solid black silhouette
+                    if (isReturned)
                     {
                         artifactDetailImage.color = Color.white;
                     }
@@ -268,9 +322,9 @@ namespace TopDownGame
 
             if (dialogueText != null)
             {
-                if (GameProgression.HasReturnedRoom1ArtifactToRealWorld)
+                if (isReturned)
                 {
-                    dialogueText.text = "The sacred relic rests peacefully in the museum. Room 2 in the Alterworld is now open!";
+                    dialogueText.text = $"The sacred relic rests peacefully in Room {rNum}. Real World Room {rNum + 1} is open!";
                 }
                 else
                 {

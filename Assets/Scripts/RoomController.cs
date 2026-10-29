@@ -68,8 +68,8 @@ namespace TopDownGame
                     if (justReturned)
                     {
                         NotificationBannerUI.Show(
-                            $"ARTIFACTS RETURNED TO ROOM {currentRoom}!",
-                            $"You brought the artifacts back inside Room {currentRoom}! Alterworld Room {currentRoom + 1} is now UNLOCKED!",
+                            $"ROOM {currentRoom} RESTORED!",
+                            $"You restored all artifacts to Room {currentRoom}!\nReal World Room {currentRoom + 1} is now OPEN!",
                             6.0f,
                             new Color(0.2f, 0.95f, 0.4f, 1f),
                             "★"
@@ -80,6 +80,17 @@ namespace TopDownGame
                 if (GameProgression.HasReturnedRoomArtifactsToRealWorld(currentRoom) || GameProgression.HasRetrievedRoomArtifact(currentRoom))
                 {
                     RestoreTableArtifactVisuals();
+                }
+                else if (!GameProgression.AreAllPlaquesRead(currentRoom))
+                {
+                    int readCount = GameProgression.GetPlaquesReadCount(currentRoom);
+                    NotificationBannerUI.Show(
+                        $"ROOM {currentRoom}",
+                        $"Read all 5 artifact plaques in this room to unlock the Alterworld trial! ({readCount}/5 studied)",
+                        4.5f,
+                        new Color(1f, 0.88f, 0.4f, 1f),
+                        "i"
+                    );
                 }
             }
         }

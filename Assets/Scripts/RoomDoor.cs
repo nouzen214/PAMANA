@@ -46,6 +46,10 @@ namespace TopDownGame
             GameProgression.OnRoom1ArtifactRetrieved += UpdateLockState;
             GameProgression.OnRoom1BattleCompleted += UpdateLockState;
             GameProgression.OnRoom1ArtifactReturned += UpdateLockState;
+            GameProgression.OnPlaqueRead += HandlePlaqueRead;
+            GameProgression.OnAllPlaquesReadInRoom += HandleAllPlaquesRead;
+            GameProgression.OnRoomArtifactsReturned += HandleRoomArtifactsReturned;
+            GameProgression.OnPortalUnlocked += UpdateLockState;
         }
 
         private void OnDisable()
@@ -53,7 +57,15 @@ namespace TopDownGame
             GameProgression.OnRoom1ArtifactRetrieved -= UpdateLockState;
             GameProgression.OnRoom1BattleCompleted -= UpdateLockState;
             GameProgression.OnRoom1ArtifactReturned -= UpdateLockState;
+            GameProgression.OnPlaqueRead -= HandlePlaqueRead;
+            GameProgression.OnAllPlaquesReadInRoom -= HandleAllPlaquesRead;
+            GameProgression.OnRoomArtifactsReturned -= HandleRoomArtifactsReturned;
+            GameProgression.OnPortalUnlocked -= UpdateLockState;
         }
+
+        private void HandlePlaqueRead(int roomNum, int count) => UpdateLockState();
+        private void HandleAllPlaquesRead(int roomNum) => UpdateLockState();
+        private void HandleRoomArtifactsReturned(int roomNum) => UpdateLockState();
 
         public void UpdateLockState()
         {
@@ -65,32 +77,37 @@ namespace TopDownGame
             {
                 // In Alter World:
                 // Completed room battle: LOCKED (player cannot re-enter).
-                // Next room: UNLOCKED only after previous room artifacts are brought inside that room in the Real World!
                 if (GameProgression.IsRoomBattleCompleted(roomNum))
                 {
                     isLocked = true;
                 }
                 else if (roomNum == 1)
                 {
-                    isLocked = false;
+                    // Room 1 Alterworld battle unlocks ONLY when all 5 plaques in Room 1 are read!
+                    isLocked = !GameProgression.AreAllPlaquesRead(1);
                 }
                 else
                 {
-                    isLocked = !GameProgression.HasReturnedRoomArtifactsToRealWorld(roomNum - 1);
+                    // Next room: UNLOCKED only after:
+                    // 1) previous room artifacts are restored in the Real World!
+                    // 2) AND all 5 plaques in this room have been read in the Real World!
+                    bool prevReturned = GameProgression.HasReturnedRoomArtifactsToRealWorld(roomNum - 1);
+                    bool plaquesRead = GameProgression.AreAllPlaquesRead(roomNum);
+                    isLocked = (!prevReturned || !plaquesRead);
                 }
             }
             else
             {
                 // In Normal World:
                 // Room 1 is UNLOCKED from the start.
-                // Rooms 2..12 unlock when the player has retrieved their artifacts from the Alterworld or already returned them.
+                // Room N (N >= 2) unlocks when the previous room (N - 1) artifacts have been restored!
                 if (roomNum == 1)
                 {
                     isLocked = false;
                 }
                 else
                 {
-                    isLocked = !GameProgression.HasRetrievedRoomArtifact(roomNum) && !GameProgression.HasReturnedRoomArtifactsToRealWorld(roomNum);
+                    isLocked = !GameProgression.HasReturnedRoomArtifactsToRealWorld(roomNum - 1);
                 }
             }
         }
@@ -122,28 +139,42 @@ namespace TopDownGame
                     {
                         lockMessage = $"{roomDisplayName} trial is already finished!\nYou cannot re-enter.";
                     }
+                    else if (roomNum == 1)
+                    {
+                        int readCount = GameProgression.GetPlaquesReadCount(1);
+                        lockMessage = $"Alterworld Battle 1 is locked!\nVisit Real World Room 1 and read all 5 plaques first! ({readCount}/5 studied)";
+                    }
                     else
                     {
                         int prevRoom = roomNum - 1;
-                        if (GameProgression.HasRetrievedRoomArtifact(prevRoom))
+                        if (!GameProgression.HasReturnedRoomArtifactsToRealWorld(prevRoom))
                         {
-                            lockMessage = $"{roomDisplayName} is locked!\nEnter the portal and bring the recovered artifacts inside Room {prevRoom} in the Real World first!";
+                            if (GameProgression.HasRetrievedRoomArtifact(prevRoom))
+                            {
+                                lockMessage = $"{roomDisplayName} trial is locked!\nReturn the recovered artifacts inside Room {prevRoom} in the Real World first!";
+                            }
+                            else
+                            {
+                                lockMessage = $"{roomDisplayName} trial is locked!\nConquer Room {prevRoom} trial in the Alterworld first!";
+                            }
                         }
                         else
                         {
-                            lockMessage = $"{roomDisplayName} is locked!\nConquer Room {prevRoom} trial in the Alterworld first!";
+                            int readCount = GameProgression.GetPlaquesReadCount(roomNum);
+                            lockMessage = $"{roomDisplayName} trial is locked!\nVisit Real World Room {roomNum} and review all 5 plaques first! ({readCount}/5 studied)";
                         }
                     }
                 }
                 else
                 {
-                    lockMessage = $"{roomDisplayName} is currently locked.\nConquer Room {roomNum} trial in the Alterworld to recover its artifacts first!";
+                    int prevRoom = roomNum - 1;
+                    lockMessage = $"{roomDisplayName} is currently locked!\nRestore all artifacts to Room {prevRoom} in the Real World first!";
                 }
 
                 NotificationBannerUI.Show(
                     "DOOR LOCKED",
                     lockMessage,
-                    2.8f,
+                    3.5f,
                     new Color(0.95f, 0.35f, 0.35f, 1f),
                     "!"
                 );

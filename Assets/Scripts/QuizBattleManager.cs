@@ -716,7 +716,7 @@ namespace TopDownGame
                     if (bodyText != null)
                     {
                         string nextUnlock = (roomNumber < 6)
-                            ? $"Take the portal back and bring them inside Room {roomNumber} in the Real World to open Alterworld Room {roomNumber + 1}!"
+                            ? $"Take the portal back and bring them inside Room {roomNumber} in the Real World to open Real World Room {roomNumber + 1}!"
                             : $"Take the portal back and bring them inside Room {roomNumber} in the Real World to restore the realm!";
                         bodyText.text = $"You completed the battle and retrieved {_retrievedCount} of {artifactSlots.Count} artifact(s)!\n{nextUnlock}";
                     }

@@ -27,6 +27,29 @@ namespace TopDownGame
         [Header("Interaction Prompt")]
         [SerializeField] private string promptText = "[E] Inspect Artifact";
 
+        [Header("Room Info")]
+        [SerializeField] private int roomNumber = 1;
+
+        public int RoomNumber
+        {
+            get
+            {
+                if (roomNumber <= 0)
+                {
+                    string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+                    if (sceneName.StartsWith("Room_") && int.TryParse(sceneName.Substring(5), out int num))
+                    {
+                        roomNumber = num;
+                    }
+                    else
+                    {
+                        roomNumber = RoomTransitionManager.CurrentRoomNumber > 0 ? RoomTransitionManager.CurrentRoomNumber : 1;
+                    }
+                }
+                return roomNumber;
+            }
+        }
+
         public string ArtifactName => artifactName;
         public Sprite ArtifactSprite => artifactSprite;
         public string PlaqueTitle => plaqueTitle;
@@ -38,38 +61,21 @@ namespace TopDownGame
 
         public override void Interact()
         {
-            // Check if interacting in Room 1
-            string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-            if (sceneName == "Room_1" || RoomTransitionManager.CurrentRoomNumber == 1)
-            {
-                if (GameProgression.HasRetrievedRoom1Artifact && !GameProgression.HasReturnedRoom1ArtifactToRealWorld)
-                {
-                    bool justReturned = GameProgression.ReturnRoom1ArtifactToRealWorld();
-                    if (justReturned)
-                    {
-                        NotificationBannerUI.Show(
-                            "ARTIFACTS RETURNED TO ROOM 1!",
-                            "You brought the artifacts back inside Room 1! Alterworld Room 2 is now UNLOCKED!",
-                            6.0f,
-                            new Color(0.2f, 0.95f, 0.4f, 1f),
-                            "★"
-                        );
-                    }
-                }
+            int rNum = RoomNumber;
 
-                if (!GameProgression.IsPortalUnlocked)
+            // If returning artifacts to this room after battle:
+            if (GameProgression.HasRetrievedRoomArtifact(rNum) && !GameProgression.HasReturnedRoomArtifactsToRealWorld(rNum))
+            {
+                bool justReturned = GameProgression.ReturnRoomArtifactsToRealWorld(rNum);
+                if (justReturned)
                 {
-                    bool justUnlocked = GameProgression.UnlockPortal();
-                    if (justUnlocked)
-                    {
-                        NotificationBannerUI.Show(
-                            "PORTAL OPENED",
-                            "A mysterious portal has opened somewhere in the museum!",
-                            5.5f,
-                            new Color(0.2f, 0.9f, 0.9f, 1f),
-                            "!"
-                        );
-                    }
+                    NotificationBannerUI.Show(
+                        $"ROOM {rNum} RESTORED!",
+                        $"You brought all artifacts back inside Room {rNum}! Real World Room {rNum + 1} is now UNLOCKED!",
+                        6.0f,
+                        new Color(0.2f, 0.95f, 0.4f, 1f),
+                        "★"
+                    );
                 }
             }
 
@@ -94,16 +100,22 @@ namespace TopDownGame
             return promptText;
         }
 
-        public void Configure(string name, Sprite sprite, string title, string plaqueDesc, string inspectDesc, string initialDiag, string reactionDiag, string artDiag = "i wonder what this artifact looks like")
+        public void SetRoomNumber(int r)
+        {
+            roomNumber = r;
+        }
+
+        public void Configure(string name, Sprite sprite, string title, string plaqueDesc, string inspectDesc, string initialDiag, string reactionDiag, string artDiag = "i wonder what this artifact looks like", int rNum = 1)
         {
             artifactName = name;
             artifactSprite = sprite;
-            plaqueTitle = title;
+            plaqueTitle = string.IsNullOrEmpty(title) || title == "..." ? name : title;
             plaqueDescription = plaqueDesc;
             artifactInspectionDescription = inspectDesc;
             initialDialogue = initialDiag;
             plaqueDialogue = reactionDiag;
             artifactDialogue = artDiag;
+            roomNumber = rNum;
         }
     }
 }

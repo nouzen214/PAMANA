@@ -1290,6 +1290,13 @@ namespace TopDownGame.Editor
 
         private static void SetupTableArtifacts(string[] tablePaths, string[] names, Sprite[] sprites, string[] plaqueTexts, string[] inspectTexts)
         {
+            string scName = EditorSceneManager.GetActiveScene().name;
+            int rNum = 1;
+            if (scName.StartsWith("Room_") && int.TryParse(scName.Substring(5), out int parsed))
+            {
+                rNum = parsed;
+            }
+
             for (int i = 0; i < tablePaths.Length; i++)
             {
                 var tableObj = GameObject.Find(tablePaths[i]);
@@ -1301,12 +1308,13 @@ namespace TopDownGame.Editor
                 interactable.Configure(
                     names[i],
                     sprites[i],
-                    "...",
+                    names[i],
                     plaqueTexts[i],
                     inspectTexts[i],
                     "what should i do",
                     "what could this artifact be",
-                    "i wonder what this artifact looks like"
+                    "i wonder what this artifact looks like",
+                    rNum
                 );
                 EditorUtility.SetDirty(interactable);
 

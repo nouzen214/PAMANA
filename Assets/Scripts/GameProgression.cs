@@ -19,6 +19,9 @@ namespace TopDownGame
         public static event Action OnRoom1ArtifactRetrieved;
         public static event Action OnRoom1BattleCompleted;
         public static event Action OnRoom1ArtifactReturned;
+        public static event Action<int, int> OnPlaqueRead; // (roomNumber, currentReadCount)
+        public static event Action<int> OnAllPlaquesReadInRoom; // (roomNumber)
+        public static event Action<int> OnRoomArtifactsReturned; // (roomNumber)
 
         public static bool IsRoom1BattleCompleted
         {
@@ -174,7 +177,8 @@ namespace TopDownGame
 
             if (!wasReturned)
             {
-                Debug.Log($"[GameProgression] Player brought Room {roomNumber} artifacts inside Room {roomNumber} in the Real World! Alterworld Room {roomNumber + 1} is now UNLOCKED.");
+                Debug.Log($"[GameProgression] Player brought Room {roomNumber} artifacts inside Room {roomNumber} in the Real World! Real World Room {roomNumber + 1} is now UNLOCKED.");
+                OnRoomArtifactsReturned?.Invoke(roomNumber);
                 OnRoom1ArtifactReturned?.Invoke();
                 return true;
             }
@@ -201,6 +205,59 @@ namespace TopDownGame
                 return true;
             }
             return false;
+        }
+
+        public static bool RecordPlaqueRead(int roomNumber, string plaqueId)
+        {
+            if (roomNumber <= 0 || string.IsNullOrEmpty(plaqueId)) return false;
+
+            string key = $"GameProgression_Room{roomNumber}_PlaquesList";
+            string currentList = PlayerPrefs.GetString(key, "");
+            string[] items = string.IsNullOrEmpty(currentList) ? new string[0] : currentList.Split(';');
+
+            for (int i = 0; i < items.Length; i++)
+            {
+                if (string.Equals(items[i], plaqueId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false; // Already read
+                }
+            }
+
+            string newList = string.IsNullOrEmpty(currentList) ? plaqueId : (currentList + ";" + plaqueId);
+            PlayerPrefs.SetString(key, newList);
+            PlayerPrefs.Save();
+
+            int count = newList.Split(';').Length;
+            Debug.Log($"[GameProgression] Room {roomNumber} plaque read: '{plaqueId}' ({count}/5)");
+
+            OnPlaqueRead?.Invoke(roomNumber, count);
+
+            if (count >= 5)
+            {
+                Debug.Log($"[GameProgression] All plaques read in Room {roomNumber}!");
+                OnAllPlaquesReadInRoom?.Invoke(roomNumber);
+
+                if (roomNumber == 1)
+                {
+                    UnlockPortal();
+                }
+            }
+
+            return true;
+        }
+
+        public static int GetPlaquesReadCount(int roomNumber)
+        {
+            if (roomNumber <= 0) return 0;
+            string key = $"GameProgression_Room{roomNumber}_PlaquesList";
+            string currentList = PlayerPrefs.GetString(key, "");
+            if (string.IsNullOrEmpty(currentList)) return 0;
+            return currentList.Split(';').Length;
+        }
+
+        public static bool AreAllPlaquesRead(int roomNumber)
+        {
+            return GetPlaquesReadCount(roomNumber) >= 5;
         }
 
         public static bool UnlockPortal()
@@ -232,6 +289,7 @@ namespace TopDownGame
                 PlayerPrefs.DeleteKey($"GameProgression_Room{i}BattleCompleted");
                 PlayerPrefs.DeleteKey($"GameProgression_Room{i}ArtifactRetrieved");
                 PlayerPrefs.DeleteKey($"GameProgression_Room{i}ArtifactReturnedToRealWorld");
+                PlayerPrefs.DeleteKey($"GameProgression_Room{i}_PlaquesList");
             }
             PlayerPrefs.Save();
             Debug.Log("[GameProgression] Progression reset. All rooms reset.");

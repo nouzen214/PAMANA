@@ -15,7 +15,14 @@ namespace TopDownGame
         {
             if (portalObject == null)
             {
-                portalObject = GameObject.Find("Portal");
+                var roots = gameObject.scene.GetRootGameObjects();
+                foreach (var r in roots)
+                {
+                    if (r.name == "Portal") { portalObject = r; break; }
+                    var tr = r.transform.Find("Portal");
+                    if (tr != null) { portalObject = tr.gameObject; break; }
+                }
+                if (portalObject == null) portalObject = GameObject.Find("Portal");
             }
         }
 
