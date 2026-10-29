@@ -49,6 +49,7 @@ namespace TopDownGame
             GameProgression.OnPlaqueRead += HandlePlaqueRead;
             GameProgression.OnAllPlaquesReadInRoom += HandleAllPlaquesRead;
             GameProgression.OnRoomArtifactsReturned += HandleRoomArtifactsReturned;
+            GameProgression.OnPedestalRestored += HandlePedestalRestored;
             GameProgression.OnPortalUnlocked += UpdateLockState;
         }
 
@@ -60,12 +61,14 @@ namespace TopDownGame
             GameProgression.OnPlaqueRead -= HandlePlaqueRead;
             GameProgression.OnAllPlaquesReadInRoom -= HandleAllPlaquesRead;
             GameProgression.OnRoomArtifactsReturned -= HandleRoomArtifactsReturned;
+            GameProgression.OnPedestalRestored -= HandlePedestalRestored;
             GameProgression.OnPortalUnlocked -= UpdateLockState;
         }
 
         private void HandlePlaqueRead(int roomNum, int count) => UpdateLockState();
         private void HandleAllPlaquesRead(int roomNum) => UpdateLockState();
         private void HandleRoomArtifactsReturned(int roomNum) => UpdateLockState();
+        private void HandlePedestalRestored(int roomNum, string art) => UpdateLockState();
 
         public void UpdateLockState()
         {
@@ -168,7 +171,16 @@ namespace TopDownGame
                 else
                 {
                     int prevRoom = roomNum - 1;
-                    lockMessage = $"{roomDisplayName} is currently locked!\nRestore all artifacts to Room {prevRoom} in the Real World first!";
+                    int retrieved = GameProgression.GetRoomRetrievedCount(prevRoom);
+                    int restored = GameProgression.GetPedestalsRestoredCount(prevRoom);
+                    if (retrieved > 0 && restored < retrieved)
+                    {
+                        lockMessage = $"{roomDisplayName} is currently locked!\nInteract with the pedestals in Room {prevRoom} to restore your recovered artifacts! ({restored}/{retrieved} placed)";
+                    }
+                    else
+                    {
+                        lockMessage = $"{roomDisplayName} is currently locked!\nRestore all artifacts to Room {prevRoom} in the Real World first!";
+                    }
                 }
 
                 NotificationBannerUI.Show(

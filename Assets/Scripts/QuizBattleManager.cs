@@ -706,6 +706,7 @@ namespace TopDownGame
             if (_retrievedCount > 0)
             {
                 GameProgression.RetrieveRoomArtifact(roomNumber);
+                GameProgression.SetRoomRetrievedCount(roomNumber, _retrievedCount);
             }
 
             if (_retrievedCount > 0 || (monsterController != null && monsterController.IsDefeated))
@@ -716,8 +717,8 @@ namespace TopDownGame
                     if (bodyText != null)
                     {
                         string nextUnlock = (roomNumber < 6)
-                            ? $"Take the portal back and bring them inside Room {roomNumber} in the Real World to open Real World Room {roomNumber + 1}!"
-                            : $"Take the portal back and bring them inside Room {roomNumber} in the Real World to restore the realm!";
+                            ? $"Take the portal back, go into Room {roomNumber} in the Real World, and interact with the pedestals to restore your recovered artifacts from your bag to open Room {roomNumber + 1}!"
+                            : $"Take the portal back, go into Room {roomNumber} in the Real World, and interact with the pedestals to restore your recovered artifacts!";
                         bodyText.text = $"You completed the battle and retrieved {_retrievedCount} of {artifactSlots.Count} artifact(s)!\n{nextUnlock}";
                     }
                     victoryModal.SetActive(true);

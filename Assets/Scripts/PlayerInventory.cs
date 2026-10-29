@@ -45,9 +45,38 @@ namespace TopDownGame
             return true;
         }
 
-        public static bool HasArtifact(string id)
+        public static bool HasArtifact(string idOrName)
         {
-            return _items.Exists(item => item.id == id);
+            if (string.IsNullOrEmpty(idOrName)) return false;
+            return _items.Exists(item => 
+                string.Equals(item.id, idOrName, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(item.name, idOrName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public static ArtifactItemData GetArtifact(string idOrName)
+        {
+            if (string.IsNullOrEmpty(idOrName)) return null;
+            return _items.Find(item => 
+                string.Equals(item.id, idOrName, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(item.name, idOrName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public static bool RemoveArtifact(string idOrName)
+        {
+            if (string.IsNullOrEmpty(idOrName)) return false;
+            int index = _items.FindIndex(item => 
+                string.Equals(item.id, idOrName, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(item.name, idOrName, StringComparison.OrdinalIgnoreCase));
+
+            if (index >= 0)
+            {
+                var removed = _items[index];
+                _items.RemoveAt(index);
+                Debug.Log($"[PlayerInventory] Removed artifact: '{removed.name}' (Remaining: {_items.Count})");
+                OnInventoryChanged?.Invoke();
+                return true;
+            }
+            return false;
         }
 
         public static void Clear()

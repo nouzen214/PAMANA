@@ -62,24 +62,25 @@ namespace TopDownGame
             // Real World Rooms
             if (!sceneName.StartsWith("Alt") && !sceneName.StartsWith("BattleScene") && currentRoom > 0)
             {
-                if (GameProgression.HasRetrievedRoomArtifact(currentRoom) && !GameProgression.HasReturnedRoomArtifactsToRealWorld(currentRoom))
-                {
-                    bool justReturned = GameProgression.ReturnRoomArtifactsToRealWorld(currentRoom);
-                    if (justReturned)
-                    {
-                        NotificationBannerUI.Show(
-                            $"ROOM {currentRoom} RESTORED!",
-                            $"You restored all artifacts to Room {currentRoom}!\nReal World Room {currentRoom + 1} is now OPEN!",
-                            6.0f,
-                            new Color(0.2f, 0.95f, 0.4f, 1f),
-                            "★"
-                        );
-                    }
-                }
+                // Update visuals on every pedestal according to individual restoration state
+                UpdateRoomPedestalVisuals(currentRoom);
 
-                if (GameProgression.HasReturnedRoomArtifactsToRealWorld(currentRoom) || GameProgression.HasRetrievedRoomArtifact(currentRoom))
+                if (GameProgression.HasReturnedRoomArtifactsToRealWorld(currentRoom))
                 {
-                    RestoreTableArtifactVisuals();
+                    // Already fully restored
+                }
+                else if (GameProgression.HasRetrievedRoomArtifact(currentRoom))
+                {
+                    int retrieved = GameProgression.GetRoomRetrievedCount(currentRoom);
+                    int restored = GameProgression.GetPedestalsRestoredCount(currentRoom);
+
+                    NotificationBannerUI.Show(
+                        $"ROOM {currentRoom}",
+                        $"You have recovered artifacts in your bag!\nWalk up to each pedestal and interact to place them ({restored}/{retrieved} placed).",
+                        5.5f,
+                        new Color(0.2f, 0.92f, 0.5f, 1f),
+                        "★"
+                    );
                 }
                 else if (!GameProgression.AreAllPlaquesRead(currentRoom))
                 {
@@ -95,20 +96,22 @@ namespace TopDownGame
             }
         }
 
-        private void RestoreTableArtifactVisuals()
+        public void UpdateRoomPedestalVisuals(int roomNum)
         {
-            var roomArtifacts = GameObject.Find("RoomArtifacts");
-            if (roomArtifacts != null)
+            var tables = FindObjectsByType<ArtifactInteractable>(FindObjectsSortMode.None);
+            foreach (var table in tables)
             {
-                var renderers = roomArtifacts.GetComponentsInChildren<SpriteRenderer>(true);
-                foreach (var sr in renderers)
+                if (table != null)
                 {
-                    if (sr != null)
-                    {
-                        sr.color = Color.white; // Restored from silhouette!
-                    }
+                    bool isRestored = GameProgression.IsPedestalRestored(roomNum, table.ArtifactName);
+                    table.SetRestoredVisual(isRestored);
                 }
             }
+        }
+
+        private void RestoreTableArtifactVisuals()
+        {
+            UpdateRoomPedestalVisuals(roomNumber);
         }
 
         private IEnumerator BannerFadeRoutine()

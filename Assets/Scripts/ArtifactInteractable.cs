@@ -59,26 +59,47 @@ namespace TopDownGame
         public string PlaqueDialogue => plaqueDialogue;
         public string ArtifactDialogue => artifactDialogue;
 
+        public bool IsRestored => GameProgression.IsPedestalRestored(RoomNumber, artifactName);
+
+        private SpriteRenderer _cachedVisualRenderer;
+
+        public SpriteRenderer GetVisualRenderer()
+        {
+            if (_cachedVisualRenderer != null) return _cachedVisualRenderer;
+            var root = GameObject.Find("RoomArtifacts");
+            if (root != null)
+            {
+                float minDist = float.MaxValue;
+                SpriteRenderer best = null;
+                foreach (Transform child in root.transform)
+                {
+                    var sr = child.GetComponent<SpriteRenderer>();
+                    if (sr != null)
+                    {
+                        float d = Vector2.Distance(child.position, transform.position);
+                        if (d < minDist && d < 2.0f)
+                        {
+                            minDist = d;
+                            best = sr;
+                        }
+                    }
+                }
+                _cachedVisualRenderer = best;
+            }
+            return _cachedVisualRenderer;
+        }
+
+        public void SetRestoredVisual(bool restored)
+        {
+            var sr = GetVisualRenderer();
+            if (sr != null)
+            {
+                sr.color = restored ? Color.white : Color.black;
+            }
+        }
+
         public override void Interact()
         {
-            int rNum = RoomNumber;
-
-            // If returning artifacts to this room after battle:
-            if (GameProgression.HasRetrievedRoomArtifact(rNum) && !GameProgression.HasReturnedRoomArtifactsToRealWorld(rNum))
-            {
-                bool justReturned = GameProgression.ReturnRoomArtifactsToRealWorld(rNum);
-                if (justReturned)
-                {
-                    NotificationBannerUI.Show(
-                        $"ROOM {rNum} RESTORED!",
-                        $"You brought all artifacts back inside Room {rNum}! Real World Room {rNum + 1} is now UNLOCKED!",
-                        6.0f,
-                        new Color(0.2f, 0.95f, 0.4f, 1f),
-                        "★"
-                    );
-                }
-            }
-
             var ui = ArtifactInspectionUI.Instance;
             if (ui == null)
             {

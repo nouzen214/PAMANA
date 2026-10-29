@@ -1039,10 +1039,19 @@ namespace TopDownGame.Editor
             choiceRt.anchorMax = new Vector2(1f, 0f);
             choiceRt.pivot = new Vector2(1f, 0f);
             choiceRt.anchoredPosition = new Vector2(-65f, 345f);
-            choiceRt.sizeDelta = new Vector2(360f, 140f);
+            choiceRt.sizeDelta = new Vector2(360f, 220f);
 
-            var btnArtifactObj = CreateChoiceButton("InspectArtifactButton", "inspect artifact", new Vector2(0f, 38f), choiceBox, plaqueSprite);
-            var btnPlaqueObj   = CreateChoiceButton("InspectPlaqueButton",   "inspect plaque",   new Vector2(0f, -38f), choiceBox, plaqueSprite);
+            var vlg = choiceBox.AddComponent<VerticalLayoutGroup>();
+            vlg.childAlignment = TextAnchor.MiddleCenter;
+            vlg.spacing = 10f;
+            vlg.childControlWidth = false;
+            vlg.childControlHeight = false;
+            vlg.childForceExpandWidth = false;
+            vlg.childForceExpandHeight = false;
+
+            var btnRestoreObj  = CreateChoiceButton("RestoreArtifactButton", "place from bag", Vector2.zero, choiceBox, plaqueSprite);
+            var btnArtifactObj = CreateChoiceButton("InspectArtifactButton", "inspect artifact", Vector2.zero, choiceBox, plaqueSprite);
+            var btnPlaqueObj   = CreateChoiceButton("InspectPlaqueButton",   "inspect plaque",   Vector2.zero, choiceBox, plaqueSprite);
 
             // 4. Plaque Popup
             var plaquePopupObj = new GameObject("PlaquePopup", typeof(RectTransform), typeof(Image));
@@ -1154,6 +1163,7 @@ namespace TopDownGame.Editor
             SetField(uiCtrl, "characterNameText", nameTmp);
             SetField(uiCtrl, "dialogueText", diagTmp);
             SetField(uiCtrl, "choiceContainer", choiceBox);
+            SetField(uiCtrl, "restoreArtifactButton", btnRestoreObj.GetComponent<Button>());
             SetField(uiCtrl, "inspectArtifactButton", btnArtifactObj.GetComponent<Button>());
             SetField(uiCtrl, "inspectPlaqueButton", btnPlaqueObj.GetComponent<Button>());
             SetField(uiCtrl, "plaquePopup", plaquePopupObj);
