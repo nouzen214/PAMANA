@@ -4564,7 +4564,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &902128519
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4732,8 +4732,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 31, y: 0}
-  m_SizeDelta: {x: -94, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -48, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &936130567
 CanvasRenderer:
@@ -4798,7 +4798,7 @@ MonoBehaviour:
   m_fontSizeMax: 27
   m_fontStyle: 1
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 4096
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -5412,8 +5412,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 31, y: 0}
-  m_SizeDelta: {x: -94, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -48, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1091249330
 CanvasRenderer:
@@ -5478,7 +5478,7 @@ MonoBehaviour:
   m_fontSizeMax: 27
   m_fontStyle: 1
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 4096
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -6149,8 +6149,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 31, y: 0}
-  m_SizeDelta: {x: -94, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -48, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1194077944
 CanvasRenderer:
@@ -6215,7 +6215,7 @@ MonoBehaviour:
   m_fontSizeMax: 27
   m_fontStyle: 1
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 4096
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -9031,11 +9031,11 @@ MonoBehaviour:
     questionText: What was one of the primary civic objectives outlined in the constitution
       of La Liga Filipina?
     choices:
-    - A. Mutual protection of members
-    - B. Violent armed rebellion
-    - C. Total Spanish expulsion
-    - D. Forced religious conversion
-    correctChoiceIndex: 0
+    - Violent armed rebellion
+    - Total Spanish expulsion
+    - Forced religious conversion
+    - Mutual protection of members
+    correctChoiceIndex: 3
     isRetrieved: 0
     isFailed: 0
   - artifactId: Room4_ArrestWarrantDecree
@@ -9046,11 +9046,11 @@ MonoBehaviour:
     questionText: Which Spanish Governor-General ordered the sudden arrest and deportation
       of Jose Rizal shortly after founding La Liga?
     choices:
-    - A. Eulogio Despujol
-    - B. Camilo de Polavieja
-    - C. Ramon Blanco
-    - D. Emilio Terrero
-    correctChoiceIndex: 0
+    - Camilo de Polavieja
+    - Emilio Terrero
+    - Eulogio Despujol
+    - Ramon Blanco
+    correctChoiceIndex: 2
     isRetrieved: 0
     isFailed: 0
   - artifactId: Room4_SecretMemberLedger
@@ -9061,11 +9061,11 @@ MonoBehaviour:
     questionText: Which founding member of La Liga Filipina co-founded the revolutionary
       Katipunan just days after Rizal's arrest?
     choices:
-    - A. Andres Bonifacio
-    - B. Marcelo del Pilar
-    - C. Emilio Aguinaldo
-    - D. Antonio Luna
-    correctChoiceIndex: 0
+    - Emilio Aguinaldo
+    - Andres Bonifacio
+    - Marcelo del Pilar
+    - Antonio Luna
+    correctChoiceIndex: 1
     isRetrieved: 0
     isFailed: 0
   - artifactId: Room4_ReorganizedCouncilCharter
@@ -9076,11 +9076,11 @@ MonoBehaviour:
     questionText: Who served as the secretary of the Supreme Council when La Liga
       Filipina was briefly reorganized in 1893?
     choices:
-    - A. Apolinario Mabini
-    - B. Emilio Jacinto
-    - C. Mariano Ponce
-    - D. Graciano Lopez Jaena
-    correctChoiceIndex: 0
+    - Emilio Jacinto
+    - Graciano Lopez Jaena
+    - Apolinario Mabini
+    - Mariano Ponce
+    correctChoiceIndex: 2
     isRetrieved: 0
     isFailed: 0
   - artifactId: Room4_SplitResolutionManifesto
@@ -9091,10 +9091,10 @@ MonoBehaviour:
     questionText: Following the dissolution of La Liga Filipina, which moderate group
       broke away to continue funding La Solidaridad?
     choices:
-    - A. Cuerpo de Compromisarios
-    - B. Katipunan
-    - C. Los Indios Bravos
-    - D. Circulo Hispano-Filipino
+    - Cuerpo de Compromisarios
+    - Circulo Hispano-Filipino
+    - Katipunan
+    - Los Indios Bravos
     correctChoiceIndex: 0
     isRetrieved: 0
     isFailed: 0
@@ -9709,7 +9709,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1778911162
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10620,7 +10620,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2006492621
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10832,7 +10832,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2087247872
 RectTransform:
   m_ObjectHideFlags: 0
@@ -11100,7 +11100,7 @@ MonoBehaviour:
   m_fontSizeMax: 27
   m_fontStyle: 1
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 4096
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -11160,8 +11160,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 31, y: 0}
-  m_SizeDelta: {x: -94, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -48, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &2109519910
 GameObject:

@@ -4564,7 +4564,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &902128519
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4732,8 +4732,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 31, y: 0}
-  m_SizeDelta: {x: -94, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -48, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &936130567
 CanvasRenderer:
@@ -4798,7 +4798,7 @@ MonoBehaviour:
   m_fontSizeMax: 27
   m_fontStyle: 1
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 4096
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -5412,8 +5412,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 31, y: 0}
-  m_SizeDelta: {x: -94, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -48, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1091249330
 CanvasRenderer:
@@ -5478,7 +5478,7 @@ MonoBehaviour:
   m_fontSizeMax: 27
   m_fontStyle: 1
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 4096
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -6149,8 +6149,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 31, y: 0}
-  m_SizeDelta: {x: -94, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -48, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1194077944
 CanvasRenderer:
@@ -6215,7 +6215,7 @@ MonoBehaviour:
   m_fontSizeMax: 27
   m_fontStyle: 1
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 4096
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -9031,11 +9031,11 @@ MonoBehaviour:
     questionText: Who was the generous friend who provided Rizal the financial funds
       needed to print the first edition of Noli Me Tangere in Berlin?
     choices:
-    - A. Maximo Viola
-    - B. Valentin Ventura
-    - C. Ferdinand Blumentritt
-    - D. Juan Luna
-    correctChoiceIndex: 0
+    - Valentin Ventura
+    - Ferdinand Blumentritt
+    - Juan Luna
+    - Maximo Viola
+    correctChoiceIndex: 3
     isRetrieved: 0
     isFailed: 0
   - artifactId: Room2_FeatherQuillPen
@@ -9046,11 +9046,11 @@ MonoBehaviour:
     questionText: Which character in Noli Me Tangere symbolized the tragic plight
       of an oppressed Filipino mother driven to insanity?
     choices:
-    - A. Sisa
-    - B. Maria Clara
-    - "C. Do\xF1a Victorina"
-    - D. Tiya Isabel
-    correctChoiceIndex: 0
+    - Maria Clara
+    - Sisa
+    - "Do\xF1a Victorina"
+    - Tiya Isabel
+    correctChoiceIndex: 1
     isRetrieved: 0
     isFailed: 0
   - artifactId: Room2_PrintingPressMatrix
@@ -9061,11 +9061,11 @@ MonoBehaviour:
     questionText: In which European city was Jose Rizal's second novel, El Filibusterismo,
       published in September 1891?
     choices:
-    - A. Ghent, Belgium
-    - B. Berlin, Germany
-    - C. Madrid, Spain
-    - D. Paris, France
-    correctChoiceIndex: 0
+    - Berlin, Germany
+    - Paris, France
+    - Madrid, Spain
+    - Ghent, Belgium
+    correctChoiceIndex: 3
     isRetrieved: 0
     isFailed: 0
   - artifactId: Room2_FirstEditionNovelCopy
@@ -9076,11 +9076,11 @@ MonoBehaviour:
     questionText: Who provided the crucial financial loan that rescued the printing
       of El Filibusterismo from being suspended?
     choices:
-    - A. Valentin Ventura
-    - B. Maximo Viola
-    - C. Graciano Lopez Jaena
-    - D. Marcelo del Pilar
-    correctChoiceIndex: 0
+    - Marcelo del Pilar
+    - Graciano Lopez Jaena
+    - Maximo Viola
+    - Valentin Ventura
+    correctChoiceIndex: 3
     isRetrieved: 0
     isFailed: 0
   - artifactId: Room2_AlcoholCookingStove
@@ -9091,10 +9091,10 @@ MonoBehaviour:
     questionText: "Inside which everyday household object did Rizal hide the folded
       manuscript of his farewell poem, Mi \xDAltimo Adi\xF3s?"
     choices:
-    - A. Alcohol cooking stove
-    - B. Leather boot heel
-    - C. Hollow walking cane
-    - D. Bible book spine
+    - Alcohol cooking stove
+    - Bible book spine
+    - Hollow walking cane
+    - Leather boot heel
     correctChoiceIndex: 0
     isRetrieved: 0
     isFailed: 0
@@ -9709,7 +9709,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1778911162
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10620,7 +10620,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2006492621
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10832,7 +10832,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2087247872
 RectTransform:
   m_ObjectHideFlags: 0
@@ -11100,7 +11100,7 @@ MonoBehaviour:
   m_fontSizeMax: 27
   m_fontStyle: 1
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 4096
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -11160,8 +11160,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 31, y: 0}
-  m_SizeDelta: {x: -94, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -48, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &2109519910
 GameObject:

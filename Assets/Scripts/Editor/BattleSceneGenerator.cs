@@ -40,10 +40,10 @@ namespace TopDownGame.Editor
                         artifactDescription = "Annotated proof sheets from the original print run of Noli Me Tángere, funded by Dr. Maximo Viola in Berlin.",
                         questionText = "Who was the generous friend who provided Rizal the financial funds needed to print the first edition of Noli Me Tangere in Berlin?",
                         choices = new string[] {
-                            "A. Maximo Viola",
-                            "B. Valentin Ventura",
-                            "C. Ferdinand Blumentritt",
-                            "D. Juan Luna"
+                            "Maximo Viola",
+                            "Valentin Ventura",
+                            "Ferdinand Blumentritt",
+                            "Juan Luna"
                         },
                         correctChoiceIndex = 0
                     },
@@ -55,10 +55,10 @@ namespace TopDownGame.Editor
                         artifactDescription = "A fine writing feather quill used to author the characters and poignant tragedies of Noli Me Tángere.",
                         questionText = "Which character in Noli Me Tangere symbolized the tragic plight of an oppressed Filipino mother driven to insanity?",
                         choices = new string[] {
-                            "A. Sisa",
-                            "B. Maria Clara",
-                            "C. Doña Victorina",
-                            "D. Tiya Isabel"
+                            "Sisa",
+                            "Maria Clara",
+                            "Doña Victorina",
+                            "Tiya Isabel"
                         },
                         correctChoiceIndex = 0
                     },
@@ -70,10 +70,10 @@ namespace TopDownGame.Editor
                         artifactDescription = "A movable type wooden press bed used to publish the first run of El Filibusterismo in Ghent.",
                         questionText = "In which European city was Jose Rizal's second novel, El Filibusterismo, published in September 1891?",
                         choices = new string[] {
-                            "A. Ghent, Belgium",
-                            "B. Berlin, Germany",
-                            "C. Madrid, Spain",
-                            "D. Paris, France"
+                            "Ghent, Belgium",
+                            "Berlin, Germany",
+                            "Madrid, Spain",
+                            "Paris, France"
                         },
                         correctChoiceIndex = 0
                     },
@@ -85,10 +85,10 @@ namespace TopDownGame.Editor
                         artifactDescription = "An original 1891 first edition volume of El Filibusterismo, saved by Valentin Ventura's urgent financial loan.",
                         questionText = "Who provided the crucial financial loan that rescued the printing of El Filibusterismo from being suspended?",
                         choices = new string[] {
-                            "A. Valentin Ventura",
-                            "B. Maximo Viola",
-                            "C. Graciano Lopez Jaena",
-                            "D. Marcelo del Pilar"
+                            "Valentin Ventura",
+                            "Maximo Viola",
+                            "Graciano Lopez Jaena",
+                            "Marcelo del Pilar"
                         },
                         correctChoiceIndex = 0
                     },
@@ -100,10 +100,10 @@ namespace TopDownGame.Editor
                         artifactDescription = "A small brass alcohol burner used by Rizal in Fort Santiago, inside which he hid the original manuscript of Mi Último Adiós.",
                         questionText = "Inside which everyday household object did Rizal hide the folded manuscript of his farewell poem, Mi Último Adiós?",
                         choices = new string[] {
-                            "A. Alcohol cooking stove",
-                            "B. Leather boot heel",
-                            "C. Hollow walking cane",
-                            "D. Bible book spine"
+                            "Alcohol cooking stove",
+                            "Leather boot heel",
+                            "Hollow walking cane",
+                            "Bible book spine"
                         },
                         correctChoiceIndex = 0
                     }
@@ -129,10 +129,10 @@ namespace TopDownGame.Editor
                         artifactDescription = "José Rizal's original handwritten manuscript of Noli Me Tángere, completed in Berlin in 1887 to expose colonial oppression.",
                         questionText = "In which European capital was José Rizal's first novel, \"Noli Me Tángere\", printed in 1887 with the aid of Maximo Viola?",
                         choices = new string[] {
-                            "A. Berlin, Germany",
-                            "B. Ghent, Belgium",
-                            "C. Madrid, Spain",
-                            "D. Paris, France"
+                            "Berlin, Germany",
+                            "Ghent, Belgium",
+                            "Madrid, Spain",
+                            "Paris, France"
                         },
                         correctChoiceIndex = 0
                     },
@@ -144,10 +144,10 @@ namespace TopDownGame.Editor
                         artifactDescription = "A rare first edition copy of El Filibusterismo, published in Ghent in 1891 and dedicated to the martyrdom of Gomburza.",
                         questionText = "To whose sacred memory did José Rizal solemnly dedicate his second novel, \"El Filibusterismo\"?",
                         choices = new string[] {
-                            "A. The martyred priests GOMBURZA",
-                            "B. His mother, Teodora Alonso",
-                            "C. The Katipunan secret society",
-                            "D. Dr. Ferdinand Blumentritt"
+                            "The martyred priests GOMBURZA",
+                            "His mother, Teodora Alonso",
+                            "The Katipunan secret society",
+                            "Dr. Ferdinand Blumentritt"
                         },
                         correctChoiceIndex = 0
                     },
@@ -159,10 +159,10 @@ namespace TopDownGame.Editor
                         artifactDescription = "The historic farewell poem composed by José Rizal on the eve of his execution at Bagumbayan, December 1896.",
                         questionText = "Where did Rizal conceal his final untitled farewell poem before handing it to his family prior to his execution?",
                         choices = new string[] {
-                            "A. Inside an alcohol cooking lamp",
-                            "B. Sewn into his overcoat lining",
-                            "C. Hidden in his leather boots",
-                            "D. Concealed within his pocket watch"
+                            "Inside an alcohol cooking lamp",
+                            "Sewn into his overcoat lining",
+                            "Hidden in his leather boots",
+                            "Concealed within his pocket watch"
                         },
                         correctChoiceIndex = 0
                     }
@@ -188,10 +188,10 @@ namespace TopDownGame.Editor
                         artifactDescription = "A handwritten draft of a historical decree laying out principles of sovereignty and governance during the revolution.",
                         questionText = "Who was revered as the \"Brains of the Revolution\" and served as the chief legal adviser of the revolutionary government?",
                         choices = new string[] {
-                            "A. Apolinario Mabini",
-                            "B. Emilio Jacinto",
-                            "C. Felipe Calderon",
-                            "D. Pedro Paterno"
+                            "Apolinario Mabini",
+                            "Emilio Jacinto",
+                            "Felipe Calderon",
+                            "Pedro Paterno"
                         },
                         correctChoiceIndex = 0
                     },
@@ -203,10 +203,10 @@ namespace TopDownGame.Editor
                         artifactDescription = "A weighted traveling inkpot used by 19th-century Filipino intellectuals to hold indelible iron gall ink during secret correspondence.",
                         questionText = "What historic decree did General Emilio Aguinaldo issue on June 23, 1898, replacing the Dictatorial Government?",
                         choices = new string[] {
-                            "A. The Revolutionary Government Decree",
-                            "B. The Malolos Accord",
-                            "C. The Biak-na-Bato Constitution",
-                            "D. The Treaty of Paris"
+                            "The Revolutionary Government Decree",
+                            "The Malolos Accord",
+                            "The Biak-na-Bato Constitution",
+                            "The Treaty of Paris"
                         },
                         correctChoiceIndex = 0
                     },
@@ -218,10 +218,10 @@ namespace TopDownGame.Editor
                         artifactDescription = "A ceremonial parchment proclamation drafted to herald national autonomy and unity among the archipelago's provinces.",
                         questionText = "In which historic town was the Philippine Declaration of Independence solemnly proclaimed on June 12, 1898?",
                         choices = new string[] {
-                            "A. Kawit, Cavite",
-                            "B. Malolos, Bulacan",
-                            "C. Barasoain, Bulacan",
-                            "D. Caloocan, Manila"
+                            "Kawit, Cavite",
+                            "Malolos, Bulacan",
+                            "Barasoain, Bulacan",
+                            "Caloocan, Manila"
                         },
                         correctChoiceIndex = 0
                     }
@@ -247,10 +247,10 @@ namespace TopDownGame.Editor
                         artifactDescription = "A thick-walled glass spherical flask used by 19th-century medical practitioners to distill antiseptics and essential herbal tinctures.",
                         questionText = "Under which eminent eye surgeons in Paris and Heidelberg did José Rizal master ophthalmic surgery?",
                         choices = new string[] {
-                            "A. Dr. Louis de Wecker and Dr. Otto Becker",
-                            "B. Dr. Rudolf Virchow and Dr. Meyer",
-                            "C. Dr. Ferdinand Blumentritt",
-                            "D. Dr. Miguel Morayta"
+                            "Dr. Louis de Wecker and Dr. Otto Becker",
+                            "Dr. Rudolf Virchow and Dr. Meyer",
+                            "Dr. Ferdinand Blumentritt",
+                            "Dr. Miguel Morayta"
                         },
                         correctChoiceIndex = 0
                     },
@@ -262,10 +262,10 @@ namespace TopDownGame.Editor
                         artifactDescription = "A glazed ceramic apothecary jar designed to preserve healing balms, poultices, and powdered botanical remedies.",
                         questionText = "During his four-year exile in Dapitan (1892–1896), what vital public engineering feat did Rizal construct for the community?",
                         choices = new string[] {
-                            "A. A community gravity waterworks system",
-                            "B. A steamboat shipyard",
-                            "C. A copper mining foundry",
-                            "D. A telegraph transmitter station"
+                            "A community gravity waterworks system",
+                            "A steamboat shipyard",
+                            "A copper mining foundry",
+                            "A telegraph transmitter station"
                         },
                         correctChoiceIndex = 0
                     },
@@ -277,10 +277,10 @@ namespace TopDownGame.Editor
                         artifactDescription = "Curved stainless surgical forceps preserved from historical Philippine medical clinics and ophthalmic procedures.",
                         questionText = "Upon which immediate family member did Dr. José Rizal successfully perform cataract surgery in Hong Kong and Calamba?",
                         choices = new string[] {
-                            "A. His mother, Teodora Alonso",
-                            "B. His brother, Paciano Rizal",
-                            "C. His sister, Maria",
-                            "D. His father, Francisco Mercado"
+                            "His mother, Teodora Alonso",
+                            "His brother, Paciano Rizal",
+                            "His sister, Maria",
+                            "His father, Francisco Mercado"
                         },
                         correctChoiceIndex = 0
                     }
@@ -306,10 +306,10 @@ namespace TopDownGame.Editor
                         artifactDescription = "A ceremonial gavel and striking block carved from native molave hardwood, used in the early judicial courts of the Philippine archipelago.",
                         questionText = "Who was appointed as the very first Chief Justice of the Supreme Court of the Philippines in 1901?",
                         choices = new string[] {
-                            "A. Cayetano Arellano",
-                            "B. Florentino Torres",
-                            "C. Victorino Mapa",
-                            "D. Manuel Araullo"
+                            "Cayetano Arellano",
+                            "Florentino Torres",
+                            "Victorino Mapa",
+                            "Manuel Araullo"
                         },
                         correctChoiceIndex = 0
                     },
@@ -321,10 +321,10 @@ namespace TopDownGame.Editor
                         artifactDescription = "A monumental bound compendium containing early civil statutes, decrees, and constitutional drafts from the First Philippine Republic.",
                         questionText = "Which historical basilica church hosted the revolutionary congress that drafted the Malolos Constitution in 1898-1899?",
                         choices = new string[] {
-                            "A. Barasoain Church in Malolos, Bulacan",
-                            "B. Manila Cathedral in Intramuros",
-                            "C. San Agustin Church",
-                            "D. Quiapo Church"
+                            "Barasoain Church in Malolos, Bulacan",
+                            "Manila Cathedral in Intramuros",
+                            "San Agustin Church",
+                            "Quiapo Church"
                         },
                         correctChoiceIndex = 0
                     },
@@ -336,10 +336,10 @@ namespace TopDownGame.Editor
                         artifactDescription = "A pair of antique round reading spectacles once belonging to a prominent 19th-century Filipino jurist and scholar.",
                         questionText = "Who was the Filipino lawyer and statesman who authored the primary draft of the Malolos Constitution?",
                         choices = new string[] {
-                            "A. Felipe Calderón y Roca",
-                            "B. Apolinario Mabini",
-                            "C. Pedro Paterno",
-                            "D. Gregorio Araneta"
+                            "Felipe Calderón y Roca",
+                            "Apolinario Mabini",
+                            "Pedro Paterno",
+                            "Gregorio Araneta"
                         },
                         correctChoiceIndex = 0
                     }

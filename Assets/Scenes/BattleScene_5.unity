@@ -4564,7 +4564,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &902128519
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4732,8 +4732,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 31, y: 0}
-  m_SizeDelta: {x: -94, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -48, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &936130567
 CanvasRenderer:
@@ -4798,7 +4798,7 @@ MonoBehaviour:
   m_fontSizeMax: 27
   m_fontStyle: 1
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 4096
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -5412,8 +5412,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 31, y: 0}
-  m_SizeDelta: {x: -94, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -48, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1091249330
 CanvasRenderer:
@@ -5478,7 +5478,7 @@ MonoBehaviour:
   m_fontSizeMax: 27
   m_fontStyle: 1
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 4096
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -6149,8 +6149,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 31, y: 0}
-  m_SizeDelta: {x: -94, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -48, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1194077944
 CanvasRenderer:
@@ -6215,7 +6215,7 @@ MonoBehaviour:
   m_fontSizeMax: 27
   m_fontStyle: 1
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 4096
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -9031,11 +9031,11 @@ MonoBehaviour:
     questionText: Whom did Rizal successfully operate on for cataract removal during
       his exile in Dapitan?
     choices:
-    - A. Teodora Alonso Realonda
-    - B. Josephine Bracken
-    - C. Governor Despujol
-    - D. Father Obach
-    correctChoiceIndex: 0
+    - Josephine Bracken
+    - Father Obach
+    - Governor Despujol
+    - Teodora Alonso Realonda
+    correctChoiceIndex: 3
     isRetrieved: 0
     isFailed: 0
   - artifactId: Room5_SchoolRollBook
@@ -9046,11 +9046,11 @@ MonoBehaviour:
     questionText: How many young male students did Rizal personally tutor tuition-free
       in his community school in Talisay?
     choices:
-    - A. Around sixteen students
-    - B. Over one hundred
-    - C. Only five boys
-    - D. Fifty foreign scholars
-    correctChoiceIndex: 0
+    - Over one hundred
+    - Only five boys
+    - Around sixteen students
+    - Fifty foreign scholars
+    correctChoiceIndex: 2
     isRetrieved: 0
     isFailed: 0
   - artifactId: Room5_SpecimenJarWithBeetle
@@ -9061,11 +9061,11 @@ MonoBehaviour:
     questionText: Which horned beetle species discovered by Rizal in Dapitan was
       scientifically named in his honor?
     choices:
-    - A. Apogonia rizali
-    - B. Draco rizali
-    - C. Rhacophorus rizali
-    - D. Scolopendra rizali
-    correctChoiceIndex: 0
+    - Rhacophorus rizali
+    - Apogonia rizali
+    - Scolopendra rizali
+    - Draco rizali
+    correctChoiceIndex: 1
     isRetrieved: 0
     isFailed: 0
   - artifactId: Room5_CoconutOilLamp
@@ -9076,11 +9076,11 @@ MonoBehaviour:
     questionText: What innovative municipal project did Rizal introduce to illuminate
       the dark public streets of Dapitan at night?
     choices:
-    - A. Coconut oil streetlamps
-    - B. Kerosene gas torches
-    - C. Electric battery bulbs
-    - D. Whale oil lanterns
-    correctChoiceIndex: 0
+    - Whale oil lanterns
+    - Coconut oil streetlamps
+    - Kerosene gas torches
+    - Electric battery bulbs
+    correctChoiceIndex: 1
     isRetrieved: 0
     isFailed: 0
   - artifactId: Room5_MilitaryDoctorApplication
@@ -9091,10 +9091,10 @@ MonoBehaviour:
     questionText: For which humanitarian mission abroad did Rizal request and receive
       permission to volunteer as a military surgeon?
     choices:
-    - A. Army hospital in Cuba
-    - B. Red Cross in Spain
-    - C. Field clinic in France
-    - D. Quarantine station in Japan
+    - Army hospital in Cuba
+    - Quarantine station in Japan
+    - Field clinic in France
+    - Red Cross in Spain
     correctChoiceIndex: 0
     isRetrieved: 0
     isFailed: 0
@@ -9709,7 +9709,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1778911162
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10620,7 +10620,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2006492621
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10832,7 +10832,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2087247872
 RectTransform:
   m_ObjectHideFlags: 0
@@ -11100,7 +11100,7 @@ MonoBehaviour:
   m_fontSizeMax: 27
   m_fontStyle: 1
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 4096
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -11160,8 +11160,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 31, y: 0}
-  m_SizeDelta: {x: -94, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -48, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &2109519910
 GameObject:

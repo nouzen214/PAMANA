@@ -93,6 +93,18 @@ namespace TopDownGame
         private int _selectedSlotIndex = -1;
         private bool _isBusy = false;
         private int _retrievedCount = 0;
+        private int _currentCorrectChoiceButtonIndex = -1;
+
+        private static string CleanChoiceText(string raw)
+        {
+            if (string.IsNullOrEmpty(raw)) return string.Empty;
+            string trimmed = raw.Trim();
+            if (trimmed.Length >= 2 && char.IsLetter(trimmed[0]) && (trimmed[1] == '.' || trimmed[1] == ')' || trimmed[1] == ':'))
+            {
+                trimmed = trimmed.Substring(2).TrimStart();
+            }
+            return trimmed;
+        }
 
         private void Awake()
         {
@@ -152,6 +164,31 @@ namespace TopDownGame
                 if (choiceButtons[i] != null)
                 {
                     choiceButtons[i].onClick.AddListener(() => OnChoiceSelected(choiceIdx));
+
+                    // Remove A, B, C, D badge and expand text area
+                    var badge = choiceButtons[i].transform.Find("Badge");
+                    if (badge != null)
+                    {
+                        badge.gameObject.SetActive(false);
+                    }
+
+                    var textChild = choiceButtons[i].transform.Find("Text");
+                    if (textChild != null)
+                    {
+                        var rt = textChild.GetComponent<RectTransform>();
+                        if (rt != null)
+                        {
+                            rt.anchorMin = Vector2.zero;
+                            rt.anchorMax = Vector2.one;
+                            rt.offsetMin = new Vector2(24f, 0f);
+                            rt.offsetMax = new Vector2(-24f, 0f);
+                        }
+                        var tmp = textChild.GetComponent<TMP_Text>();
+                        if (tmp != null)
+                        {
+                            tmp.alignment = TextAlignmentOptions.MidlineLeft;
+                        }
+                    }
                 }
             }
 
@@ -421,23 +458,57 @@ namespace TopDownGame
                 dialogueBodyText.text = slot.questionText;
             }
 
-            // Setup choice buttons
+            // Setup choice buttons with randomized positions and clean text
             if (choicesContainer != null)
             {
                 choicesContainer.SetActive(true);
             }
 
+            var options = new List<(string text, bool isCorrect)>();
+            for (int c = 0; c < slot.choices.Length; c++)
+            {
+                if (!string.IsNullOrEmpty(slot.choices[c]))
+                {
+                    string cleaned = CleanChoiceText(slot.choices[c]);
+                    bool isCorrect = (c == slot.correctChoiceIndex);
+                    options.Add((cleaned, isCorrect));
+                }
+            }
+
+            // Shuffle choices so correct answer position is randomized
+            for (int i = options.Count - 1; i > 0; i--)
+            {
+                int r = UnityEngine.Random.Range(0, i + 1);
+                var temp = options[i];
+                options[i] = options[r];
+                options[r] = temp;
+            }
+
+            _currentCorrectChoiceButtonIndex = -1;
+
             for (int c = 0; c < choiceButtons.Count; c++)
             {
                 if (choiceButtons[c] == null) continue;
 
-                if (c < slot.choices.Length && !string.IsNullOrEmpty(slot.choices[c]))
+                if (c < options.Count)
                 {
                     choiceButtons[c].gameObject.SetActive(true);
                     choiceButtons[c].interactable = true;
                     if (c < choiceButtonTexts.Count && choiceButtonTexts[c] != null)
                     {
-                        choiceButtonTexts[c].text = slot.choices[c];
+                        choiceButtonTexts[c].text = options[c].text;
+                    }
+
+                    if (options[c].isCorrect)
+                    {
+                        _currentCorrectChoiceButtonIndex = c;
+                    }
+
+                    // Hide A, B, C, D badge so it's just the text choices only
+                    var badge = choiceButtons[c].transform.Find("Badge");
+                    if (badge != null && badge.gameObject.activeSelf)
+                    {
+                        badge.gameObject.SetActive(false);
                     }
                 }
                 else
@@ -460,7 +531,9 @@ namespace TopDownGame
                 if (choiceButtons[i] != null) choiceButtons[i].interactable = false;
             }
 
-            bool isCorrect = (choiceIndex == slot.correctChoiceIndex);
+            bool isCorrect = (_currentCorrectChoiceButtonIndex >= 0)
+                ? (choiceIndex == _currentCorrectChoiceButtonIndex)
+                : (choiceIndex == slot.correctChoiceIndex);
 
             if (isCorrect)
             {
