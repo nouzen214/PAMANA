@@ -95,6 +95,14 @@ namespace TopDownGame
         private int _retrievedCount = 0;
         private int _currentCorrectChoiceButtonIndex = -1;
 
+        private class CachedChoiceData
+        {
+            public List<string> optionTexts = new List<string>();
+            public int correctButtonIndex = -1;
+        }
+
+        private readonly Dictionary<int, CachedChoiceData> _cachedSlotChoices = new Dictionary<int, CachedChoiceData>();
+
         private static string CleanChoiceText(string raw)
         {
             if (string.IsNullOrEmpty(raw)) return string.Empty;
@@ -138,6 +146,8 @@ namespace TopDownGame
 
         private void Start()
         {
+            _cachedSlotChoices.Clear();
+
             // Wire buttons
             if (settingsButton != null) settingsButton.onClick.AddListener(OnSettingsClicked);
             // Bag is removed in BattleScene; ensure any residual reference is hidden
@@ -208,11 +218,18 @@ namespace TopDownGame
             SetInitialDialogue();
         }
 
+        private string GetPlayerCharacterName()
+        {
+            string chosenChar = PlayerPrefs.GetString("SelectedCharacter", "Boy");
+            string defaultName = chosenChar == "Girl" ? "Darla" : "Darrel";
+            return PlayerPrefs.GetString("CustomCharacterName", defaultName);
+        }
+
         private void SetupPlayerUI()
         {
             string chosenChar = PlayerPrefs.GetString("SelectedCharacter", "Boy");
             bool isGirl = chosenChar == "Girl";
-            string pName = isGirl ? "Darla" : "Darrel";
+            string pName = GetPlayerCharacterName();
 
             if (playerNameText != null)
             {
@@ -340,8 +357,7 @@ namespace TopDownGame
         private void SetInitialDialogue()
         {
             _selectedSlotIndex = -1;
-            string chosenChar = PlayerPrefs.GetString("SelectedCharacter", "Boy");
-            string pName = chosenChar == "Girl" ? "Darla" : "Darrel";
+            string pName = GetPlayerCharacterName();
 
             // Hide question, enemy dialogue, enemy portrait, and choices when entering or choosing
             if (TopDialogueBoxGO != null)
@@ -401,6 +417,12 @@ namespace TopDownGame
             var slot = artifactSlots[index];
             if (slot.isRetrieved || slot.isFailed) return;
 
+            // If the player clicks the currently selected active slot again, do not re-run or re-shuffle anything!
+            if (_selectedSlotIndex == index && choicesContainer != null && choicesContainer.activeSelf)
+            {
+                return;
+            }
+
             _selectedSlotIndex = index;
 
             // Reveal question, enemy dialogue, enemy portrait, and choices
@@ -437,8 +459,7 @@ namespace TopDownGame
             }
 
             // Player reaction in Bottom Player Box
-            string chosenChar = PlayerPrefs.GetString("SelectedCharacter", "Boy");
-            string pName = chosenChar == "Girl" ? "Darla" : "Darrel";
+            string pName = GetPlayerCharacterName();
             if (playerSpeakerText != null)
             {
                 playerSpeakerText.text = pName;
@@ -458,50 +479,59 @@ namespace TopDownGame
                 dialogueBodyText.text = slot.questionText;
             }
 
-            // Setup choice buttons with randomized positions and clean text
+            // Setup choice buttons with randomized positions (shuffled once and persistent per battle session)
             if (choicesContainer != null)
             {
                 choicesContainer.SetActive(true);
             }
 
-            var options = new List<(string text, bool isCorrect)>();
-            for (int c = 0; c < slot.choices.Length; c++)
+            if (!_cachedSlotChoices.TryGetValue(index, out var cachedData))
             {
-                if (!string.IsNullOrEmpty(slot.choices[c]))
+                var options = new List<(string text, bool isCorrect)>();
+                for (int c = 0; c < slot.choices.Length; c++)
                 {
-                    string cleaned = CleanChoiceText(slot.choices[c]);
-                    bool isCorrect = (c == slot.correctChoiceIndex);
-                    options.Add((cleaned, isCorrect));
+                    if (!string.IsNullOrEmpty(slot.choices[c]))
+                    {
+                        string cleaned = CleanChoiceText(slot.choices[c]);
+                        bool isCorrect = (c == slot.correctChoiceIndex);
+                        options.Add((cleaned, isCorrect));
+                    }
                 }
+
+                // Shuffle choices once so correct answer position is randomized for this battle session
+                for (int i = options.Count - 1; i > 0; i--)
+                {
+                    int r = UnityEngine.Random.Range(0, i + 1);
+                    var temp = options[i];
+                    options[i] = options[r];
+                    options[r] = temp;
+                }
+
+                cachedData = new CachedChoiceData();
+                for (int c = 0; c < options.Count; c++)
+                {
+                    cachedData.optionTexts.Add(options[c].text);
+                    if (options[c].isCorrect)
+                    {
+                        cachedData.correctButtonIndex = c;
+                    }
+                }
+                _cachedSlotChoices[index] = cachedData;
             }
 
-            // Shuffle choices so correct answer position is randomized
-            for (int i = options.Count - 1; i > 0; i--)
-            {
-                int r = UnityEngine.Random.Range(0, i + 1);
-                var temp = options[i];
-                options[i] = options[r];
-                options[r] = temp;
-            }
-
-            _currentCorrectChoiceButtonIndex = -1;
+            _currentCorrectChoiceButtonIndex = cachedData.correctButtonIndex;
 
             for (int c = 0; c < choiceButtons.Count; c++)
             {
                 if (choiceButtons[c] == null) continue;
 
-                if (c < options.Count)
+                if (c < cachedData.optionTexts.Count)
                 {
                     choiceButtons[c].gameObject.SetActive(true);
                     choiceButtons[c].interactable = true;
                     if (c < choiceButtonTexts.Count && choiceButtonTexts[c] != null)
                     {
-                        choiceButtonTexts[c].text = options[c].text;
-                    }
-
-                    if (options[c].isCorrect)
-                    {
-                        _currentCorrectChoiceButtonIndex = c;
+                        choiceButtonTexts[c].text = cachedData.optionTexts[c];
                     }
 
                     // Hide A, B, C, D badge so it's just the text choices only
@@ -702,23 +732,21 @@ namespace TopDownGame
             if (MonsterPortraitContainerGO != null) MonsterPortraitContainerGO.SetActive(false);
             if (choicesContainer != null) choicesContainer.SetActive(false);
 
-            GameProgression.CompleteRoomBattle(roomNumber);
             if (_retrievedCount > 0)
             {
+                // PASSED! Player retrieved at least 1 artifact
+                GameProgression.CompleteRoomBattle(roomNumber);
                 GameProgression.RetrieveRoomArtifact(roomNumber);
                 GameProgression.SetRoomRetrievedCount(roomNumber, _retrievedCount);
-            }
 
-            if (_retrievedCount > 0 || (monsterController != null && monsterController.IsDefeated))
-            {
                 if (victoryModal != null)
                 {
                     var bodyText = victoryModal.transform.Find("Window/Body")?.GetComponent<TMP_Text>();
                     if (bodyText != null)
                     {
-                        string nextUnlock = (roomNumber < 6)
-                            ? $"Take the portal back, go into Room {roomNumber} in the Real World, and interact with the pedestals to restore your recovered artifacts from your bag to open Room {roomNumber + 1}!"
-                            : $"Take the portal back, go into Room {roomNumber} in the Real World, and interact with the pedestals to restore your recovered artifacts!";
+                        string nextUnlock = (roomNumber < 12)
+                            ? $"Take the portal back, enter Room {roomNumber} in the Real World, and place your recovered artifact(s) on the pedestals to open Room {roomNumber + 1}!"
+                            : $"Take the portal back, enter Room {roomNumber} in the Real World, and place your recovered artifact(s) on the pedestals!";
                         bodyText.text = $"You completed the battle and retrieved {_retrievedCount} of {artifactSlots.Count} artifact(s)!\n{nextUnlock}";
                     }
                     victoryModal.SetActive(true);
@@ -726,16 +754,20 @@ namespace TopDownGame
             }
             else
             {
-                // All attempted were wrong (0 retrieved)
+                // FAILED: 0 artifacts retrieved! Must retake the battle to progress
+                GameProgression.SetRoomRetrievedCount(roomNumber, 0);
+
                 if (defeatModal != null)
                 {
                     var titleText = defeatModal.transform.Find("Window/Title")?.GetComponent<TMP_Text>();
-                    if (titleText != null) titleText.text = "TRIAL COMPLETED";
+                    if (titleText != null) titleText.text = "TRIAL FAILED - 0 ARTIFACTS";
                     var bodyText = defeatModal.transform.Find("Window/Body")?.GetComponent<TMP_Text>();
                     if (bodyText != null)
                     {
-                        bodyText.text = "You were unable to recover any artifacts from this room!\nReturning to hallway...";
+                        bodyText.text = "You scored 0 and recovered no artifacts!\nYou must retake the battle to retrieve at least 1 artifact and progress.";
                     }
+                    var retryBtnText = defeatRetryButton != null ? defeatRetryButton.GetComponentInChildren<TMP_Text>() : null;
+                    if (retryBtnText != null) retryBtnText.text = "RETAKE BATTLE";
                     defeatModal.SetActive(true);
                 }
             }
@@ -754,29 +786,43 @@ namespace TopDownGame
             if (MonsterPortraitContainerGO != null) MonsterPortraitContainerGO.SetActive(false);
             if (choicesContainer != null) choicesContainer.SetActive(false);
 
-            GameProgression.CompleteRoomBattle(roomNumber);
             if (_retrievedCount > 0)
             {
+                // Managed to retrieve at least 1 artifact before defeat -> can progress!
+                GameProgression.CompleteRoomBattle(roomNumber);
                 GameProgression.RetrieveRoomArtifact(roomNumber);
-            }
+                GameProgression.SetRoomRetrievedCount(roomNumber, _retrievedCount);
 
-            if (defeatModal != null)
-            {
-                var titleText = defeatModal.transform.Find("Window/Title")?.GetComponent<TMP_Text>();
-                if (titleText != null) titleText.text = "DEFEATED";
-                var bodyText = defeatModal.transform.Find("Window/Body")?.GetComponent<TMP_Text>();
-                if (bodyText != null)
+                if (defeatModal != null)
                 {
-                    if (_retrievedCount > 0)
+                    var titleText = defeatModal.transform.Find("Window/Title")?.GetComponent<TMP_Text>();
+                    if (titleText != null) titleText.text = "TRIAL ENDED";
+                    var bodyText = defeatModal.transform.Find("Window/Body")?.GetComponent<TMP_Text>();
+                    if (bodyText != null)
                     {
-                        bodyText.text = $"You fell in battle, but managed to keep {_retrievedCount} recovered artifact(s)!\nBring them back inside Room {roomNumber} in the Real World.";
+                        bodyText.text = $"You fell in battle, but kept {_retrievedCount} recovered artifact(s)!\nBring them back inside Room {roomNumber} in the Real World to open Room {roomNumber + 1}.";
                     }
-                    else
-                    {
-                        bodyText.text = "You were overwhelmed by the monster!\nReturning to hallway...";
-                    }
+                    defeatModal.SetActive(true);
                 }
-                defeatModal.SetActive(true);
+            }
+            else
+            {
+                // FAILED: 0 artifacts retrieved! Must retake the battle to progress
+                GameProgression.SetRoomRetrievedCount(roomNumber, 0);
+
+                if (defeatModal != null)
+                {
+                    var titleText = defeatModal.transform.Find("Window/Title")?.GetComponent<TMP_Text>();
+                    if (titleText != null) titleText.text = "TRIAL FAILED - 0 ARTIFACTS";
+                    var bodyText = defeatModal.transform.Find("Window/Body")?.GetComponent<TMP_Text>();
+                    if (bodyText != null)
+                    {
+                        bodyText.text = "You were defeated and recovered 0 artifacts!\nYou must retake the battle to retrieve at least 1 artifact and progress.";
+                    }
+                    var retryBtnText = defeatRetryButton != null ? defeatRetryButton.GetComponentInChildren<TMP_Text>() : null;
+                    if (retryBtnText != null) retryBtnText.text = "RETAKE BATTLE";
+                    defeatModal.SetActive(true);
+                }
             }
             Debug.Log("[QuizBattleManager] Battle LOST! Player health depleted!");
         }
@@ -793,16 +839,19 @@ namespace TopDownGame
 
         public void OnRetryClicked()
         {
-            OnReturnToHallwayClicked();
+            // Retake the battle fresh
+            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
         }
 
         public void OnReturnToHallwayClicked()
         {
-            GameProgression.CompleteRoomBattle(roomNumber);
             if (_retrievedCount > 0)
             {
+                GameProgression.CompleteRoomBattle(roomNumber);
                 GameProgression.RetrieveRoomArtifact(roomNumber);
+                GameProgression.SetRoomRetrievedCount(roomNumber, _retrievedCount);
             }
+            // If _retrievedCount == 0, room battle is NOT completed, so player can re-enter to retake it!
             RoomTransitionManager.ExitToLobby();
         }
     }

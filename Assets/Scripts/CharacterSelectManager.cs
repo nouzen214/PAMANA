@@ -20,6 +20,9 @@ namespace TopDownGame
         [SerializeField] private TextMeshProUGUI selectedNameText;
         [SerializeField] private TextMeshProUGUI characterDescriptionText;
 
+        [Header("Character Name Input")]
+        [SerializeField] private TMP_InputField nameInputField;
+
         [Header("Colors")]
         [SerializeField] private Color selectedColor = Color.white;
         [SerializeField] private Color unselectedColor = new Color(0.55f, 0.55f, 0.58f, 0.88f);
@@ -34,8 +37,40 @@ namespace TopDownGame
 
         private void Start()
         {
-            // Default selection
+            // If character was already selected, do not make the user pick again
+            if (PlayerPrefs.GetInt("HasSelectedCharacter", 0) == 1)
+            {
+                string chosen = PlayerPrefs.GetString("SelectedCharacter", selectedCharacter);
+                Debug.Log($"[CharacterSelectManager] Character already selected ({chosen}). Proceeding to game...");
+                SceneManager.LoadScene(nextSceneName);
+                return;
+            }
+
+            // Default selection for first-time player
             selectedCharacter = PlayerPrefs.GetString("SelectedCharacter", "Boy");
+
+            string defaultName = selectedCharacter == "Girl" ? "Darla" : "Darrel";
+            string savedName = PlayerPrefs.GetString("CustomCharacterName", "");
+
+            if (string.IsNullOrEmpty(savedName) && FirebaseAuthManager.Instance != null &&
+                FirebaseAuthManager.Instance.IsGoogleUser && !string.IsNullOrEmpty(FirebaseAuthManager.Instance.Username))
+            {
+                savedName = FirebaseAuthManager.Instance.Username;
+            }
+
+            if (nameInputField != null)
+            {
+                nameInputField.characterLimit = 16;
+                nameInputField.text = !string.IsNullOrEmpty(savedName) ? savedName : defaultName;
+                nameInputField.onValueChanged.RemoveAllListeners();
+                nameInputField.onValueChanged.AddListener(OnNameInputChanged);
+            }
+
+            UpdateUI();
+        }
+
+        private void OnNameInputChanged(string val)
+        {
             UpdateUI();
         }
 
@@ -73,13 +108,27 @@ namespace TopDownGame
         public void SelectBoy()
         {
             selectedCharacter = "Boy";
+            UpdateNameForCharacter("Darrel", "Darla");
             UpdateUI();
         }
 
         public void SelectGirl()
         {
             selectedCharacter = "Girl";
+            UpdateNameForCharacter("Darla", "Darrel");
             UpdateUI();
+        }
+
+        private void UpdateNameForCharacter(string newDefault, string oldDefault)
+        {
+            if (nameInputField != null)
+            {
+                string currentText = nameInputField.text.Trim();
+                if (string.IsNullOrEmpty(currentText) || string.Equals(currentText, oldDefault, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    nameInputField.text = newDefault;
+                }
+            }
         }
 
         private void UpdateUI()
@@ -114,9 +163,15 @@ namespace TopDownGame
                 girlPreviewImage.color = !isBoy ? Color.white : new Color(0.72f, 0.72f, 0.75f, 0.88f);
             }
 
+            string chosenName = nameInputField != null ? nameInputField.text.Trim() : "";
+            if (string.IsNullOrEmpty(chosenName))
+            {
+                chosenName = isBoy ? "Darrel" : "Darla";
+            }
+
             if (selectedNameText != null)
             {
-                selectedNameText.text = isBoy ? "CHOSEN: BOY" : "CHOSEN: GIRL";
+                selectedNameText.text = isBoy ? $"CHOSEN: BOY ({chosenName.ToUpper()})" : $"CHOSEN: GIRL ({chosenName.ToUpper()})";
             }
 
             if (characterDescriptionText != null)
@@ -129,11 +184,33 @@ namespace TopDownGame
 
         public void OnConfirmAndPlay()
         {
+            string chosenName = nameInputField != null ? nameInputField.text.Trim() : "";
+            if (string.IsNullOrEmpty(chosenName))
+            {
+                chosenName = selectedCharacter == "Girl" ? "Darla" : "Darrel";
+            }
+
             PlayerPrefs.SetString("SelectedCharacter", selectedCharacter);
+            PlayerPrefs.SetString("CustomCharacterName", chosenName);
+            PlayerPrefs.SetString("PlayerUsername", chosenName);
+            PlayerPrefs.SetInt("HasSelectedCharacter", 1);
             PlayerPrefs.Save();
             GameProgression.ResetProgression();
             PlayerInventory.Clear();
-            Debug.Log($"Character chosen: {selectedCharacter}. Starting game...");
+            Debug.Log($"Character chosen for the first time: {selectedCharacter}, Name: '{chosenName}'. Starting game...");
+
+            // Persist to Firebase so returning logins remember the choice
+            if (FirebaseDatabaseManager.Instance != null)
+            {
+                var data = FirebaseDatabaseManager.Instance.CurrentPlayerData ?? new PlayerData();
+                data.selectedCharacter = selectedCharacter;
+                data.characterName = chosenName;
+                data.username = chosenName;
+                data.hasSelectedCharacter = true;
+                data.currentScene = nextSceneName;
+                FirebaseDatabaseManager.Instance.SavePlayerData(data, null);
+            }
+
             SceneManager.LoadScene(nextSceneName);
         }
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -16,11 +17,45 @@ namespace TopDownGame.Editor
         private const string SprParchmentPath = "Assets/UI/ParchmentDialogueBox.png";
         private const string SprButtonFramePath = "Assets/UI/CharacterButton_Frame.png";
 
+        // Settings UI Assets
+        private const string SprScrollCleanTracksPath = "Assets/UI/Settings/Settings_Scroll_Clean_Tracks.png";
+        private const string SprKnobPath = "Assets/UI/Settings/Settings_Slider_Knob.png";
+        private const string SprCloseCleanPath = "Assets/UI/Settings/Settings_Btn_Close_Clean.png";
+        private const string SprSettingsIconGoogleNormalPath = "Assets/UI/Settings/Settings_Icon_Google_Normal.png";
+        private const string SprSettingsIconGoogleHoverPath = "Assets/UI/Settings/Settings_Icon_Google_Hover.png";
+
+        // Login UI Assets
+        private const string SprLoginScreenBasePath = "Assets/UI/Login/Login_Screen_Base.png";
+        private const string SprLoginWallPath = "Assets/UI/Login/Login_Wall_Background.png";
+        private const string SprLoginScrollPath = "Assets/UI/Login/Login_Scroll_Frame.png";
+        private const string SprLoginInputPath = "Assets/UI/Login/Login_Input_Frame.png";
+        private const string SprLoginOrConnectPath = "Assets/UI/Login/Login_OrConnectWith.png";
+        private const string SprLoginBtnLoginNormalPath = "Assets/UI/Login/Login_Btn_Login_Normal.png";
+        private const string SprLoginBtnLoginHoverPath = "Assets/UI/Login/Login_Btn_Login_Hover.png";
+        private const string SprLoginBtnRegisterNormalPath = "Assets/UI/Login/Login_Btn_Register_Normal.png";
+        private const string SprLoginBtnRegisterHoverPath = "Assets/UI/Login/Login_Btn_Register_Hover.png";
+        private const string SprLoginBtnGooglePath = "Assets/UI/Login/Login_Btn_Google.png";
+        private const string SprLoginBtnGoogleNormalPath = "Assets/UI/Login/Login_Btn_Google_Normal.png";
+        private const string SprLoginBtnGoogleHoverPath = "Assets/UI/Login/Login_Btn_Google_Hover.png";
+        private const string SprLoginBtnGuestNormalPath = "Assets/UI/Login/Login_Btn_Guest_Normal.png";
+        private const string SprLoginBtnGuestHoverPath = "Assets/UI/Login/Login_Btn_Guest_Hover.png";
+        private const string SprLoginBtnTransparentPath = "Assets/UI/Login/Login_Btn_Transparent.png";
+
         [MenuItem("Tools/Setup In-Game HUD (Settings, Bag, Book)")]
         public static void SetupAll()
         {
+            if (EditorApplication.isPlaying)
+            {
+                Debug.LogWarning("[InGameUISetup] Please stop Play Mode in Unity to run setup.");
+                return;
+            }
+            EnsureSpriteImport(SprSettingsIconGoogleNormalPath);
+            EnsureSpriteImport(SprSettingsIconGoogleHoverPath);
             SetupPrefab();
             SyncGameplayScenes();
+            SetupMainMenuScene();
+            CharacterSelectUISetup.SetupCharacterSelectScene();
+            Debug.Log("[InGameUISetup] Settings, Login, and CharacterSelect UI successfully set up!");
         }
 
         public static void SetupPrefab()
@@ -29,24 +64,13 @@ namespace TopDownGame.Editor
             try
             {
                 var menuCtrl = prefabRoot.GetComponent<InGameMenuController>();
-                if (menuCtrl == null)
-                {
-                    menuCtrl = prefabRoot.AddComponent<InGameMenuController>();
-                }
+                if (menuCtrl == null) menuCtrl = prefabRoot.AddComponent<InGameMenuController>();
 
-                // Deactivate old HomeButton if present
                 var oldHome = prefabRoot.transform.Find("HomeButton");
-                if (oldHome != null)
-                {
-                    oldHome.gameObject.SetActive(false);
-                }
+                if (oldHome != null) oldHome.gameObject.SetActive(false);
 
-                // Deactivate HeartContainer outside of battle
                 var heartCont = prefabRoot.transform.Find("HeartContainer");
-                if (heartCont != null)
-                {
-                    heartCont.gameObject.SetActive(false);
-                }
+                if (heartCont != null) heartCont.gameObject.SetActive(false);
 
                 var sprSettings = AssetDatabase.LoadAssetAtPath<Sprite>(SprSettingsPath);
                 var sprBackpack = AssetDatabase.LoadAssetAtPath<Sprite>(SprBackpackPath);
@@ -54,51 +78,31 @@ namespace TopDownGame.Editor
                 var sprParchment = AssetDatabase.LoadAssetAtPath<Sprite>(SprParchmentPath);
                 var sprBtnFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SprButtonFramePath);
 
-                // 1. Settings Button (Top-Right)
                 var btnSettings = GetOrCreateChild(prefabRoot.transform, "SettingsButton");
                 ConfigureIconButton(btnSettings, sprSettings, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-95f, -95f), new Vector2(110f, 110f));
                 var btnSettingsComp = btnSettings.GetComponent<Button>();
                 btnSettingsComp.onClick = new Button.ButtonClickedEvent();
                 UnityEditor.Events.UnityEventTools.AddPersistentListener(btnSettingsComp.onClick, menuCtrl.OnSettingsClicked);
 
-                // 2. Bag Button (Below Settings on Top-Right)
                 var btnBag = GetOrCreateChild(prefabRoot.transform, "BagButton");
                 ConfigureIconButton(btnBag, sprBackpack, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-95f, -225f), new Vector2(120f, 120f));
                 var btnBagComp = btnBag.GetComponent<Button>();
                 btnBagComp.onClick = new Button.ButtonClickedEvent();
                 UnityEditor.Events.UnityEventTools.AddPersistentListener(btnBagComp.onClick, menuCtrl.OnBagClicked);
 
-                // 3. Book Button (Bottom-Right)
                 var btnBook = GetOrCreateChild(prefabRoot.transform, "BookButton");
                 ConfigureIconButton(btnBook, sprBook, new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), new Vector2(-120f, 120f), new Vector2(150f, 150f));
                 var btnBookComp = btnBook.GetComponent<Button>();
                 btnBookComp.onClick = new Button.ButtonClickedEvent();
                 UnityEditor.Events.UnityEventTools.AddPersistentListener(btnBookComp.onClick, menuCtrl.OnBookClicked);
 
-                // 4. Settings Modal Panel
-                var settingsPanel = BuildSettingsModal(prefabRoot.transform, menuCtrl, sprParchment, sprBtnFrame);
-
-                // 5. Bag Modal Panel
+                var settingsPanel = BuildSettingsModal(prefabRoot.transform, menuCtrl, isGameplay: true);
                 var bagModalObj = BuildBagModal(prefabRoot.transform, sprParchment, sprBtnFrame);
                 var bagModalComp = bagModalObj.GetComponent<BagModalUI>();
 
-                // Connect serialized references on InGameMenuController
-                var so = new SerializedObject(menuCtrl);
-                so.Update();
-                var spSettingsPanel = so.FindProperty("settingsPanel");
-                if (spSettingsPanel != null) spSettingsPanel.objectReferenceValue = settingsPanel;
-
-                var spBagModal = so.FindProperty("bagModal");
-                if (spBagModal != null) spBagModal.objectReferenceValue = bagModalComp;
-
-                var sliderComp = settingsPanel.GetComponentInChildren<Slider>(true);
-                var spVolumeSlider = so.FindProperty("volumeSlider");
-                if (spVolumeSlider != null) spVolumeSlider.objectReferenceValue = sliderComp;
-
-                so.ApplyModifiedProperties();
+                WireInGameMenuController(menuCtrl, settingsPanel, bagModalComp);
 
                 PrefabUtility.SaveAsPrefabAsset(prefabRoot, PrefabPath);
-                Debug.Log("[InGameUISetup] InGameCanvas.prefab updated successfully with BagModal and deactivated hearts!");
             }
             finally
             {
@@ -144,7 +148,7 @@ namespace TopDownGame.Editor
             btn.colors = colors;
         }
 
-        private static GameObject BuildSettingsModal(Transform parent, InGameMenuController menuCtrl, Sprite sprParchment, Sprite sprBtnFrame)
+        private static GameObject BuildSettingsModal(Transform parent, InGameMenuController menuCtrl, bool isGameplay)
         {
             var panelObj = GetOrCreateChild(parent, "SettingsPanel");
             panelObj.SetActive(false);
@@ -155,7 +159,7 @@ namespace TopDownGame.Editor
             panelRt.offsetMin = Vector2.zero;
             panelRt.offsetMax = Vector2.zero;
 
-            // Translucent Dimmer Background
+            // Dark Dimmer
             var dimmerObj = GetOrCreateChild(panelObj.transform, "Dimmer");
             var dimmerRt = dimmerObj.GetComponent<RectTransform>();
             dimmerRt.anchorMin = Vector2.zero;
@@ -165,133 +169,702 @@ namespace TopDownGame.Editor
 
             var dimmerImg = dimmerObj.GetComponent<Image>();
             if (dimmerImg == null) dimmerImg = dimmerObj.AddComponent<Image>();
-            dimmerImg.color = new Color(0f, 0f, 0f, 0.65f);
+            dimmerImg.color = new Color(0f, 0f, 0f, 0.85f);
             dimmerImg.raycastTarget = true;
 
-            // Modal Dialog Frame
+            var dimmerBtn = dimmerObj.GetComponent<Button>();
+            if (dimmerBtn == null) dimmerBtn = dimmerObj.AddComponent<Button>();
+            dimmerBtn.transition = Selectable.Transition.None;
+            dimmerBtn.onClick = new Button.ButtonClickedEvent();
+            if (menuCtrl != null)
+            {
+                UnityEditor.Events.UnityEventTools.AddPersistentListener(dimmerBtn.onClick, menuCtrl.OnCloseSettingsClicked);
+            }
+
+            // Modal Dialog Scroll Frame (940 x 642)
             var dialogObj = GetOrCreateChild(panelObj.transform, "DialogBox");
             var dialogRt = dialogObj.GetComponent<RectTransform>();
             dialogRt.anchorMin = new Vector2(0.5f, 0.5f);
             dialogRt.anchorMax = new Vector2(0.5f, 0.5f);
             dialogRt.pivot = new Vector2(0.5f, 0.5f);
             dialogRt.anchoredPosition = Vector2.zero;
-            dialogRt.sizeDelta = new Vector2(560f, 520f);
+            dialogRt.sizeDelta = new Vector2(940f, 642f);
+
+            for (int i = dialogObj.transform.childCount - 1; i >= 0; i--)
+            {
+                Object.DestroyImmediate(dialogObj.transform.GetChild(i).gameObject);
+            }
 
             var dialogImg = dialogObj.GetComponent<Image>();
             if (dialogImg == null) dialogImg = dialogObj.AddComponent<Image>();
-            dialogImg.sprite = sprParchment;
-            dialogImg.type = Image.Type.Sliced;
+            var sprScroll = AssetDatabase.LoadAssetAtPath<Sprite>(SprScrollCleanTracksPath);
+            dialogImg.sprite = sprScroll;
+            dialogImg.type = Image.Type.Simple;
+            dialogImg.preserveAspect = true;
             dialogImg.color = Color.white;
 
-            // Header Title
-            var titleObj = GetOrCreateChild(dialogObj.transform, "TitleText");
-            var titleRt = titleObj.GetComponent<RectTransform>();
-            titleRt.anchorMin = new Vector2(0.5f, 1f);
-            titleRt.anchorMax = new Vector2(0.5f, 1f);
-            titleRt.pivot = new Vector2(0.5f, 1f);
-            titleRt.anchoredPosition = new Vector2(0f, -40f);
-            titleRt.sizeDelta = new Vector2(400f, 50f);
+            // Close Button [X]
+            var closeObj = GetOrCreateChild(dialogObj.transform, "CloseButton");
+            var closeRt = closeObj.GetComponent<RectTransform>();
+            closeRt.anchorMin = new Vector2(0.5f, 1f);
+            closeRt.anchorMax = new Vector2(0.5f, 1f);
+            closeRt.pivot = new Vector2(0.5f, 1f);
+            closeRt.anchoredPosition = new Vector2(358f, -96f);
+            closeRt.sizeDelta = new Vector2(44f, 45f);
 
-            var titleTmp = titleObj.GetComponent<TextMeshProUGUI>();
-            if (titleTmp == null) titleTmp = titleObj.AddComponent<TextMeshProUGUI>();
-            titleTmp.text = "PAUSED";
-            titleTmp.fontSize = 36f;
-            titleTmp.fontStyle = FontStyles.Bold;
-            titleTmp.alignment = TextAlignmentOptions.Center;
-            titleTmp.color = new Color(0.24f, 0.16f, 0.08f, 1f);
+            var closeImg = closeObj.GetComponent<Image>();
+            if (closeImg == null) closeImg = closeObj.AddComponent<Image>();
+            closeImg.color = new Color(1f, 1f, 1f, 0f);
+            closeImg.raycastTarget = true;
 
-            // Volume Label & Slider
-            var volLabelObj = GetOrCreateChild(dialogObj.transform, "VolumeLabel");
-            var volLabelRt = volLabelObj.GetComponent<RectTransform>();
-            volLabelRt.anchorMin = new Vector2(0.5f, 1f);
-            volLabelRt.anchorMax = new Vector2(0.5f, 1f);
-            volLabelRt.pivot = new Vector2(0.5f, 1f);
-            volLabelRt.anchoredPosition = new Vector2(0f, -115f);
-            volLabelRt.sizeDelta = new Vector2(380f, 32f);
+            var closeBtn = closeObj.GetComponent<Button>();
+            if (closeBtn == null) closeBtn = closeObj.AddComponent<Button>();
+            closeBtn.targetGraphic = closeImg;
+            var closeColors = closeBtn.colors;
+            closeColors.normalColor = new Color(1f, 1f, 1f, 0f);
+            closeColors.highlightedColor = new Color(1f, 1f, 1f, 0.25f);
+            closeColors.pressedColor = new Color(0f, 0f, 0f, 0.35f);
+            closeBtn.colors = closeColors;
+            closeBtn.onClick = new Button.ButtonClickedEvent();
+            if (menuCtrl != null)
+            {
+                UnityEditor.Events.UnityEventTools.AddPersistentListener(closeBtn.onClick, menuCtrl.OnCloseSettingsClicked);
+            }
 
-            var volLabelTmp = volLabelObj.GetComponent<TextMeshProUGUI>();
-            if (volLabelTmp == null) volLabelTmp = volLabelObj.AddComponent<TextMeshProUGUI>();
-            volLabelTmp.text = "MASTER VOLUME";
-            volLabelTmp.fontSize = 20f;
-            volLabelTmp.fontStyle = FontStyles.Bold;
-            volLabelTmp.alignment = TextAlignmentOptions.Center;
-            volLabelTmp.color = new Color(0.32f, 0.22f, 0.12f, 1f);
+            // Sliders
+            var sprKnob = AssetDatabase.LoadAssetAtPath<Sprite>(SprKnobPath);
 
-            var sliderObj = GetOrCreateChild(dialogObj.transform, "VolumeSlider");
+            float row1Y = -238f;
+            var masterSlider = CreateInteractiveSlider("Slider_MasterVolume", new Vector2(148f, row1Y), dialogObj.transform, sprKnob);
+            if (menuCtrl != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(masterSlider.onValueChanged, menuCtrl.OnMasterVolumeChanged);
+
+            float row2Y = -328f;
+            var sfxSlider = CreateInteractiveSlider("Slider_SoundEffects", new Vector2(148f, row2Y), dialogObj.transform, sprKnob);
+            if (menuCtrl != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(sfxSlider.onValueChanged, menuCtrl.OnSFXVolumeChanged);
+
+            float row3Y = -418f;
+            var bgmSlider = CreateInteractiveSlider("Slider_BackgroundMusic", new Vector2(148f, row3Y), dialogObj.transform, sprKnob);
+            if (menuCtrl != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(bgmSlider.onValueChanged, menuCtrl.OnBGMVolumeChanged);
+
+            // Overlay Buttons for SAVE and DEFAULT
+            var btnSaveObj = CreateOverlayButton("Button_Save", new Vector2(-135f, -504f), new Vector2(180f, 70f), dialogObj.transform);
+            var btnSave = btnSaveObj.GetComponent<Button>();
+            if (menuCtrl != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(btnSave.onClick, menuCtrl.OnSaveSettingsClicked);
+
+            var btnDefaultObj = CreateOverlayButton("Button_Default", new Vector2(148f, -504f), new Vector2(184f, 70f), dialogObj.transform);
+            var btnDefault = btnDefaultObj.GetComponent<Button>();
+            if (menuCtrl != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(btnDefault.onClick, menuCtrl.OnDefaultSettingsClicked);
+
+            var sprBtnFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SprButtonFramePath);
+
+            if (isGameplay && menuCtrl != null)
+            {
+                var btnMenuObj = CreateModalButton("Button_ExitToMenu", "RETURN TO MAIN MENU", new Vector2(-140f, -572f), dialogObj.transform, sprBtnFrame);
+                var btnMenuRt = btnMenuObj.GetComponent<RectTransform>();
+                btnMenuRt.sizeDelta = new Vector2(250f, 38f);
+                var btnMenu = btnMenuObj.GetComponent<Button>();
+                UnityEditor.Events.UnityEventTools.AddPersistentListener(btnMenu.onClick, menuCtrl.GoToMainMenu);
+            }
+
+            EnsureSpriteImport(SprSettingsIconGoogleNormalPath);
+            EnsureSpriteImport(SprSettingsIconGoogleHoverPath);
+            var sprGoogleNormal = AssetDatabase.LoadAssetAtPath<Sprite>(SprSettingsIconGoogleNormalPath);
+            var sprGoogleHover = AssetDatabase.LoadAssetAtPath<Sprite>(SprSettingsIconGoogleHoverPath);
+
+            Vector2 googlePos = isGameplay ? new Vector2(140f, -572f) : new Vector2(0f, -572f);
+            Vector2 googleSize = isGameplay ? new Vector2(250f, 38f) : new Vector2(280f, 38f);
+            var btnGoogleObj = CreateGoogleConnectButton("Button_ConnectToGoogle", googlePos, googleSize, dialogObj.transform, sprGoogleNormal, sprGoogleHover, sprBtnFrame);
+            var btnGoogle = btnGoogleObj.GetComponent<Button>();
+            if (menuCtrl != null)
+            {
+                UnityEditor.Events.UnityEventTools.AddPersistentListener(btnGoogle.onClick, menuCtrl.OnConnectToGoogleClicked);
+            }
+
+            return panelObj;
+        }
+
+        private static Slider CreateInteractiveSlider(string name, Vector2 pos, Transform parent, Sprite sprKnob)
+        {
+            var sliderObj = GetOrCreateChild(parent, name);
             var sliderRt = sliderObj.GetComponent<RectTransform>();
             sliderRt.anchorMin = new Vector2(0.5f, 1f);
             sliderRt.anchorMax = new Vector2(0.5f, 1f);
-            sliderRt.pivot = new Vector2(0.5f, 1f);
-            sliderRt.anchoredPosition = new Vector2(0f, -155f);
-            sliderRt.sizeDelta = new Vector2(360f, 30f);
+            sliderRt.pivot = new Vector2(0.5f, 0.5f);
+            sliderRt.anchoredPosition = pos;
+            sliderRt.sizeDelta = new Vector2(402f, 66f);
 
             var slider = sliderObj.GetComponent<Slider>();
             if (slider == null) slider = sliderObj.AddComponent<Slider>();
+            slider.direction = Slider.Direction.LeftToRight;
             slider.minValue = 0f;
             slider.maxValue = 1f;
             slider.value = 1f;
 
-            // Slider Background
-            var sBgObj = GetOrCreateChild(sliderObj.transform, "Background");
-            var sBgRt = sBgObj.GetComponent<RectTransform>();
-            sBgRt.anchorMin = new Vector2(0f, 0.25f);
-            sBgRt.anchorMax = new Vector2(1f, 0.75f);
-            sBgRt.offsetMin = Vector2.zero;
-            sBgRt.offsetMax = Vector2.zero;
-            var sBgImg = sBgObj.GetComponent<Image>();
-            if (sBgImg == null) sBgImg = sBgObj.AddComponent<Image>();
-            sBgImg.color = new Color(0.18f, 0.14f, 0.1f, 0.6f);
+            var bgObj = GetOrCreateChild(sliderObj.transform, "Background");
+            var bgRt = bgObj.GetComponent<RectTransform>();
+            bgRt.anchorMin = Vector2.zero;
+            bgRt.anchorMax = Vector2.one;
+            bgRt.offsetMin = Vector2.zero;
+            bgRt.offsetMax = Vector2.zero;
+            var bgImg = bgObj.GetComponent<Image>();
+            if (bgImg == null) bgImg = bgObj.AddComponent<Image>();
+            bgImg.color = new Color(1f, 1f, 1f, 0f);
+            bgImg.raycastTarget = true;
 
-            // Slider Fill Area & Fill
-            var sFillArea = GetOrCreateChild(sliderObj.transform, "Fill Area");
-            var sFillAreaRt = sFillArea.GetComponent<RectTransform>();
-            sFillAreaRt.anchorMin = new Vector2(0f, 0.25f);
-            sFillAreaRt.anchorMax = new Vector2(1f, 0.75f);
-            sFillAreaRt.offsetMin = new Vector2(5f, 0f);
-            sFillAreaRt.offsetMax = new Vector2(-5f, 0f);
+            var slideArea = GetOrCreateChild(sliderObj.transform, "Handle Slide Area");
+            var slideAreaRt = slideArea.GetComponent<RectTransform>();
+            slideAreaRt.anchorMin = Vector2.zero;
+            slideAreaRt.anchorMax = Vector2.one;
+            slideAreaRt.offsetMin = new Vector2(24f, 0f);
+            slideAreaRt.offsetMax = new Vector2(-24f, 0f);
 
-            var sFillObj = GetOrCreateChild(sFillArea.transform, "Fill");
-            var sFillRt = sFillObj.GetComponent<RectTransform>();
-            sFillRt.anchorMin = Vector2.zero;
-            sFillRt.anchorMax = Vector2.one;
-            sFillRt.offsetMin = Vector2.zero;
-            sFillRt.offsetMax = Vector2.zero;
-            var sFillImg = sFillObj.GetComponent<Image>();
-            if (sFillImg == null) sFillImg = sFillObj.AddComponent<Image>();
-            sFillImg.color = new Color(0.78f, 0.58f, 0.24f, 1f);
+            var handleObj = GetOrCreateChild(slideArea.transform, "Handle");
+            var handleRt = handleObj.GetComponent<RectTransform>();
+            handleRt.anchorMin = new Vector2(0.5f, 0.5f);
+            handleRt.anchorMax = new Vector2(0.5f, 0.5f);
+            handleRt.pivot = new Vector2(0.5f, 0.5f);
+            handleRt.sizeDelta = new Vector2(46f, 46f);
+            var handleImg = handleObj.GetComponent<Image>();
+            if (handleImg == null) handleImg = handleObj.AddComponent<Image>();
+            handleImg.sprite = sprKnob;
+            handleImg.preserveAspect = true;
+            handleImg.raycastTarget = true;
 
-            slider.fillRect = sFillRt;
+            slider.targetGraphic = handleImg;
+            slider.handleRect = handleRt;
 
-            // Action Buttons Container
-            float startY = -230f;
-            float stepY = 70f;
+            return slider;
+        }
 
-            // Button 1: RESUME
-            var btnResume = CreateModalButton("ResumeButton", "RESUME", new Vector2(0f, startY), dialogObj.transform, sprBtnFrame);
-            var btnResumeComp = btnResume.GetComponent<Button>();
-            btnResumeComp.onClick = new Button.ButtonClickedEvent();
-            UnityEditor.Events.UnityEventTools.AddPersistentListener(btnResumeComp.onClick, menuCtrl.OnCloseSettingsClicked);
+        private static GameObject CreateOverlayButton(string name, Vector2 pos, Vector2 size, Transform parent)
+        {
+            var obj = GetOrCreateChild(parent, name);
+            var rt = obj.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 1f);
+            rt.anchorMax = new Vector2(0.5f, 1f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = size;
 
-            // Button 2: RESTART ROOM
-            var btnRestart = CreateModalButton("RestartButton", "RESTART ROOM", new Vector2(0f, startY - stepY), dialogObj.transform, sprBtnFrame);
-            var btnRestartComp = btnRestart.GetComponent<Button>();
-            btnRestartComp.onClick = new Button.ButtonClickedEvent();
-            UnityEditor.Events.UnityEventTools.AddPersistentListener(btnRestartComp.onClick, menuCtrl.RestartCurrentScene);
+            var img = obj.GetComponent<Image>();
+            if (img == null) img = obj.AddComponent<Image>();
+            img.color = new Color(1f, 1f, 1f, 0f);
+            img.raycastTarget = true;
 
-            // Button 3: MAIN MENU
-            var btnMainMenu = CreateModalButton("MainMenuButton", "MAIN MENU", new Vector2(0f, startY - (stepY * 2f)), dialogObj.transform, sprBtnFrame);
-            var btnMainMenuComp = btnMainMenu.GetComponent<Button>();
-            btnMainMenuComp.onClick = new Button.ButtonClickedEvent();
-            UnityEditor.Events.UnityEventTools.AddPersistentListener(btnMainMenuComp.onClick, menuCtrl.GoToMainMenu);
+            var btn = obj.GetComponent<Button>();
+            if (btn == null) btn = obj.AddComponent<Button>();
+            btn.targetGraphic = img;
 
-            // Dimmer click closes settings
-            var dimmerBtn = dimmerObj.GetComponent<Button>();
-            if (dimmerBtn == null) dimmerBtn = dimmerObj.AddComponent<Button>();
-            dimmerBtn.transition = Selectable.Transition.None;
-            dimmerBtn.onClick = new Button.ButtonClickedEvent();
-            UnityEditor.Events.UnityEventTools.AddPersistentListener(dimmerBtn.onClick, menuCtrl.OnCloseSettingsClicked);
+            var colors = btn.colors;
+            colors.normalColor = new Color(1f, 1f, 1f, 0f);
+            colors.highlightedColor = new Color(1f, 1f, 1f, 0.2f);
+            colors.pressedColor = new Color(0f, 0f, 0f, 0.3f);
+            colors.selectedColor = new Color(1f, 1f, 1f, 0f);
+            btn.colors = colors;
+            btn.onClick = new Button.ButtonClickedEvent();
+
+            return obj;
+        }
+
+        [MenuItem("Tools/Setup/Generate Login Base Image")]
+        public static void GenerateLoginBaseTexture()
+        {
+            string sourceJpgPath = "Assets/UI/Login/Login_Scroll_Source.jpg";
+            string wallPath = SprLoginWallPath;
+            string outBasePath = SprLoginScreenBasePath;
+            string outScrollPath = SprLoginScrollPath;
+
+            if (!File.Exists(sourceJpgPath))
+            {
+                Debug.LogWarning("[InGameUISetup] Login_Scroll_Source.jpg not found!");
+                return;
+            }
+
+            byte[] sourceBytes = File.ReadAllBytes(sourceJpgPath);
+            Texture2D sourceTex = new Texture2D(2, 2);
+            sourceTex.LoadImage(sourceBytes);
+
+            byte[] wallBytes = File.Exists(wallPath) ? File.ReadAllBytes(wallPath) : null;
+            Texture2D wallTex = null;
+            if (wallBytes != null)
+            {
+                wallTex = new Texture2D(2, 2);
+                wallTex.LoadImage(wallBytes);
+            }
+
+            int w = sourceTex.width;
+            int h = sourceTex.height;
+
+            // Flood fill from borders to identify exterior background
+            bool[,] isBg = new bool[w, h];
+            Queue<Vector2Int> q = new Queue<Vector2Int>();
+
+            void CheckAndEnqueue(int x, int y)
+            {
+                if (!isBg[x, y])
+                {
+                    Color c = sourceTex.GetPixel(x, y);
+                    if (c.r > 0.90f && c.g > 0.90f && c.b > 0.90f)
+                    {
+                        isBg[x, y] = true;
+                        q.Enqueue(new Vector2Int(x, y));
+                    }
+                }
+            }
+
+            for (int x = 0; x < w; x++)
+            {
+                CheckAndEnqueue(x, 0);
+                CheckAndEnqueue(x, h - 1);
+            }
+            for (int y = 0; y < h; y++)
+            {
+                CheckAndEnqueue(0, y);
+                CheckAndEnqueue(w - 1, y);
+            }
+
+            int[] dx = { 1, -1, 0, 0 };
+            int[] dy = { 0, 0, 1, -1 };
+
+            while (q.Count > 0)
+            {
+                Vector2Int p = q.Dequeue();
+                for (int i = 0; i < 4; i++)
+                {
+                    int nx = p.x + dx[i];
+                    int ny = p.y + dy[i];
+                    if (nx >= 0 && nx < w && ny >= 0 && ny < h && !isBg[nx, ny])
+                    {
+                        Color c = sourceTex.GetPixel(nx, ny);
+                        if (c.r > 0.90f && c.g > 0.90f && c.b > 0.90f)
+                        {
+                            isBg[nx, ny] = true;
+                            q.Enqueue(new Vector2Int(nx, ny));
+                        }
+                    }
+                }
+            }
+
+            Texture2D compositeTex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            Texture2D scrollOnlyTex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+
+            for (int y = 0; y < h; y++)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    if (isBg[x, y])
+                    {
+                        Color wc = (wallTex != null) ? wallTex.GetPixel(x, y) : new Color(0.12f, 0.08f, 0.05f, 1f);
+                        compositeTex.SetPixel(x, y, wc);
+                        scrollOnlyTex.SetPixel(x, y, new Color(0f, 0f, 0f, 0f));
+                    }
+                    else
+                    {
+                        Color sc = sourceTex.GetPixel(x, y);
+                        compositeTex.SetPixel(x, y, sc);
+                        scrollOnlyTex.SetPixel(x, y, sc);
+                    }
+                }
+            }
+
+            compositeTex.Apply();
+            scrollOnlyTex.Apply();
+
+            File.WriteAllBytes(outBasePath, compositeTex.EncodeToPNG());
+            File.WriteAllBytes(outScrollPath, scrollOnlyTex.EncodeToPNG());
+
+            Object.DestroyImmediate(sourceTex);
+            if (wallTex != null) Object.DestroyImmediate(wallTex);
+            Object.DestroyImmediate(compositeTex);
+            Object.DestroyImmediate(scrollOnlyTex);
+
+            AssetDatabase.ImportAsset(outBasePath, ImportAssetOptions.ForceUpdate);
+            AssetDatabase.ImportAsset(outScrollPath, ImportAssetOptions.ForceUpdate);
+            Debug.Log("[InGameUISetup] Successfully generated composite Login_Screen_Base.png and Login_Scroll_Frame.png!");
+
+            ProcessHoverButtonImage("Assets/UI/Login/Login_Btn_Google_Normal_Raw.jpg", SprLoginBtnGoogleNormalPath);
+            ProcessHoverButtonImage("Assets/UI/Login/Login_Btn_Google_Hover_Raw.jpg", SprLoginBtnGoogleHoverPath);
+            ProcessHoverButtonImage("Assets/UI/Login/Login_Btn_Guest_Normal_Raw.jpg", SprLoginBtnGuestNormalPath);
+            ProcessHoverButtonImage("Assets/UI/Login/Login_Btn_Guest_Hover_Raw.jpg", SprLoginBtnGuestHoverPath);
+            EnsureTransparentSprite();
+        }
+
+        public static void EnsureSpriteImport(string path)
+        {
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer != null)
+            {
+                bool dirty = false;
+                if (importer.textureType != TextureImporterType.Sprite)
+                {
+                    importer.textureType = TextureImporterType.Sprite;
+                    dirty = true;
+                }
+                if (!importer.alphaIsTransparency)
+                {
+                    importer.alphaIsTransparency = true;
+                    dirty = true;
+                }
+                if (dirty)
+                {
+                    importer.SaveAndReimport();
+                }
+            }
+        }
+
+        private static void EnsureTransparentSprite()
+        {
+            if (!File.Exists(SprLoginBtnTransparentPath))
+            {
+                var tex = new Texture2D(32, 32, TextureFormat.RGBA32, false);
+                for (int y = 0; y < 32; y++)
+                {
+                    for (int x = 0; x < 32; x++)
+                    {
+                        tex.SetPixel(x, y, new Color(0f, 0f, 0f, 0f));
+                    }
+                }
+                tex.Apply();
+                File.WriteAllBytes(SprLoginBtnTransparentPath, tex.EncodeToPNG());
+                Object.DestroyImmediate(tex);
+                AssetDatabase.ImportAsset(SprLoginBtnTransparentPath, ImportAssetOptions.ForceUpdate);
+            }
+            EnsureSpriteImport(SprLoginBtnTransparentPath);
+        }
+
+        public static void ProcessHoverButtonImage(string rawJpgPath, string outPngPath)
+        {
+            if (!File.Exists(rawJpgPath))
+            {
+                Debug.LogWarning($"[InGameUISetup] Raw hover image not found: {rawJpgPath}");
+                return;
+            }
+
+            byte[] bytes = File.ReadAllBytes(rawJpgPath);
+            Texture2D tex = new Texture2D(2, 2);
+            tex.LoadImage(bytes);
+
+            int w = tex.width;
+            int h = tex.height;
+
+            bool[,] isBg = new bool[w, h];
+            Queue<Vector2Int> q = new Queue<Vector2Int>();
+
+            void EnqueueIfWhite(int x, int y)
+            {
+                if (!isBg[x, y])
+                {
+                    Color c = tex.GetPixel(x, y);
+                    if (c.r > 0.90f && c.g > 0.90f && c.b > 0.90f)
+                    {
+                        isBg[x, y] = true;
+                        q.Enqueue(new Vector2Int(x, y));
+                    }
+                }
+            }
+
+            for (int x = 0; x < w; x++)
+            {
+                EnqueueIfWhite(x, 0);
+                EnqueueIfWhite(x, h - 1);
+            }
+            for (int y = 0; y < h; y++)
+            {
+                EnqueueIfWhite(0, y);
+                EnqueueIfWhite(w - 1, y);
+            }
+
+            int[] dx = { 1, -1, 0, 0 };
+            int[] dy = { 0, 0, 1, -1 };
+
+            while (q.Count > 0)
+            {
+                Vector2Int p = q.Dequeue();
+                for (int i = 0; i < 4; i++)
+                {
+                    int nx = p.x + dx[i];
+                    int ny = p.y + dy[i];
+                    if (nx >= 0 && nx < w && ny >= 0 && ny < h && !isBg[nx, ny])
+                    {
+                        Color c = tex.GetPixel(nx, ny);
+                        if (c.r > 0.90f && c.g > 0.90f && c.b > 0.90f)
+                        {
+                            isBg[nx, ny] = true;
+                            q.Enqueue(new Vector2Int(nx, ny));
+                        }
+                    }
+                }
+            }
+
+            Texture2D outTex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            for (int y = 0; y < h; y++)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    if (isBg[x, y])
+                    {
+                        outTex.SetPixel(x, y, new Color(0f, 0f, 0f, 0f));
+                    }
+                    else
+                    {
+                        outTex.SetPixel(x, y, tex.GetPixel(x, y));
+                    }
+                }
+            }
+            outTex.Apply();
+
+            File.WriteAllBytes(outPngPath, outTex.EncodeToPNG());
+            Object.DestroyImmediate(tex);
+            Object.DestroyImmediate(outTex);
+
+            AssetDatabase.ImportAsset(outPngPath, ImportAssetOptions.ForceUpdate);
+            EnsureSpriteImport(outPngPath);
+            Debug.Log($"[InGameUISetup] Successfully generated hover sprite: {outPngPath}");
+        }
+
+        public static GameObject BuildLoginPanel(Transform parent, MainMenuController menuCtrl)
+        {
+            var panelObj = GetOrCreateChild(parent, "LoginPanel");
+            panelObj.SetActive(false);
+
+            var panelRt = panelObj.GetComponent<RectTransform>();
+            panelRt.anchorMin = Vector2.zero;
+            panelRt.anchorMax = Vector2.one;
+            panelRt.offsetMin = Vector2.zero;
+            panelRt.offsetMax = Vector2.zero;
+            panelRt.pivot = new Vector2(0.5f, 0.5f);
+
+            var panelImg = panelObj.GetComponent<Image>();
+            if (panelImg == null) panelImg = panelObj.AddComponent<Image>();
+            panelImg.color = new Color(0.08f, 0.06f, 0.05f, 1f);
+            panelImg.raycastTarget = true;
+
+            // Destroy any previous/nested children (WallBackground, ScrollDialog, etc.)
+            for (int i = panelObj.transform.childCount - 1; i >= 0; i--)
+            {
+                Object.DestroyImmediate(panelObj.transform.GetChild(i).gameObject);
+            }
+
+            // Single unified ContentBox matching 16:9 1920x1080 canvas
+            var contentObj = GetOrCreateChild(panelObj.transform, "ContentBox");
+            var contentRt = contentObj.GetComponent<RectTransform>();
+            contentRt.anchorMin = new Vector2(0.5f, 0.5f);
+            contentRt.anchorMax = new Vector2(0.5f, 0.5f);
+            contentRt.pivot = new Vector2(0.5f, 0.5f);
+            contentRt.anchoredPosition = Vector2.zero;
+            contentRt.sizeDelta = new Vector2(1920f, 1080f);
+
+            var contentImg = contentObj.GetComponent<Image>();
+            if (contentImg == null) contentImg = contentObj.AddComponent<Image>();
+            var sprBase = AssetDatabase.LoadAssetAtPath<Sprite>(SprLoginScreenBasePath);
+            contentImg.sprite = sprBase;
+            contentImg.type = Image.Type.Simple;
+            contentImg.preserveAspect = true;
+            contentImg.color = Color.white;
+            contentImg.raycastTarget = true;
+
+            // 1. Close Button [X] at top right of the parchment
+            var sprClose = AssetDatabase.LoadAssetAtPath<Sprite>(SprCloseCleanPath);
+            var closeObj = GetOrCreateChild(contentObj.transform, "CloseButton");
+            var closeRt = closeObj.GetComponent<RectTransform>();
+            closeRt.anchorMin = new Vector2(0.5f, 0.5f);
+            closeRt.anchorMax = new Vector2(0.5f, 0.5f);
+            closeRt.pivot = new Vector2(0.5f, 0.5f);
+            closeRt.anchoredPosition = new Vector2(581f, 356f);
+            closeRt.sizeDelta = new Vector2(75f, 75f);
+
+            var closeImg = closeObj.GetComponent<Image>();
+            if (closeImg == null) closeImg = closeObj.AddComponent<Image>();
+            closeImg.sprite = sprClose;
+            closeImg.preserveAspect = true;
+            closeImg.raycastTarget = true;
+
+            var closeBtn = closeObj.GetComponent<Button>();
+            if (closeBtn == null) closeBtn = closeObj.AddComponent<Button>();
+            closeBtn.targetGraphic = closeImg;
+            var cColors = closeBtn.colors;
+            cColors.normalColor = Color.white;
+            cColors.highlightedColor = new Color(1f, 0.85f, 0.85f, 1f);
+            cColors.pressedColor = new Color(0.7f, 0.7f, 0.7f, 1f);
+            closeBtn.colors = cColors;
+            closeBtn.onClick = new Button.ButtonClickedEvent();
+            if (menuCtrl != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(closeBtn.onClick, menuCtrl.OnCloseLoginClicked);
+
+            // 2. SIGN IN WITH GOOGLE Button (with user-provided Normal & Hover Sprites)
+            var sprGoogleNormal = AssetDatabase.LoadAssetAtPath<Sprite>(SprLoginBtnGoogleNormalPath);
+            var sprGoogleHover = AssetDatabase.LoadAssetAtPath<Sprite>(SprLoginBtnGoogleHoverPath);
+            var googleBtnObj = CreateHoverButton("Button_GoogleSignIn", sprGoogleNormal, sprGoogleHover, new Vector2(0f, 170f), new Vector2(994f, 290f), contentObj.transform);
+            var googleBtn = googleBtnObj.GetComponent<Button>();
+            if (menuCtrl != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(googleBtn.onClick, menuCtrl.OnGoogleLoginClicked);
+
+            // 3. PLAY AS GUEST Button (with user-provided Normal & Hover Sprites)
+            var sprGuestNormal = AssetDatabase.LoadAssetAtPath<Sprite>(SprLoginBtnGuestNormalPath);
+            var sprGuestHover = AssetDatabase.LoadAssetAtPath<Sprite>(SprLoginBtnGuestHoverPath);
+            var guestBtnObj = CreateHoverButton("Button_PlayAsGuest", sprGuestNormal, sprGuestHover, new Vector2(0f, -167f), new Vector2(994f, 290f), contentObj.transform);
+            var guestBtn = guestBtnObj.GetComponent<Button>();
+            if (menuCtrl != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(guestBtn.onClick, menuCtrl.OnGuestLoginClicked);
+
+            // 4. Login Status / Feedback Text
+            var statusObj = GetOrCreateChild(contentObj.transform, "LoginStatusText");
+            var statusRt = statusObj.GetComponent<RectTransform>();
+            statusRt.anchorMin = new Vector2(0.5f, 0.5f);
+            statusRt.anchorMax = new Vector2(0.5f, 0.5f);
+            statusRt.pivot = new Vector2(0.5f, 0.5f);
+            statusRt.anchoredPosition = new Vector2(0f, -345f);
+            statusRt.sizeDelta = new Vector2(900f, 45f);
+
+            var statusTmp = statusObj.GetComponent<TextMeshProUGUI>();
+            if (statusTmp == null) statusTmp = statusObj.AddComponent<TextMeshProUGUI>();
+            statusTmp.text = "";
+            statusTmp.fontSize = 24f;
+            statusTmp.fontStyle = FontStyles.Bold;
+            statusTmp.alignment = TextAlignmentOptions.Center;
+            statusTmp.color = new Color(0.85f, 0.15f, 0.15f, 1f);
+            statusTmp.raycastTarget = false;
+
+            // Connect references on MainMenuController
+            if (menuCtrl != null)
+            {
+                var so = new SerializedObject(menuCtrl);
+                so.Update();
+                var spLogin = so.FindProperty("loginPanel");
+                if (spLogin != null) spLogin.objectReferenceValue = panelObj;
+
+                var spUser = so.FindProperty("usernameInput");
+                if (spUser != null) spUser.objectReferenceValue = null;
+
+                var spPass = so.FindProperty("passwordInput");
+                if (spPass != null) spPass.objectReferenceValue = null;
+
+                var spStatus = so.FindProperty("loginStatusText");
+                if (spStatus != null) spStatus.objectReferenceValue = statusTmp;
+
+                so.ApplyModifiedProperties();
+            }
 
             return panelObj;
+        }
+
+        private static TMP_InputField CreateInputField(string name, string placeholderText, bool isPassword, Vector2 pos, Vector2 size, Transform parent, Sprite sprFrame)
+        {
+            var go = GetOrCreateChild(parent, name);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = size;
+
+            var img = go.GetComponent<Image>();
+            if (img == null) img = go.AddComponent<Image>();
+            if (sprFrame != null)
+            {
+                img.sprite = sprFrame;
+                img.type = Image.Type.Simple;
+                img.color = Color.white;
+            }
+            else
+            {
+                img.sprite = null;
+                img.color = new Color(0f, 0f, 0f, 0f);
+            }
+            img.raycastTarget = true;
+
+            var inputField = go.GetComponent<TMP_InputField>();
+            if (inputField == null) inputField = go.AddComponent<TMP_InputField>();
+            inputField.targetGraphic = img;
+
+            var textArea = GetOrCreateChild(go.transform, "Text Area");
+            var textAreaRt = textArea.GetComponent<RectTransform>();
+            textAreaRt.anchorMin = Vector2.zero;
+            textAreaRt.anchorMax = Vector2.one;
+            textAreaRt.offsetMin = new Vector2(40f, 10f);
+            textAreaRt.offsetMax = new Vector2(-40f, -10f);
+
+            var rectMask = textArea.GetComponent<RectMask2D>();
+            if (rectMask == null) rectMask = textArea.AddComponent<RectMask2D>();
+
+            var phObj = GetOrCreateChild(textArea.transform, "Placeholder");
+            var phRt = phObj.GetComponent<RectTransform>();
+            phRt.anchorMin = Vector2.zero;
+            phRt.anchorMax = Vector2.one;
+            phRt.offsetMin = Vector2.zero;
+            phRt.offsetMax = Vector2.zero;
+
+            var phTmp = phObj.GetComponent<TextMeshProUGUI>();
+            if (phTmp == null) phTmp = phObj.AddComponent<TextMeshProUGUI>();
+            phTmp.text = placeholderText;
+            phTmp.fontSize = 32f;
+            phTmp.fontStyle = FontStyles.Bold;
+            phTmp.alignment = TextAlignmentOptions.Center;
+            phTmp.color = new Color(0.70f, 0.52f, 0.35f, 0.85f);
+
+            var txtObj = GetOrCreateChild(textArea.transform, "Text");
+            var txtRt = txtObj.GetComponent<RectTransform>();
+            txtRt.anchorMin = Vector2.zero;
+            txtRt.anchorMax = Vector2.one;
+            txtRt.offsetMin = Vector2.zero;
+            txtRt.offsetMax = Vector2.zero;
+
+            var txtTmp = txtObj.GetComponent<TextMeshProUGUI>();
+            if (txtTmp == null) txtTmp = txtObj.AddComponent<TextMeshProUGUI>();
+            txtTmp.fontSize = 32f;
+            txtTmp.fontStyle = FontStyles.Bold;
+            txtTmp.alignment = TextAlignmentOptions.Center;
+            txtTmp.color = new Color(0.96f, 0.90f, 0.80f, 1f);
+
+            inputField.textViewport = textAreaRt;
+            inputField.textComponent = txtTmp;
+            inputField.placeholder = phTmp;
+            inputField.caretColor = new Color(1f, 0.95f, 0.85f, 1f);
+            inputField.customCaretColor = true;
+            inputField.caretWidth = 3;
+            inputField.lineType = TMP_InputField.LineType.SingleLine;
+
+            if (isPassword)
+            {
+                inputField.contentType = TMP_InputField.ContentType.Password;
+                inputField.inputType = TMP_InputField.InputType.Password;
+            }
+            else
+            {
+                inputField.contentType = TMP_InputField.ContentType.Standard;
+                inputField.inputType = TMP_InputField.InputType.Standard;
+            }
+
+            return inputField;
+        }
+
+        private static GameObject CreateHoverButton(string name, Sprite sprNormal, Sprite sprHover, Vector2 pos, Vector2 size, Transform parent)
+        {
+            var obj = GetOrCreateChild(parent, name);
+            var rt = obj.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = size;
+
+            var img = obj.GetComponent<Image>();
+            if (img == null) img = obj.AddComponent<Image>();
+            img.sprite = sprNormal;
+            img.color = Color.white;
+            img.preserveAspect = false;
+            img.raycastTarget = true;
+
+            var btn = obj.GetComponent<Button>();
+            if (btn == null) btn = obj.AddComponent<Button>();
+            btn.targetGraphic = img;
+            btn.transition = Selectable.Transition.SpriteSwap;
+
+            var ss = btn.spriteState;
+            ss.highlightedSprite = sprHover;
+            ss.pressedSprite = sprHover;
+            ss.selectedSprite = sprHover;
+            btn.spriteState = ss;
+
+            btn.onClick = new Button.ButtonClickedEvent();
+            return obj;
         }
 
         private static GameObject BuildBagModal(Transform parent, Sprite sprParchment, Sprite sprBtnFrame)
@@ -305,7 +878,6 @@ namespace TopDownGame.Editor
             modalRt.offsetMin = Vector2.zero;
             modalRt.offsetMax = Vector2.zero;
 
-            // Translucent Dimmer Background
             var dimmerObj = GetOrCreateChild(modalObj.transform, "Dimmer");
             var dimmerRt = dimmerObj.GetComponent<RectTransform>();
             dimmerRt.anchorMin = Vector2.zero;
@@ -322,7 +894,6 @@ namespace TopDownGame.Editor
             if (dimmerBtn == null) dimmerBtn = dimmerObj.AddComponent<Button>();
             dimmerBtn.transition = Selectable.Transition.None;
 
-            // Modal Dialog Frame
             var dialogObj = GetOrCreateChild(modalObj.transform, "DialogBox");
             var dialogRt = dialogObj.GetComponent<RectTransform>();
             dialogRt.anchorMin = new Vector2(0.5f, 0.5f);
@@ -344,7 +915,6 @@ namespace TopDownGame.Editor
                 dialogImg.color = new Color(0.97f, 0.94f, 0.88f, 1f);
             }
 
-            // Header Title
             var titleObj = GetOrCreateChild(dialogObj.transform, "TitleText");
             var titleRt = titleObj.GetComponent<RectTransform>();
             titleRt.anchorMin = new Vector2(0.5f, 1f);
@@ -361,41 +931,75 @@ namespace TopDownGame.Editor
             titleTmp.alignment = TextAlignmentOptions.Center;
             titleTmp.color = new Color(0.24f, 0.16f, 0.08f, 1f);
 
-            // Count Text
             var countObj = GetOrCreateChild(dialogObj.transform, "CountText");
             var countRt = countObj.GetComponent<RectTransform>();
             countRt.anchorMin = new Vector2(0.5f, 1f);
             countRt.anchorMax = new Vector2(0.5f, 1f);
             countRt.pivot = new Vector2(0.5f, 1f);
             countRt.anchoredPosition = new Vector2(0f, -65f);
-            countRt.sizeDelta = new Vector2(500f, 30f);
+            countRt.sizeDelta = new Vector2(400f, 30f);
 
             var countTmp = countObj.GetComponent<TextMeshProUGUI>();
             if (countTmp == null) countTmp = countObj.AddComponent<TextMeshProUGUI>();
-            countTmp.text = "ARTIFACTS COLLECTED: 0";
+            countTmp.text = "Items collected: 0";
             countTmp.fontSize = 18f;
-            countTmp.fontStyle = FontStyles.Bold;
             countTmp.alignment = TextAlignmentOptions.Center;
-            countTmp.color = new Color(0.45f, 0.35f, 0.2f, 1f);
+            countTmp.color = new Color(0.38f, 0.28f, 0.16f, 1f);
 
-            // Grid Container
-            var gridObj = GetOrCreateChild(dialogObj.transform, "ItemsGrid");
+            var scrollObj = GetOrCreateChild(dialogObj.transform, "ArtifactScrollView");
+            var scrollRt = scrollObj.GetComponent<RectTransform>();
+            scrollRt.anchorMin = new Vector2(0.5f, 0.5f);
+            scrollRt.anchorMax = new Vector2(0.5f, 0.5f);
+            scrollRt.pivot = new Vector2(0.5f, 0.5f);
+            scrollRt.anchoredPosition = new Vector2(0f, -30f);
+            scrollRt.sizeDelta = new Vector2(760f, 360f);
+
+            var scrollRect = scrollObj.GetComponent<ScrollRect>();
+            if (scrollRect == null) scrollRect = scrollObj.AddComponent<ScrollRect>();
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+
+            var viewportObj = GetOrCreateChild(scrollObj.transform, "Viewport");
+            var viewportRt = viewportObj.GetComponent<RectTransform>();
+            viewportRt.anchorMin = Vector2.zero;
+            viewportRt.anchorMax = Vector2.one;
+            viewportRt.offsetMin = Vector2.zero;
+            viewportRt.offsetMax = Vector2.zero;
+
+            var viewportMask = viewportObj.GetComponent<Mask>();
+            if (viewportMask == null) viewportMask = viewportObj.AddComponent<Mask>();
+            viewportMask.showMaskGraphic = false;
+
+            var viewportImg = viewportObj.GetComponent<Image>();
+            if (viewportImg == null) viewportImg = viewportObj.AddComponent<Image>();
+            viewportImg.color = Color.white;
+
+            var gridObj = GetOrCreateChild(viewportObj.transform, "GridContent");
             var gridRt = gridObj.GetComponent<RectTransform>();
-            gridRt.anchorMin = new Vector2(0.5f, 0.5f);
-            gridRt.anchorMax = new Vector2(0.5f, 0.5f);
-            gridRt.pivot = new Vector2(0.5f, 0.5f);
-            gridRt.anchoredPosition = new Vector2(0f, -20f);
-            gridRt.sizeDelta = new Vector2(760f, 360f);
+            gridRt.anchorMin = new Vector2(0f, 1f);
+            gridRt.anchorMax = new Vector2(1f, 1f);
+            gridRt.pivot = new Vector2(0.5f, 1f);
+            gridRt.anchoredPosition = Vector2.zero;
+            gridRt.sizeDelta = new Vector2(0f, 360f);
 
             var glg = gridObj.GetComponent<GridLayoutGroup>();
             if (glg == null) glg = gridObj.AddComponent<GridLayoutGroup>();
-            glg.cellSize = new Vector2(360f, 95f);
-            glg.spacing = new Vector2(20f, 15f);
+            glg.cellSize = new Vector2(140f, 140f);
+            glg.spacing = new Vector2(25f, 25f);
+            glg.startCorner = GridLayoutGroup.Corner.UpperLeft;
+            glg.startAxis = GridLayoutGroup.Axis.Horizontal;
+            glg.childAlignment = TextAnchor.UpperCenter;
             glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            glg.constraintCount = 2;
+            glg.constraintCount = 4;
 
-            // Empty Notice
-            var emptyNoticeObj = GetOrCreateChild(dialogObj.transform, "EmptyNotice");
+            var csf = gridObj.GetComponent<ContentSizeFitter>();
+            if (csf == null) csf = gridObj.AddComponent<ContentSizeFitter>();
+            csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            scrollRect.content = gridRt;
+            scrollRect.viewport = viewportRt;
+
+            var emptyNoticeObj = GetOrCreateChild(dialogObj.transform, "EmptyNoticeText");
             var enRt = emptyNoticeObj.GetComponent<RectTransform>();
             enRt.anchorMin = new Vector2(0.5f, 0.5f);
             enRt.anchorMax = new Vector2(0.5f, 0.5f);
@@ -410,7 +1014,6 @@ namespace TopDownGame.Editor
             enTmp.alignment = TextAlignmentOptions.Center;
             enTmp.color = new Color(0.45f, 0.35f, 0.2f, 0.85f);
 
-            // Close Button
             var closeBtnObj = GetOrCreateChild(dialogObj.transform, "CloseButton");
             var closeRt = closeBtnObj.GetComponent<RectTransform>();
             closeRt.anchorMin = new Vector2(1f, 1f);
@@ -441,7 +1044,6 @@ namespace TopDownGame.Editor
             closeTmp.alignment = TextAlignmentOptions.Center;
             closeTmp.color = Color.white;
 
-            // BagModalUI component
             var bagModalComp = modalObj.GetComponent<BagModalUI>();
             if (bagModalComp == null) bagModalComp = modalObj.AddComponent<BagModalUI>();
 
@@ -510,12 +1112,118 @@ namespace TopDownGame.Editor
             var txtTmp = txtObj.GetComponent<TextMeshProUGUI>();
             if (txtTmp == null) txtTmp = txtObj.AddComponent<TextMeshProUGUI>();
             txtTmp.text = text;
-            txtTmp.fontSize = 22f;
+            txtTmp.fontSize = 20f;
             txtTmp.fontStyle = FontStyles.Bold;
             txtTmp.alignment = TextAlignmentOptions.Center;
             txtTmp.color = new Color(0.95f, 0.92f, 0.85f, 1f);
 
             return btnObj;
+        }
+
+        private static GameObject CreateGoogleConnectButton(string name, Vector2 pos, Vector2 size, Transform parent, Sprite sprNormal, Sprite sprHover, Sprite sprFrame)
+        {
+            var btnObj = GetOrCreateChild(parent, name);
+            var btnRt = btnObj.GetComponent<RectTransform>();
+            btnRt.anchorMin = new Vector2(0.5f, 1f);
+            btnRt.anchorMax = new Vector2(0.5f, 1f);
+            btnRt.pivot = new Vector2(0.5f, 1f);
+            btnRt.anchoredPosition = pos;
+            btnRt.sizeDelta = size;
+
+            var btnImg = btnObj.GetComponent<Image>();
+            if (btnImg == null) btnImg = btnObj.AddComponent<Image>();
+            btnImg.sprite = sprFrame;
+            btnImg.type = Image.Type.Sliced;
+            btnImg.color = Color.white;
+            btnImg.raycastTarget = true;
+
+            // Google Icon (child) with normal and hover states
+            var iconObj = GetOrCreateChild(btnObj.transform, "GoogleIcon");
+            var iconRt = iconObj.GetComponent<RectTransform>();
+            iconRt.anchorMin = new Vector2(0f, 0.5f);
+            iconRt.anchorMax = new Vector2(0f, 0.5f);
+            iconRt.pivot = new Vector2(0.5f, 0.5f);
+            iconRt.anchoredPosition = new Vector2(22f, 0f);
+            iconRt.sizeDelta = new Vector2(28f, 28f);
+
+            var iconImg = iconObj.GetComponent<Image>();
+            if (iconImg == null) iconImg = iconObj.AddComponent<Image>();
+            iconImg.sprite = sprNormal;
+            iconImg.preserveAspect = true;
+            iconImg.raycastTarget = false;
+
+            // Text
+            var txtObj = GetOrCreateChild(btnObj.transform, "Text");
+            var txtRt = txtObj.GetComponent<RectTransform>();
+            txtRt.anchorMin = Vector2.zero;
+            txtRt.anchorMax = Vector2.one;
+            txtRt.offsetMin = new Vector2(40f, 0f);
+            txtRt.offsetMax = new Vector2(-8f, 0f);
+
+            var txtTmp = txtObj.GetComponent<TextMeshProUGUI>();
+            if (txtTmp == null) txtTmp = txtObj.AddComponent<TextMeshProUGUI>();
+            txtTmp.text = "CONNECT TO GOOGLE";
+            txtTmp.fontSize = 15f;
+            txtTmp.enableAutoSizing = true;
+            txtTmp.fontSizeMin = 10f;
+            txtTmp.fontSizeMax = 15f;
+            txtTmp.fontStyle = FontStyles.Bold;
+            txtTmp.alignment = TextAlignmentOptions.Center;
+            txtTmp.color = new Color(0.95f, 0.92f, 0.85f, 1f);
+            txtTmp.raycastTarget = false;
+
+            // Button with SpriteSwap targeting GoogleIcon
+            var btnComp = btnObj.GetComponent<Button>();
+            if (btnComp == null) btnComp = btnObj.AddComponent<Button>();
+            btnComp.targetGraphic = iconImg;
+            btnComp.transition = Selectable.Transition.SpriteSwap;
+
+            var ss = btnComp.spriteState;
+            ss.highlightedSprite = sprHover;
+            ss.pressedSprite = sprHover;
+            ss.selectedSprite = sprHover;
+            btnComp.spriteState = ss;
+
+            return btnObj;
+        }
+
+        private static void WireInGameMenuController(InGameMenuController menuCtrl, GameObject settingsPanel, BagModalUI bagModalComp)
+        {
+            var so = new SerializedObject(menuCtrl);
+            so.Update();
+
+            var spSettingsPanel = so.FindProperty("settingsPanel");
+            if (spSettingsPanel != null) spSettingsPanel.objectReferenceValue = settingsPanel;
+
+            var spBagModal = so.FindProperty("bagModal");
+            if (spBagModal != null) spBagModal.objectReferenceValue = bagModalComp;
+
+            var dialog = settingsPanel.transform.Find("DialogBox");
+            if (dialog != null)
+            {
+                var sMaster = dialog.Find("Slider_MasterVolume")?.GetComponent<Slider>();
+                var sSFX = dialog.Find("Slider_SoundEffects")?.GetComponent<Slider>();
+                var sBGM = dialog.Find("Slider_BackgroundMusic")?.GetComponent<Slider>();
+
+                var spMaster = so.FindProperty("masterVolumeSlider");
+                if (spMaster != null) spMaster.objectReferenceValue = sMaster;
+
+                var spSFX = so.FindProperty("sfxVolumeSlider");
+                if (spSFX != null) spSFX.objectReferenceValue = sSFX;
+
+                var spBGM = so.FindProperty("bgmVolumeSlider");
+                if (spBGM != null) spBGM.objectReferenceValue = sBGM;
+
+                var btnGoogle = dialog.Find("Button_ConnectToGoogle")?.GetComponent<Button>();
+                var spGoogleBtn = so.FindProperty("connectGoogleButton");
+                if (spGoogleBtn != null) spGoogleBtn.objectReferenceValue = btnGoogle;
+
+                var txtGoogle = dialog.Find("Button_ConnectToGoogle/Text")?.GetComponent<TextMeshProUGUI>();
+                var spGoogleTxt = so.FindProperty("connectGoogleText");
+                if (spGoogleTxt != null) spGoogleTxt.objectReferenceValue = txtGoogle;
+            }
+
+            so.ApplyModifiedProperties();
         }
 
         public static void SyncGameplayScenes()
@@ -529,8 +1237,11 @@ namespace TopDownGame.Editor
                 "Assets/Scenes/AltRightHallway.unity"
             };
 
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
-            if (prefab == null) return;
+            var sprSettings = AssetDatabase.LoadAssetAtPath<Sprite>(SprSettingsPath);
+            var sprBackpack = AssetDatabase.LoadAssetAtPath<Sprite>(SprBackpackPath);
+            var sprBook = AssetDatabase.LoadAssetAtPath<Sprite>(SprBookPath);
+            var sprParchment = AssetDatabase.LoadAssetAtPath<Sprite>(SprParchmentPath);
+            var sprBtnFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SprButtonFramePath);
 
             foreach (var scenePath in standaloneScenes)
             {
@@ -546,18 +1257,8 @@ namespace TopDownGame.Editor
                     var oldHome = existingCanvas.transform.Find("HomeButton");
                     if (oldHome != null) oldHome.gameObject.SetActive(false);
 
-                    // Deactivate HeartContainer outside of battle
                     var heartCont = existingCanvas.transform.Find("HeartContainer");
-                    if (heartCont != null)
-                    {
-                        heartCont.gameObject.SetActive(false);
-                    }
-
-                    var sprSettings = AssetDatabase.LoadAssetAtPath<Sprite>(SprSettingsPath);
-                    var sprBackpack = AssetDatabase.LoadAssetAtPath<Sprite>(SprBackpackPath);
-                    var sprBook = AssetDatabase.LoadAssetAtPath<Sprite>(SprBookPath);
-                    var sprParchment = AssetDatabase.LoadAssetAtPath<Sprite>(SprParchmentPath);
-                    var sprBtnFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SprButtonFramePath);
+                    if (heartCont != null) heartCont.gameObject.SetActive(false);
 
                     var btnSettings = GetOrCreateChild(existingCanvas.transform, "SettingsButton");
                     ConfigureIconButton(btnSettings, sprSettings, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-95f, -95f), new Vector2(110f, 110f));
@@ -577,28 +1278,193 @@ namespace TopDownGame.Editor
                     btnBookComp.onClick = new Button.ButtonClickedEvent();
                     UnityEditor.Events.UnityEventTools.AddPersistentListener(btnBookComp.onClick, menuCtrl.OnBookClicked);
 
-                    var settingsPanel = BuildSettingsModal(existingCanvas.transform, menuCtrl, sprParchment, sprBtnFrame);
+                    var settingsPanel = BuildSettingsModal(existingCanvas.transform, menuCtrl, isGameplay: true);
                     var bagModalObj = BuildBagModal(existingCanvas.transform, sprParchment, sprBtnFrame);
                     var bagModalComp = bagModalObj.GetComponent<BagModalUI>();
 
-                    var so = new SerializedObject(menuCtrl);
-                    so.Update();
-                    var spSettingsPanel = so.FindProperty("settingsPanel");
-                    if (spSettingsPanel != null) spSettingsPanel.objectReferenceValue = settingsPanel;
-
-                    var spBagModal = so.FindProperty("bagModal");
-                    if (spBagModal != null) spBagModal.objectReferenceValue = bagModalComp;
-
-                    var sliderComp = settingsPanel.GetComponentInChildren<Slider>(true);
-                    var spVolumeSlider = so.FindProperty("volumeSlider");
-                    if (spVolumeSlider != null) spVolumeSlider.objectReferenceValue = sliderComp;
-                    so.ApplyModifiedProperties();
+                    WireInGameMenuController(menuCtrl, settingsPanel, bagModalComp);
 
                     EditorSceneManager.MarkSceneDirty(scene);
                     EditorSceneManager.SaveScene(scene);
-                    Debug.Log($"[InGameUISetup] Synchronized canvas in scene {scenePath}");
                 }
             }
+        }
+
+        public static void SetupMainMenuScene()
+        {
+            string scenePath = "Assets/Scenes/MainMenu.unity";
+            if (!System.IO.File.Exists(scenePath)) return;
+
+            var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+            var canvas = GameObject.Find("Canvas");
+            if (canvas == null) return;
+
+            var menuCtrl = canvas.GetComponent<MainMenuController>();
+            if (menuCtrl == null) menuCtrl = canvas.AddComponent<MainMenuController>();
+
+            // Setup SettingsPanel
+            var panelObj = GetOrCreateChild(canvas.transform, "SettingsPanel");
+            panelObj.SetActive(false);
+
+            var panelRt = panelObj.GetComponent<RectTransform>();
+            panelRt.anchorMin = Vector2.zero;
+            panelRt.anchorMax = Vector2.one;
+            panelRt.offsetMin = Vector2.zero;
+            panelRt.offsetMax = Vector2.zero;
+
+            var dimmerObj = GetOrCreateChild(panelObj.transform, "Dimmer");
+            var dimmerRt = dimmerObj.GetComponent<RectTransform>();
+            dimmerRt.anchorMin = Vector2.zero;
+            dimmerRt.anchorMax = Vector2.one;
+            dimmerRt.offsetMin = Vector2.zero;
+            dimmerRt.offsetMax = Vector2.zero;
+
+            var dimmerImg = dimmerObj.GetComponent<Image>();
+            if (dimmerImg == null) dimmerImg = dimmerObj.AddComponent<Image>();
+            dimmerImg.color = new Color(0f, 0f, 0f, 0.85f);
+            dimmerImg.raycastTarget = true;
+
+            var dimmerBtn = dimmerObj.GetComponent<Button>();
+            if (dimmerBtn == null) dimmerBtn = dimmerObj.AddComponent<Button>();
+            dimmerBtn.transition = Selectable.Transition.None;
+            dimmerBtn.onClick = new Button.ButtonClickedEvent();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(dimmerBtn.onClick, menuCtrl.OnCloseSettingsClicked);
+
+            var dialogObj = GetOrCreateChild(panelObj.transform, "DialogBox");
+            var dialogRt = dialogObj.GetComponent<RectTransform>();
+            dialogRt.anchorMin = new Vector2(0.5f, 0.5f);
+            dialogRt.anchorMax = new Vector2(0.5f, 0.5f);
+            dialogRt.pivot = new Vector2(0.5f, 0.5f);
+            dialogRt.anchoredPosition = Vector2.zero;
+            dialogRt.sizeDelta = new Vector2(940f, 642f);
+
+            for (int i = dialogObj.transform.childCount - 1; i >= 0; i--)
+            {
+                Object.DestroyImmediate(dialogObj.transform.GetChild(i).gameObject);
+            }
+
+            var dialogImg = dialogObj.GetComponent<Image>();
+            if (dialogImg == null) dialogImg = dialogObj.AddComponent<Image>();
+            var sprScroll = AssetDatabase.LoadAssetAtPath<Sprite>(SprScrollCleanTracksPath);
+            dialogImg.sprite = sprScroll;
+            dialogImg.type = Image.Type.Simple;
+            dialogImg.preserveAspect = true;
+            dialogImg.color = Color.white;
+
+            var closeObj = GetOrCreateChild(dialogObj.transform, "CloseButton");
+            var closeRt = closeObj.GetComponent<RectTransform>();
+            closeRt.anchorMin = new Vector2(0.5f, 1f);
+            closeRt.anchorMax = new Vector2(0.5f, 1f);
+            closeRt.pivot = new Vector2(0.5f, 1f);
+            closeRt.anchoredPosition = new Vector2(358f, -96f);
+            closeRt.sizeDelta = new Vector2(44f, 45f);
+
+            var closeImg = closeObj.GetComponent<Image>();
+            if (closeImg == null) closeImg = closeObj.AddComponent<Image>();
+            closeImg.color = new Color(1f, 1f, 1f, 0f);
+            closeImg.raycastTarget = true;
+
+            var closeBtn = closeObj.GetComponent<Button>();
+            if (closeBtn == null) closeBtn = closeObj.AddComponent<Button>();
+            closeBtn.targetGraphic = closeImg;
+            var closeColors = closeBtn.colors;
+            closeColors.normalColor = new Color(1f, 1f, 1f, 0f);
+            closeColors.highlightedColor = new Color(1f, 1f, 1f, 0.25f);
+            closeColors.pressedColor = new Color(0f, 0f, 0f, 0.35f);
+            closeBtn.colors = closeColors;
+            closeBtn.onClick = new Button.ButtonClickedEvent();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(closeBtn.onClick, menuCtrl.OnCloseSettingsClicked);
+
+            var sprKnob = AssetDatabase.LoadAssetAtPath<Sprite>(SprKnobPath);
+
+            float row1Y = -238f;
+            var masterSlider = CreateInteractiveSlider("Slider_MasterVolume", new Vector2(148f, row1Y), dialogObj.transform, sprKnob);
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(masterSlider.onValueChanged, menuCtrl.OnMasterVolumeChanged);
+
+            float row2Y = -328f;
+            var sfxSlider = CreateInteractiveSlider("Slider_SoundEffects", new Vector2(148f, row2Y), dialogObj.transform, sprKnob);
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(sfxSlider.onValueChanged, menuCtrl.OnSFXVolumeChanged);
+
+            float row3Y = -418f;
+            var bgmSlider = CreateInteractiveSlider("Slider_BackgroundMusic", new Vector2(148f, row3Y), dialogObj.transform, sprKnob);
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(bgmSlider.onValueChanged, menuCtrl.OnBGMVolumeChanged);
+
+            var btnSaveObj = CreateOverlayButton("Button_Save", new Vector2(-135f, -504f), new Vector2(180f, 70f), dialogObj.transform);
+            var btnSave = btnSaveObj.GetComponent<Button>();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(btnSave.onClick, menuCtrl.OnSaveSettingsClicked);
+
+            var btnDefaultObj = CreateOverlayButton("Button_Default", new Vector2(148f, -504f), new Vector2(184f, 70f), dialogObj.transform);
+            var btnDefault = btnDefaultObj.GetComponent<Button>();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(btnDefault.onClick, menuCtrl.OnDefaultSettingsClicked);
+
+            EnsureSpriteImport(SprSettingsIconGoogleNormalPath);
+            EnsureSpriteImport(SprSettingsIconGoogleHoverPath);
+            var sprGoogleNormal = AssetDatabase.LoadAssetAtPath<Sprite>(SprSettingsIconGoogleNormalPath);
+            var sprGoogleHover = AssetDatabase.LoadAssetAtPath<Sprite>(SprSettingsIconGoogleHoverPath);
+            var sprBtnFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SprButtonFramePath);
+
+            var btnGoogleObj = CreateGoogleConnectButton("Button_ConnectToGoogle", new Vector2(0f, -572f), new Vector2(280f, 38f), dialogObj.transform, sprGoogleNormal, sprGoogleHover, sprBtnFrame);
+            var btnGoogle = btnGoogleObj.GetComponent<Button>();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(btnGoogle.onClick, menuCtrl.OnConnectToGoogleClicked);
+            var txtGoogle = btnGoogleObj.transform.Find("Text")?.GetComponent<TextMeshProUGUI>();
+
+            // Setup LoginPanel
+            GenerateLoginBaseTexture();
+            var loginPanel = BuildLoginPanel(canvas.transform, menuCtrl);
+
+            // Connect StartGameButton to menuCtrl.OnStartGameClicked
+            var startBtnObj = canvas.transform.Find("ButtonsContainer/StartGameButton");
+            if (startBtnObj != null)
+            {
+                var startBtn = startBtnObj.GetComponent<Button>();
+                if (startBtn != null)
+                {
+                    startBtn.onClick = new Button.ButtonClickedEvent();
+                    UnityEditor.Events.UnityEventTools.AddPersistentListener(startBtn.onClick, menuCtrl.OnStartGameClicked);
+                }
+            }
+
+            // Connect SettingsButton to menuCtrl.OnSettingsClicked
+            var settingsBtnObj = canvas.transform.Find("ButtonsContainer/SettingsButton");
+            if (settingsBtnObj != null)
+            {
+                var sBtn = settingsBtnObj.GetComponent<Button>();
+                if (sBtn != null)
+                {
+                    sBtn.onClick = new Button.ButtonClickedEvent();
+                    UnityEditor.Events.UnityEventTools.AddPersistentListener(sBtn.onClick, menuCtrl.OnSettingsClicked);
+                }
+            }
+
+            // Connect references on MainMenuController
+            var so = new SerializedObject(menuCtrl);
+            so.Update();
+            var spSettings = so.FindProperty("settingsPanel");
+            if (spSettings != null) spSettings.objectReferenceValue = panelObj;
+
+            var spLogin = so.FindProperty("loginPanel");
+            if (spLogin != null) spLogin.objectReferenceValue = loginPanel;
+
+            var spMaster = so.FindProperty("masterVolumeSlider");
+            if (spMaster != null) spMaster.objectReferenceValue = masterSlider;
+
+            var spSFX = so.FindProperty("sfxVolumeSlider");
+            if (spSFX != null) spSFX.objectReferenceValue = sfxSlider;
+
+            var spBGM = so.FindProperty("bgmVolumeSlider");
+            if (spBGM != null) spBGM.objectReferenceValue = bgmSlider;
+
+            var spGoogleBtn = so.FindProperty("connectGoogleButton");
+            if (spGoogleBtn != null) spGoogleBtn.objectReferenceValue = btnGoogle;
+
+            var spGoogleTxt = so.FindProperty("connectGoogleText");
+            if (spGoogleTxt != null) spGoogleTxt.objectReferenceValue = txtGoogle;
+
+            so.ApplyModifiedProperties();
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log("[InGameUISetup] MainMenu.unity Settings and Login UI updated successfully!");
         }
     }
 }

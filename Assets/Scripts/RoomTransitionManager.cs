@@ -35,5 +35,16 @@ namespace TopDownGame
             Debug.Log($"[RoomTransition] Exiting back to {target}. Return door: '{ReturnDoorName}', HasReturnPosition: {HasReturnPosition}");
             SceneManager.LoadScene(target);
         }
+
+        public static void Reset()
+        {
+            ReturnDoorName = null;
+            ReturnPosition = Vector2.zero;
+            HasReturnPosition = false;
+            ReturnSceneName = "Lobby";
+            HasReturnFacing = false;
+            CurrentRoomDisplayName = "Room 1";
+            CurrentRoomNumber = 1;
+        }
     }
 }

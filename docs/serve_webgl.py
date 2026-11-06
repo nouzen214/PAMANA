@@ -9,7 +9,7 @@ BUILD_DIR = os.path.dirname(os.path.abspath(__file__))
 class WebGLHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Cross-Origin-Opener-Policy", "same-origin")
+        self.send_header("Cross-Origin-Opener-Policy", "same-origin-allow-popups")
         self.send_header("Cross-Origin-Embedder-Policy", "require-corp")
         super().end_headers()
 

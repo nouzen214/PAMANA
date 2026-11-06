@@ -42,10 +42,32 @@ namespace TopDownGame
                 dimmerButton.onClick.AddListener(CloseBag);
             }
 
+            ConfigureGridContainer();
+
             if (modalRoot != null)
             {
                 modalRoot.SetActive(false);
             }
+        }
+
+        private void ConfigureGridContainer()
+        {
+            if (itemsGridContainer == null) return;
+
+            var glg = itemsGridContainer.GetComponent<GridLayoutGroup>();
+            if (glg == null) glg = itemsGridContainer.gameObject.AddComponent<GridLayoutGroup>();
+
+            glg.cellSize = new Vector2(350f, 105f);
+            glg.spacing = new Vector2(20f, 15f);
+            glg.padding = new RectOffset(20, 20, 15, 15);
+            glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            glg.constraintCount = 2;
+            glg.childAlignment = TextAnchor.UpperLeft;
+
+            var csf = itemsGridContainer.GetComponent<ContentSizeFitter>();
+            if (csf == null) csf = itemsGridContainer.gameObject.AddComponent<ContentSizeFitter>();
+            csf.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         }
 
         private void OnEnable()
@@ -109,6 +131,8 @@ namespace TopDownGame
 
         public void RefreshUI()
         {
+            ConfigureGridContainer();
+
             var items = PlayerInventory.Items;
 
             if (countText != null)
@@ -138,67 +162,139 @@ namespace TopDownGame
             }
         }
 
+        private static Sprite ResolveArtifactSprite(ArtifactItemData item)
+        {
+            if (item == null) return null;
+            if (item.icon != null) return item.icon;
+
+            string[] searchKeys = new string[] { item.name, item.id };
+            foreach (var k in searchKeys)
+            {
+                if (string.IsNullOrEmpty(k)) continue;
+                string lower = k.ToLowerInvariant();
+                string path = null;
+                if (lower.Contains("spectacles") || lower.Contains("glasses")) path = "Assets/Sprites/Artifacts/Artifact_Glasses.png";
+                else if (lower.Contains("stamp") || lower.Contains("seal")) path = "Assets/Sprites/Artifacts/Artifact_Stamp.png";
+                else if (lower.Contains("pen") || lower.Contains("nib") || lower.Contains("quill")) path = "Assets/Sprites/Artifacts/Artifact_PenNib.png";
+                else if (lower.Contains("notebook") || lower.Contains("book") || lower.Contains("journal")) path = "Assets/Sprites/Artifacts/Artifact_Book.png";
+                else if (lower.Contains("locket") || lower.Contains("pendant")) path = "Assets/Sprites/Artifacts/Artifact_Locket.png";
+                else if (lower.Contains("galley") || lower.Contains("proof")) path = "Assets/Sprites/Artifacts/Artifact_GalleyProofSheets.png";
+                else if (lower.Contains("matrix") || lower.Contains("press")) path = "Assets/Sprites/Artifacts/Artifact_PrintingPressMatrix.png";
+                else if (lower.Contains("fili") || lower.Contains("novel") || lower.Contains("edition")) path = "Assets/Sprites/Artifacts/Artifact_FirstEditionNovelCopy.png";
+                else if (lower.Contains("stove")) path = "Assets/Sprites/Artifacts/Artifact_AlcoholCookingStove.png";
+
+#if UNITY_EDITOR
+                if (path != null)
+                {
+                    var s = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                    if (s != null) return s;
+                }
+#endif
+            }
+            return null;
+        }
+
         private GameObject CreateItemCard(ArtifactItemData item, Transform parent)
         {
             var cardObj = new GameObject($"Card_{item.id}", typeof(RectTransform), typeof(Image));
             cardObj.transform.SetParent(parent, false);
 
             var img = cardObj.GetComponent<Image>();
-            img.color = new Color(0.18f, 0.16f, 0.15f, 0.95f);
+            img.color = new Color(0.20f, 0.16f, 0.13f, 0.98f);
+
+            var outline = cardObj.AddComponent<Outline>();
+            outline.effectColor = new Color(0.68f, 0.52f, 0.32f, 0.85f);
+            outline.effectDistance = new Vector2(1.5f, -1.5f);
 
             var cardRt = cardObj.GetComponent<RectTransform>();
-            cardRt.sizeDelta = new Vector2(360f, 95f);
+            cardRt.sizeDelta = new Vector2(350f, 105f);
 
-            // Icon Frame / Icon
+            // Icon Frame (light aged parchment square so dark artifact sprites stand out with high contrast)
+            var iconFrameObj = new GameObject("IconFrame", typeof(RectTransform), typeof(Image));
+            iconFrameObj.transform.SetParent(cardObj.transform, false);
+            var iconFrameRt = iconFrameObj.GetComponent<RectTransform>();
+            iconFrameRt.anchorMin = new Vector2(0f, 0.5f);
+            iconFrameRt.anchorMax = new Vector2(0f, 0.5f);
+            iconFrameRt.pivot = new Vector2(0f, 0.5f);
+            iconFrameRt.anchoredPosition = new Vector2(12f, 0f);
+            iconFrameRt.sizeDelta = new Vector2(80f, 80f);
+
+            var frameImg = iconFrameObj.GetComponent<Image>();
+            frameImg.color = new Color(0.92f, 0.88f, 0.80f, 1f);
+
+            var frameOutline = iconFrameObj.AddComponent<Outline>();
+            frameOutline.effectColor = new Color(0.42f, 0.32f, 0.22f, 0.6f);
+            frameOutline.effectDistance = new Vector2(1f, -1f);
+
+            // Artifact Icon
             var iconObj = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-            iconObj.transform.SetParent(cardObj.transform, false);
+            iconObj.transform.SetParent(iconFrameObj.transform, false);
             var iconRt = iconObj.GetComponent<RectTransform>();
-            iconRt.anchorMin = new Vector2(0f, 0.5f);
-            iconRt.anchorMax = new Vector2(0f, 0.5f);
-            iconRt.pivot = new Vector2(0f, 0.5f);
-            iconRt.anchoredPosition = new Vector2(14f, 0f);
-            iconRt.sizeDelta = new Vector2(68f, 68f);
+            iconRt.anchorMin = Vector2.zero;
+            iconRt.anchorMax = Vector2.one;
+            iconRt.offsetMin = new Vector2(6f, 6f);
+            iconRt.offsetMax = new Vector2(-6f, -6f);
+
             var iconImg = iconObj.GetComponent<Image>();
-            if (item.icon != null)
+            var spr = ResolveArtifactSprite(item);
+            if (spr != null)
             {
-                iconImg.sprite = item.icon;
+                iconImg.sprite = spr;
                 iconImg.color = Color.white;
             }
             else
             {
-                iconImg.color = new Color(1f, 1f, 1f, 0.15f);
+                iconImg.color = new Color(0.35f, 0.30f, 0.25f, 0.3f);
             }
             iconImg.preserveAspect = true;
 
-            // Name
+            // Info Container (Right side)
+            var infoObj = new GameObject("Info", typeof(RectTransform));
+            infoObj.transform.SetParent(cardObj.transform, false);
+            var infoRt = infoObj.GetComponent<RectTransform>();
+            infoRt.anchorMin = Vector2.zero;
+            infoRt.anchorMax = Vector2.one;
+            infoRt.offsetMin = new Vector2(104f, 8f);
+            infoRt.offsetMax = new Vector2(-12f, -8f);
+
+            // Item Name
             var nameObj = new GameObject("Name", typeof(RectTransform), typeof(TextMeshProUGUI));
-            nameObj.transform.SetParent(cardObj.transform, false);
+            nameObj.transform.SetParent(infoObj.transform, false);
             var nameRt = nameObj.GetComponent<RectTransform>();
             nameRt.anchorMin = new Vector2(0f, 1f);
             nameRt.anchorMax = new Vector2(1f, 1f);
             nameRt.pivot = new Vector2(0f, 1f);
-            nameRt.anchoredPosition = new Vector2(95f, -10f);
-            nameRt.sizeDelta = new Vector2(-105f, 28f);
+            nameRt.anchoredPosition = new Vector2(0f, 0f);
+            nameRt.sizeDelta = new Vector2(0f, 26f);
+
             var nameTmp = nameObj.GetComponent<TextMeshProUGUI>();
             nameTmp.text = item.name;
-            nameTmp.fontSize = 18f;
+            nameTmp.fontSize = 16f;
             nameTmp.fontStyle = FontStyles.Bold;
-            nameTmp.color = new Color(0.96f, 0.85f, 0.55f, 1f);
+            nameTmp.color = new Color(0.98f, 0.88f, 0.55f, 1f);
+            nameTmp.enableAutoSizing = true;
+            nameTmp.fontSizeMin = 13f;
+            nameTmp.fontSizeMax = 16f;
+            nameTmp.textWrappingMode = TextWrappingModes.Normal;
+            nameTmp.overflowMode = TextOverflowModes.Ellipsis;
 
-            // Description
+            // Item Description
             var descObj = new GameObject("Desc", typeof(RectTransform), typeof(TextMeshProUGUI));
-            descObj.transform.SetParent(cardObj.transform, false);
+            descObj.transform.SetParent(infoObj.transform, false);
             var descRt = descObj.GetComponent<RectTransform>();
-            descRt.anchorMin = new Vector2(0f, 0f);
-            descRt.anchorMax = new Vector2(1f, 1f);
+            descRt.anchorMin = Vector2.zero;
+            descRt.anchorMax = Vector2.one;
             descRt.pivot = new Vector2(0f, 0f);
-            descRt.anchoredPosition = new Vector2(95f, 8f);
-            descRt.sizeDelta = new Vector2(-105f, -40f);
+            descRt.offsetMin = Vector2.zero;
+            descRt.offsetMax = new Vector2(0f, -28f);
+
             var descTmp = descObj.GetComponent<TextMeshProUGUI>();
             descTmp.text = item.description;
-            descTmp.fontSize = 13f;
-            descTmp.color = new Color(0.85f, 0.85f, 0.85f, 0.9f);
+            descTmp.fontSize = 11.5f;
+            descTmp.color = new Color(0.88f, 0.85f, 0.80f, 0.95f);
+            descTmp.textWrappingMode = TextWrappingModes.Normal;
             descTmp.overflowMode = TextOverflowModes.Ellipsis;
+            descTmp.alignment = TextAlignmentOptions.TopLeft;
 
             return cardObj;
         }
@@ -283,10 +379,12 @@ namespace TopDownGame
             gridRt.anchoredPosition = new Vector2(0f, -20f);
             gridRt.sizeDelta = new Vector2(760f, 360f);
             var glg = gridObj.GetComponent<GridLayoutGroup>();
-            glg.cellSize = new Vector2(360f, 95f);
+            glg.cellSize = new Vector2(350f, 105f);
             glg.spacing = new Vector2(20f, 15f);
+            glg.padding = new RectOffset(20, 20, 15, 15);
             glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             glg.constraintCount = 2;
+            glg.childAlignment = TextAnchor.UpperLeft;
 
             // Empty Notice
             var emptyNoticeObj = new GameObject("EmptyNotice", typeof(RectTransform), typeof(TextMeshProUGUI));

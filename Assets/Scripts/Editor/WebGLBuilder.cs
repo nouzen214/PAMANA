@@ -1,4 +1,5 @@
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 using System.IO;
@@ -18,6 +19,7 @@ namespace TopDownGame.Editor
             }
 
             string buildPath = "Builds/WebGL";
+            PlayerSettings.WebGL.template = "PROJECT:PAMANA";
             PlayerSettings.WebGL.decompressionFallback = true;
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
@@ -32,19 +34,36 @@ namespace TopDownGame.Editor
             if (summary.result == BuildResult.Succeeded)
             {
                 Debug.Log($"[WebGLBuilder] Build succeeded: {summary.totalSize} bytes");
-                CopyDirectory("Builds/WebGL/Build", "docs/Build");
-                CopyDirectory("Builds/WebGL/TemplateData", "docs/TemplateData");
-                File.Copy("Builds/WebGL/index.html", "docs/index.html", true);
-                if (!File.Exists("docs/.nojekyll"))
-                {
-                    File.WriteAllText("docs/.nojekyll", "");
-                }
-                Debug.Log("[WebGLBuilder] Synced build to docs/ folder!");
+                SyncToDocs();
             }
             else
             {
                 Debug.LogError($"[WebGLBuilder] Build failed with result: {summary.result}");
             }
+        }
+
+        public static void SyncToDocs()
+        {
+            if (!Directory.Exists("Builds/WebGL/Build")) return;
+
+            if (Directory.Exists("docs/Build"))
+            {
+                Directory.Delete("docs/Build", true);
+            }
+            CopyDirectory("Builds/WebGL/Build", "docs/Build");
+            if (Directory.Exists("Builds/WebGL/TemplateData"))
+            {
+                CopyDirectory("Builds/WebGL/TemplateData", "docs/TemplateData");
+            }
+            if (File.Exists("Builds/WebGL/index.html"))
+            {
+                File.Copy("Builds/WebGL/index.html", "docs/index.html", true);
+            }
+            if (!File.Exists("docs/.nojekyll"))
+            {
+                File.WriteAllText("docs/.nojekyll", "");
+            }
+            Debug.Log("[WebGLBuilder] Synced build to docs/ folder!");
         }
 
         private static void CopyDirectory(string sourceDir, string destinationDir)
@@ -59,6 +78,18 @@ namespace TopDownGame.Editor
             {
                 string nextDestinationDir = Path.Combine(destinationDir, Path.GetFileName(subDir));
                 CopyDirectory(subDir, nextDestinationDir);
+            }
+        }
+    }
+
+    public class WebGLPostProcessor : IPostprocessBuildWithReport
+    {
+        public int callbackOrder => 100;
+        public void OnPostprocessBuild(BuildReport report)
+        {
+            if (report.summary.platform == BuildTarget.WebGL && report.summary.result == BuildResult.Succeeded)
+            {
+                WebGLBuilder.SyncToDocs();
             }
         }
     }

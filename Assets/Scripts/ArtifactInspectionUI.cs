@@ -100,45 +100,96 @@ namespace TopDownGame
                 _playerMovement.enabled = true;
         }
 
+        private void CleanAllChoiceButtons()
+        {
+            if (choiceContainer == null) return;
+            foreach (Transform child in choiceContainer.transform)
+            {
+                if (child == null) continue;
+                var badge = child.Find("Badge");
+                if (badge != null)
+                {
+                    if (Application.isPlaying) Destroy(badge.gameObject);
+                    else DestroyImmediate(badge.gameObject);
+                }
+                var letter = child.Find("Letter");
+                if (letter != null)
+                {
+                    if (Application.isPlaying) Destroy(letter.gameObject);
+                    else DestroyImmediate(letter.gameObject);
+                }
+                var labelTr = child.Find("Label");
+                if (labelTr != null)
+                {
+                    var rt = labelTr.GetComponent<RectTransform>();
+                    if (rt != null)
+                    {
+                        rt.anchorMin = Vector2.zero;
+                        rt.anchorMax = Vector2.one;
+                        rt.offsetMin = new Vector2(20f, 0f);
+                        rt.offsetMax = new Vector2(-20f, 0f);
+                    }
+                    var tmp = labelTr.GetComponent<TextMeshProUGUI>();
+                    if (tmp != null)
+                    {
+                        tmp.alignment = TextAlignmentOptions.Center;
+                    }
+                }
+            }
+        }
+
         private void EnsureRestoreButton()
         {
-            if (restoreArtifactButton != null) return;
             if (choiceContainer == null) return;
 
-            var existing = choiceContainer.transform.Find("RestoreArtifactButton");
-            if (existing != null)
+            CleanAllChoiceButtons();
+
+            if (restoreArtifactButton == null)
             {
-                restoreArtifactButton = existing.GetComponent<Button>();
-                return;
+                var existing = choiceContainer.transform.Find("RestoreArtifactButton");
+                if (existing != null)
+                {
+                    restoreArtifactButton = existing.GetComponent<Button>();
+                }
+                else if (inspectArtifactButton != null)
+                {
+                    var btnObj = Instantiate(inspectArtifactButton.gameObject, choiceContainer.transform);
+                    btnObj.name = "RestoreArtifactButton";
+                    var txt = btnObj.GetComponentInChildren<TMP_Text>();
+                    if (txt != null)
+                    {
+                        txt.text = "place from bag";
+                        txt.alignment = TextAlignmentOptions.Center;
+                    }
+                    restoreArtifactButton = btnObj.GetComponent<Button>();
+                    restoreArtifactButton.onClick.RemoveAllListeners();
+                    restoreArtifactButton.onClick.AddListener(OnRestoreArtifactClicked);
+
+                    // Configure layout
+                    var vlg = choiceContainer.GetComponent<VerticalLayoutGroup>();
+                    if (vlg == null)
+                    {
+                        vlg = choiceContainer.AddComponent<VerticalLayoutGroup>();
+                        vlg.childAlignment = TextAnchor.MiddleCenter;
+                        vlg.spacing = 10f;
+                        vlg.childControlWidth = false;
+                        vlg.childControlHeight = false;
+                        vlg.childForceExpandWidth = false;
+                        vlg.childForceExpandHeight = false;
+
+                        var rt = choiceContainer.GetComponent<RectTransform>();
+                        if (rt != null) rt.sizeDelta = new Vector2(360f, 220f);
+                    }
+
+                    btnObj.transform.SetSiblingIndex(0); // Place at top of choice box
+                }
             }
 
-            if (inspectArtifactButton != null)
+            CleanAllChoiceButtons();
+
+            if (restoreArtifactButton != null)
             {
-                var btnObj = Instantiate(inspectArtifactButton.gameObject, choiceContainer.transform);
-                btnObj.name = "RestoreArtifactButton";
-                var txt = btnObj.GetComponentInChildren<TMP_Text>();
-                if (txt != null) txt.text = "place from bag";
-                restoreArtifactButton = btnObj.GetComponent<Button>();
-                restoreArtifactButton.onClick.RemoveAllListeners();
-                restoreArtifactButton.onClick.AddListener(OnRestoreArtifactClicked);
-
-                // Configure layout
-                var vlg = choiceContainer.GetComponent<VerticalLayoutGroup>();
-                if (vlg == null)
-                {
-                    vlg = choiceContainer.AddComponent<VerticalLayoutGroup>();
-                    vlg.childAlignment = TextAnchor.MiddleCenter;
-                    vlg.spacing = 10f;
-                    vlg.childControlWidth = false;
-                    vlg.childControlHeight = false;
-                    vlg.childForceExpandWidth = false;
-                    vlg.childForceExpandHeight = false;
-
-                    var rt = choiceContainer.GetComponent<RectTransform>();
-                    if (rt != null) rt.sizeDelta = new Vector2(360f, 220f);
-                }
-
-                btnObj.transform.SetSiblingIndex(0); // Place at top of choice box
+                restoreArtifactButton.gameObject.SetActive(true);
             }
         }
 
@@ -249,7 +300,8 @@ namespace TopDownGame
 
             if (characterNameText != null)
             {
-                characterNameText.text = isGirl ? "Darla" : "Darrel";
+                string defaultName = isGirl ? "Darla" : "Darrel";
+                characterNameText.text = PlayerPrefs.GetString("CustomCharacterName", defaultName);
                 characterNameText.color = new Color(1f, 0.95f, 0.85f, 1f);
             }
 
@@ -304,10 +356,13 @@ namespace TopDownGame
             EnsureRestoreButton();
             if (restoreArtifactButton != null)
             {
-                bool isPedestalRestored = _currentArtifact != null && _currentArtifact.IsRestored;
-                // Only show restore button if pedestal is NOT restored yet
-                restoreArtifactButton.gameObject.SetActive(!isPedestalRestored);
+                // Option "place from bag" is always visible on all artifacts
+                restoreArtifactButton.gameObject.SetActive(true);
             }
+            if (inspectArtifactButton != null) inspectArtifactButton.gameObject.SetActive(true);
+            if (inspectPlaqueButton != null) inspectPlaqueButton.gameObject.SetActive(true);
+
+            CleanAllChoiceButtons();
         }
 
         private bool DoesPlayerHaveArtifactForPedestal(ArtifactInteractable pedestal)
@@ -341,8 +396,8 @@ namespace TopDownGame
             string iname = item.name.ToLowerInvariant();
             string pname = pedestal.ArtifactName.ToLowerInvariant();
             if (iname.Contains("seal") && pname.Contains("seal")) return true;
-            if (iname.Contains("manuscript") && pname.Contains("manuscript")) return true;
-            if ((iname.Contains("quill") || iname.Contains("nib")) && (pname.Contains("quill") || pname.Contains("nib"))) return true;
+            if ((iname.Contains("notebook") || iname.Contains("manuscript") || iname.Contains("book")) && (pname.Contains("notebook") || pname.Contains("manuscript") || pname.Contains("book"))) return true;
+            if ((iname.Contains("quill") || iname.Contains("nib") || iname.Contains("pen")) && (pname.Contains("quill") || pname.Contains("nib") || pname.Contains("pen"))) return true;
             if ((iname.Contains("spectacles") || iname.Contains("glasses")) && (pname.Contains("spectacles") || pname.Contains("glasses"))) return true;
             if (iname.Contains("locket") && pname.Contains("locket")) return true;
 
@@ -354,6 +409,23 @@ namespace TopDownGame
             if (choiceContainer != null) choiceContainer.SetActive(false);
             if (plaquePopup != null) plaquePopup.SetActive(false);
             if (artifactPopup != null) artifactPopup.SetActive(false);
+
+            if (_currentArtifact != null && _currentArtifact.IsRestored)
+            {
+                NotificationBannerUI.Show(
+                    "ALREADY RESTORED",
+                    $"The {_currentArtifact.ArtifactName} is already safely restored to this pedestal!",
+                    3.5f,
+                    new Color(0.2f, 0.95f, 0.4f, 1f),
+                    "★"
+                );
+                if (dialogueText != null)
+                {
+                    dialogueText.text = $"The {_currentArtifact.ArtifactName} has already been safely restored to this pedestal!";
+                }
+                if (choiceContainer != null) choiceContainer.SetActive(true);
+                return;
+            }
 
             EnsureRestorePickerModal();
             RefreshRestorePicker();
@@ -524,20 +596,40 @@ namespace TopDownGame
                 cardObj.transform.SetParent(_restoreItemsGrid, false);
 
                 var img = cardObj.GetComponent<Image>();
-                img.color = new Color(0.18f, 0.16f, 0.15f, 0.95f);
+                img.color = new Color(0.20f, 0.16f, 0.13f, 0.98f);
+
+                var outline = cardObj.AddComponent<Outline>();
+                outline.effectColor = new Color(0.68f, 0.52f, 0.32f, 0.85f);
+                outline.effectDistance = new Vector2(1.5f, -1.5f);
 
                 var cardRt = cardObj.GetComponent<RectTransform>();
                 cardRt.sizeDelta = new Vector2(360f, 95f);
 
+                // Icon Frame (light parchment background for high contrast)
+                var iconFrameObj = new GameObject("IconFrame", typeof(RectTransform), typeof(Image));
+                iconFrameObj.transform.SetParent(cardObj.transform, false);
+                var iconFrameRt = iconFrameObj.GetComponent<RectTransform>();
+                iconFrameRt.anchorMin = new Vector2(0f, 0.5f);
+                iconFrameRt.anchorMax = new Vector2(0f, 0.5f);
+                iconFrameRt.pivot = new Vector2(0f, 0.5f);
+                iconFrameRt.anchoredPosition = new Vector2(12f, 0f);
+                iconFrameRt.sizeDelta = new Vector2(74f, 74f);
+
+                var frameImg = iconFrameObj.GetComponent<Image>();
+                frameImg.color = new Color(0.92f, 0.88f, 0.80f, 1f);
+
+                var frameOutline = iconFrameObj.AddComponent<Outline>();
+                frameOutline.effectColor = new Color(0.42f, 0.32f, 0.22f, 0.6f);
+                frameOutline.effectDistance = new Vector2(1f, -1f);
+
                 // Icon
                 var iconObj = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-                iconObj.transform.SetParent(cardObj.transform, false);
+                iconObj.transform.SetParent(iconFrameObj.transform, false);
                 var iconRt = iconObj.GetComponent<RectTransform>();
-                iconRt.anchorMin = new Vector2(0f, 0.5f);
-                iconRt.anchorMax = new Vector2(0f, 0.5f);
-                iconRt.pivot = new Vector2(0f, 0.5f);
-                iconRt.anchoredPosition = new Vector2(14f, 0f);
-                iconRt.sizeDelta = new Vector2(68f, 68f);
+                iconRt.anchorMin = Vector2.zero;
+                iconRt.anchorMax = Vector2.one;
+                iconRt.offsetMin = new Vector2(5f, 5f);
+                iconRt.offsetMax = new Vector2(-5f, -5f);
                 var iconImg = iconObj.GetComponent<Image>();
                 if (item.icon != null)
                 {
@@ -546,7 +638,7 @@ namespace TopDownGame
                 }
                 else
                 {
-                    iconImg.color = new Color(1f, 1f, 1f, 0.2f);
+                    iconImg.color = new Color(0.35f, 0.30f, 0.25f, 0.3f);
                 }
                 iconImg.preserveAspect = true;
 
@@ -660,12 +752,25 @@ namespace TopDownGame
             // Check room restoration status
             int retrieved = GameProgression.GetRoomRetrievedCount(rNum);
             int restored = GameProgression.GetPedestalsRestoredCount(rNum);
-            if (retrieved > 0 && restored >= retrieved)
+            if (restored == 1)
             {
+                string nextMsg = (rNum < 12)
+                    ? $"You restored an artifact to Room {rNum}!\nReal World Room {rNum + 1} is now OPEN!"
+                    : $"You restored an artifact to Room {rNum}!";
                 NotificationBannerUI.Show(
                     $"ROOM {rNum} RESTORED!",
-                    $"All recovered artifacts restored to Room {rNum}!\nReal World Room {rNum + 1} is now OPEN!",
+                    nextMsg,
                     6.0f,
+                    new Color(0.2f, 0.95f, 0.4f, 1f),
+                    "★"
+                );
+            }
+            else if (retrieved > 1 && restored >= retrieved)
+            {
+                NotificationBannerUI.Show(
+                    $"ROOM {rNum} COMPLETE!",
+                    $"All {retrieved} recovered artifacts restored to Room {rNum}!",
+                    5.0f,
                     new Color(0.2f, 0.95f, 0.4f, 1f),
                     "★"
                 );

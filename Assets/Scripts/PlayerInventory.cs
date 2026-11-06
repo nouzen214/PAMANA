@@ -84,5 +84,10 @@ namespace TopDownGame
             _items.Clear();
             OnInventoryChanged?.Invoke();
         }
+
+        public static void ClearSilently()
+        {
+            _items.Clear();
+        }
     }
 }

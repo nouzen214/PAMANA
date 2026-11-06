@@ -65,15 +65,11 @@ namespace TopDownGame
                 // Update visuals on every pedestal according to individual restoration state
                 UpdateRoomPedestalVisuals(currentRoom);
 
-                if (GameProgression.HasReturnedRoomArtifactsToRealWorld(currentRoom))
-                {
-                    // Already fully restored
-                }
-                else if (GameProgression.HasRetrievedRoomArtifact(currentRoom))
-                {
-                    int retrieved = GameProgression.GetRoomRetrievedCount(currentRoom);
-                    int restored = GameProgression.GetPedestalsRestoredCount(currentRoom);
+                int retrieved = GameProgression.GetRoomRetrievedCount(currentRoom);
+                int restored = GameProgression.GetPedestalsRestoredCount(currentRoom);
 
+                if (retrieved > 0 && restored < retrieved)
+                {
                     NotificationBannerUI.Show(
                         $"ROOM {currentRoom}",
                         $"You have recovered artifacts in your bag!\nWalk up to each pedestal and interact to place them ({restored}/{retrieved} placed).",
@@ -81,6 +77,10 @@ namespace TopDownGame
                         new Color(0.2f, 0.92f, 0.5f, 1f),
                         "★"
                     );
+                }
+                else if (restored >= 1)
+                {
+                    // At least 1 artifact restored, progression unlocked
                 }
                 else if (!GameProgression.AreAllPlaquesRead(currentRoom))
                 {

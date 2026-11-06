@@ -702,7 +702,7 @@ namespace TopDownGame
                 page.transform,
                 "STEP 2: CRIME SCENE PEDESTALS",
                 "OBSERVE THE BLACK SILHOUETTES",
-                "Inside Room 1, you will find 3 pedestals showing solid black silhouettes (Ancient Seal of Tondo, Sacred Doctrina Manuscript, Illustrado Quill Nib). The black color indicates the artifact is missing!",
+                "Inside Room 1, you will find 3 pedestals showing solid black silhouettes (University Wax Seal Stamp, Travel Notebook, Dip Pen Nib). The black color indicates the artifact is missing!",
                 new Color(0.18f, 0.28f, 0.38f, 1f)
             );
 

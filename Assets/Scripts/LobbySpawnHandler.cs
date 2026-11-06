@@ -60,7 +60,7 @@ namespace TopDownGame
                 {
                     NotificationBannerUI.Show(
                         "RETURN ARTIFACTS TO ROOM 1",
-                        "Head down the West Wing to Room 1 to return the relics and unlock Alterworld Room 2!",
+                        "Head down the West Wing to Room 1 to place recovered artifacts on their pedestals and unlock Room 2!",
                         5.5f,
                         new Color(0.95f, 0.85f, 0.35f, 1f),
                         "★"

@@ -79,8 +79,8 @@ namespace TopDownGame
             if (isAltScene)
             {
                 // In Alter World:
-                // Completed room battle: LOCKED (player cannot re-enter).
-                if (GameProgression.IsRoomBattleCompleted(roomNum))
+                // Completed room battle: LOCKED (player cannot re-enter once they won and retrieved >= 1 artifact).
+                if (GameProgression.IsRoomBattleCompleted(roomNum) && GameProgression.GetRoomRetrievedCount(roomNum) > 0)
                 {
                     isLocked = true;
                 }
@@ -91,8 +91,8 @@ namespace TopDownGame
                 }
                 else
                 {
-                    // Next room: UNLOCKED only after:
-                    // 1) previous room artifacts are restored in the Real World!
+                    // Next room Alterworld battle: UNLOCKED only after:
+                    // 1) previous room has at least 1 artifact restored in the Real World!
                     // 2) AND all 5 plaques in this room have been read in the Real World!
                     bool prevReturned = GameProgression.HasReturnedRoomArtifactsToRealWorld(roomNum - 1);
                     bool plaquesRead = GameProgression.AreAllPlaquesRead(roomNum);
@@ -103,7 +103,7 @@ namespace TopDownGame
             {
                 // In Normal World:
                 // Room 1 is UNLOCKED from the start.
-                // Room N (N >= 2) unlocks when the previous room (N - 1) artifacts have been restored!
+                // Room N (N >= 2) unlocks when the previous room (N - 1) has at least 1 artifact restored to a pedestal!
                 if (roomNum == 1)
                 {
                     isLocked = false;
@@ -122,6 +122,14 @@ namespace TopDownGame
             {
                 return parsed;
             }
+            if (!string.IsNullOrEmpty(targetSceneName))
+            {
+                var matchScene = System.Text.RegularExpressions.Regex.Match(targetSceneName, @"\d+");
+                if (matchScene.Success && int.TryParse(matchScene.Value, out int parsedScene))
+                {
+                    return parsedScene;
+                }
+            }
             return 1;
         }
 
@@ -138,7 +146,7 @@ namespace TopDownGame
                 string lockMessage;
                 if (isAltScene)
                 {
-                    if (GameProgression.IsRoomBattleCompleted(roomNum))
+                    if (GameProgression.IsRoomBattleCompleted(roomNum) && GameProgression.GetRoomRetrievedCount(roomNum) > 0)
                     {
                         lockMessage = $"{roomDisplayName} trial is already finished!\nYou cannot re-enter.";
                     }
@@ -152,9 +160,9 @@ namespace TopDownGame
                         int prevRoom = roomNum - 1;
                         if (!GameProgression.HasReturnedRoomArtifactsToRealWorld(prevRoom))
                         {
-                            if (GameProgression.HasRetrievedRoomArtifact(prevRoom))
+                            if (GameProgression.HasRetrievedRoomArtifact(prevRoom) || GameProgression.GetRoomRetrievedCount(prevRoom) > 0)
                             {
-                                lockMessage = $"{roomDisplayName} trial is locked!\nReturn the recovered artifacts inside Room {prevRoom} in the Real World first!";
+                                lockMessage = $"{roomDisplayName} trial is locked!\nPlace at least 1 recovered artifact on its pedestal in Room {prevRoom} in the Real World first!";
                             }
                             else
                             {
@@ -173,13 +181,13 @@ namespace TopDownGame
                     int prevRoom = roomNum - 1;
                     int retrieved = GameProgression.GetRoomRetrievedCount(prevRoom);
                     int restored = GameProgression.GetPedestalsRestoredCount(prevRoom);
-                    if (retrieved > 0 && restored < retrieved)
+                    if (retrieved > 0 && restored == 0)
                     {
-                        lockMessage = $"{roomDisplayName} is currently locked!\nInteract with the pedestals in Room {prevRoom} to restore your recovered artifacts! ({restored}/{retrieved} placed)";
+                        lockMessage = $"{roomDisplayName} is currently locked!\nPlace at least 1 recovered artifact on a pedestal in Room {prevRoom} to unlock this door!";
                     }
                     else
                     {
-                        lockMessage = $"{roomDisplayName} is currently locked!\nRestore all artifacts to Room {prevRoom} in the Real World first!";
+                        lockMessage = $"{roomDisplayName} is currently locked!\nConquer Room {prevRoom} trial in the Alterworld and recover at least 1 artifact first!";
                     }
                 }
 

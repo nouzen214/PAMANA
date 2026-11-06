@@ -104,13 +104,13 @@ namespace TopDownGame
             get
             {
                 if (PlayerPrefs.GetInt(KEY_ROOM1_ARTIFACT_RETRIEVED, 0) == 1) return true;
+                if (GetRoomRetrievedCount(1) > 0) return true;
                 if (PlayerInventory.HasArtifact("Room1_DipPenNib") ||
                     PlayerInventory.HasArtifact("Room1_UniversityWaxSeal") ||
                     PlayerInventory.HasArtifact("Room1_TravelNotebook") ||
                     PlayerInventory.HasArtifact("Room1_WireSpectacles") ||
                     PlayerInventory.HasArtifact("Room1_KeepsakeLocket") ||
-                    PlayerInventory.HasArtifact("Room1_GoldLocketPendant") ||
-                    PlayerInventory.Count > 0)
+                    PlayerInventory.HasArtifact("Room1_GoldLocketPendant"))
                 {
                     return true;
                 }
@@ -125,7 +125,12 @@ namespace TopDownGame
 
         public static bool HasReturnedRoom1ArtifactToRealWorld
         {
-            get => PlayerPrefs.GetInt(KEY_ROOM1_ARTIFACT_RETURNED, 0) == 1;
+            get
+            {
+                // Must have placed at least 1 artifact on a pedestal in Room 1
+                if (GetPedestalsRestoredCount(1) < 1) return false;
+                return PlayerPrefs.GetInt(KEY_ROOM1_ARTIFACT_RETURNED, 0) == 1;
+            }
             set
             {
                 PlayerPrefs.SetInt(KEY_ROOM1_ARTIFACT_RETURNED, value ? 1 : 0);
@@ -154,7 +159,7 @@ namespace TopDownGame
 
             if (!wasReturned)
             {
-                Debug.Log("[GameProgression] Player brought Room 1 artifacts inside Room 1 in the Real World! Alterworld Room 2 is now UNLOCKED.");
+                Debug.Log("[GameProgression] Player placed at least 1 artifact in Room 1 in the Real World! Alterworld Room 2 and Real World Room 2 are now UNLOCKED.");
                 OnRoom1ArtifactReturned?.Invoke();
                 return true;
             }
@@ -163,6 +168,10 @@ namespace TopDownGame
 
         public static bool HasReturnedRoomArtifactsToRealWorld(int roomNumber)
         {
+            if (roomNumber <= 0) return false;
+            // In order to open the next room, player MUST have restored AT LEAST 1 artifact to a pedestal in this room!
+            if (GetPedestalsRestoredCount(roomNumber) < 1) return false;
+
             if (roomNumber == 1) return HasReturnedRoom1ArtifactToRealWorld;
             return PlayerPrefs.GetInt($"GameProgression_Room{roomNumber}ArtifactReturnedToRealWorld", 0) == 1;
         }
@@ -178,7 +187,7 @@ namespace TopDownGame
 
             if (!wasReturned)
             {
-                Debug.Log($"[GameProgression] Player brought Room {roomNumber} artifacts inside Room {roomNumber} in the Real World! Real World Room {roomNumber + 1} is now UNLOCKED.");
+                Debug.Log($"[GameProgression] Player placed at least 1 artifact inside Room {roomNumber} in the Real World! Real World Room {roomNumber + 1} is now UNLOCKED.");
                 OnRoomArtifactsReturned?.Invoke(roomNumber);
                 OnRoom1ArtifactReturned?.Invoke();
                 return true;
@@ -188,6 +197,8 @@ namespace TopDownGame
 
         public static bool HasRetrievedRoomArtifact(int roomNum)
         {
+            if (roomNum <= 0) return false;
+            if (GetRoomRetrievedCount(roomNum) > 0) return true;
             if (roomNum == 1) return HasRetrievedRoom1Artifact;
             return PlayerPrefs.GetInt($"GameProgression_Room{roomNum}ArtifactRetrieved", 0) == 1;
         }
@@ -240,14 +251,20 @@ namespace TopDownGame
             PlayerPrefs.SetInt(key, 1);
             int current = GetPedestalsRestoredCount(roomNumber) + 1;
             PlayerPrefs.SetInt($"GameProgression_Room{roomNumber}_RestoredPedestalsCount", current);
+
+            // Record in a list of restored artifact names for easy serialization
+            string listKey = $"GameProgression_Room{roomNumber}_RestoredArtifactsList";
+            string currentList = PlayerPrefs.GetString(listKey, "");
+            string newList = string.IsNullOrEmpty(currentList) ? artifactName : (currentList + ";" + artifactName);
+            PlayerPrefs.SetString(listKey, newList);
+
             PlayerPrefs.Save();
 
             Debug.Log($"[GameProgression] Restored pedestal for '{artifactName}' in Room {roomNumber} ({current} placed)");
             OnPedestalRestored?.Invoke(roomNumber, artifactName);
 
-            // If player has placed all the artifacts they recovered in battle for this room:
-            int retrieved = GetRoomRetrievedCount(roomNumber);
-            if (retrieved > 0 && current >= retrieved)
+            // In order to progress to next room, player needs at least 1 artifact restored in this room!
+            if (current >= 1)
             {
                 ReturnRoomArtifactsToRealWorld(roomNumber);
             }
@@ -345,7 +362,31 @@ namespace TopDownGame
                 PlayerPrefs.DeleteKey($"GameProgression_Room{i}_PlaquesList");
                 PlayerPrefs.DeleteKey($"GameProgression_Room{i}_RetrievedCount");
                 PlayerPrefs.DeleteKey($"GameProgression_Room{i}_RestoredPedestalsCount");
+
+                string listKey = $"GameProgression_Room{i}_RestoredArtifactsList";
+                string currentList = PlayerPrefs.GetString(listKey, "");
+                if (!string.IsNullOrEmpty(currentList))
+                {
+                    string[] arts = currentList.Split(';');
+                    foreach (var a in arts)
+                    {
+                        if (!string.IsNullOrEmpty(a))
+                        {
+                            string clean = a.Replace(" ", "_").Replace("'", "");
+                            PlayerPrefs.DeleteKey($"GameProgression_Room{i}_Pedestal_{clean}_Restored");
+                        }
+                    }
+                    PlayerPrefs.DeleteKey(listKey);
+                }
             }
+
+            // Also clear known default Room 1 artifact pedestals
+            string[] room1Arts = { "DipPenNib", "UniversityWaxSeal", "TravelNotebook", "WireSpectacles", "KeepsakeLocket", "GoldLocketPendant" };
+            foreach (var r1 in room1Arts)
+            {
+                PlayerPrefs.DeleteKey($"GameProgression_Room1_Pedestal_{r1}_Restored");
+            }
+
             PlayerPrefs.Save();
             Debug.Log("[GameProgression] Progression reset. All rooms reset.");
         }
