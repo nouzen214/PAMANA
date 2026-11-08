@@ -48,6 +48,14 @@ namespace TopDownGame
                 interactor.SetPromptLabel(interactPromptText);
             }
 
+            // Initialize room restoration visuals & transitions
+            var restoration = GetComponent<RoomRestorationController>();
+            if (restoration == null)
+            {
+                restoration = gameObject.AddComponent<RoomRestorationController>();
+            }
+            restoration.Initialize(roomNumber);
+
             CheckArtifactReturn(SceneManager.GetActiveScene().name);
         }
 
@@ -140,6 +148,12 @@ namespace TopDownGame
             roomTitle = title;
             if (roomBannerText != null)
                 roomBannerText.text = roomTitle.ToUpper();
+
+            var restoration = GetComponent<RoomRestorationController>();
+            if (restoration != null)
+            {
+                restoration.Initialize(number);
+            }
         }
     }
 }

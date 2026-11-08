@@ -23,6 +23,7 @@ namespace TopDownGame
         public static event Action<int> OnAllPlaquesReadInRoom; // (roomNumber)
         public static event Action<int> OnRoomArtifactsReturned; // (roomNumber)
         public static event Action<int, string> OnPedestalRestored; // (roomNumber, artifactName)
+        public static event Action<int, int> OnRoomRestorationStageChanged; // (roomNumber, newStage)
 
         public static bool IsRoom1BattleCompleted
         {
@@ -221,13 +222,42 @@ namespace TopDownGame
 
         public static void SetRoomRetrievedCount(int roomNumber, int count)
         {
+            int oldStage = GetRoomRestorationStage(roomNumber);
             PlayerPrefs.SetInt($"GameProgression_Room{roomNumber}_RetrievedCount", count);
             PlayerPrefs.Save();
+            int newStage = GetRoomRestorationStage(roomNumber);
+            if (newStage > oldStage)
+            {
+                OnRoomRestorationStageChanged?.Invoke(roomNumber, newStage);
+            }
         }
 
         public static int GetRoomRetrievedCount(int roomNumber)
         {
             return PlayerPrefs.GetInt($"GameProgression_Room{roomNumber}_RetrievedCount", 0);
+        }
+
+        public static int GetRoomRestorationStage(int roomNumber)
+        {
+            if (roomNumber <= 0) return 0;
+            int restored = GetPedestalsRestoredCount(roomNumber);
+            int retrieved = GetRoomRetrievedCount(roomNumber);
+            int count = Mathf.Max(restored, retrieved);
+
+            if (count >= 5) return 2; // Fully Restored
+            if (count >= 1) return 1; // Partially Restored
+            return 0;                 // Ruined
+        }
+
+        public static int GetRoomSeenRestorationStage(int roomNumber)
+        {
+            return PlayerPrefs.GetInt($"GameProgression_Room{roomNumber}_SeenStage", 0);
+        }
+
+        public static void SetRoomSeenRestorationStage(int roomNumber, int stage)
+        {
+            PlayerPrefs.SetInt($"GameProgression_Room{roomNumber}_SeenStage", stage);
+            PlayerPrefs.Save();
         }
 
         private static string GetPedestalKey(int roomNumber, string artifactName)
@@ -248,6 +278,8 @@ namespace TopDownGame
             string key = GetPedestalKey(roomNumber, artifactName);
             if (PlayerPrefs.GetInt(key, 0) == 1) return false;
 
+            int oldStage = GetRoomRestorationStage(roomNumber);
+
             PlayerPrefs.SetInt(key, 1);
             int current = GetPedestalsRestoredCount(roomNumber) + 1;
             PlayerPrefs.SetInt($"GameProgression_Room{roomNumber}_RestoredPedestalsCount", current);
@@ -262,6 +294,12 @@ namespace TopDownGame
 
             Debug.Log($"[GameProgression] Restored pedestal for '{artifactName}' in Room {roomNumber} ({current} placed)");
             OnPedestalRestored?.Invoke(roomNumber, artifactName);
+
+            int newStage = GetRoomRestorationStage(roomNumber);
+            if (newStage > oldStage)
+            {
+                OnRoomRestorationStageChanged?.Invoke(roomNumber, newStage);
+            }
 
             // In order to progress to next room, player needs at least 1 artifact restored in this room!
             if (current >= 1)
@@ -362,6 +400,7 @@ namespace TopDownGame
                 PlayerPrefs.DeleteKey($"GameProgression_Room{i}_PlaquesList");
                 PlayerPrefs.DeleteKey($"GameProgression_Room{i}_RetrievedCount");
                 PlayerPrefs.DeleteKey($"GameProgression_Room{i}_RestoredPedestalsCount");
+                PlayerPrefs.DeleteKey($"GameProgression_Room{i}_SeenStage");
 
                 string listKey = $"GameProgression_Room{i}_RestoredArtifactsList";
                 string currentList = PlayerPrefs.GetString(listKey, "");
