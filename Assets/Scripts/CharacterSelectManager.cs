@@ -169,9 +169,9 @@ namespace TopDownGame
                 chosenName = isBoy ? "Darrel" : "Darla";
             }
 
-            if (selectedNameText != null)
+            if (selectedNameText != null && selectedNameText.gameObject.activeSelf)
             {
-                selectedNameText.text = isBoy ? $"CHOSEN: BOY ({chosenName.ToUpper()})" : $"CHOSEN: GIRL ({chosenName.ToUpper()})";
+                selectedNameText.gameObject.SetActive(false);
             }
 
             if (characterDescriptionText != null)
