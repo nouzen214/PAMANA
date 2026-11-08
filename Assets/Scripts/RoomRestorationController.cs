@@ -7,13 +7,11 @@ namespace TopDownGame
 {
     /// <summary>
     /// Controls dynamic room restoration visuals and transition animations
-    /// SOLELY based on the number of artifacts actually placed on pedestals in the room.
-    /// 0 placed = 0% (Ruined)
-    /// 1 placed = 20%
-    /// 2 placed = 33% (Partially Restored)
-    /// 3 placed = 67% (Advanced Restored)
-    /// 4 placed = 80%
-    /// 5 placed = 100% (Fully Restored / Pristine)
+    /// based on specific artifact placement thresholds:
+    /// - 0 or 1 artifact: 0% restored (Ruined) -> 1st artifact does NOT restore the room.
+    /// - 2/5 artifacts: 33% restored (Partially Restored) -> triggers 33% transformation.
+    /// - 3-4/5 artifacts: 67% restored (Advanced Restored) -> triggers 67% transformation.
+    /// - 5/5 artifacts: 100% restored (Fully Restored / Pristine) -> triggers 100% transformation.
     /// </summary>
     public class RoomRestorationController : MonoBehaviour
     {
@@ -33,7 +31,7 @@ namespace TopDownGame
         [Header("Audio")]
         [SerializeField] private AudioSource audioSource;
 
-        private int _currentRestoredCount = -1;
+        private int _currentRestoredCount = 0;
         private bool _isTransitioning = false;
         private AudioClip _cachedChimeClip;
 
@@ -68,8 +66,25 @@ namespace TopDownGame
             EnsureReferences();
 
             // Strictly apply current placed pedestal count without any animation
-            int placedCount = GameProgression.GetPedestalsRestoredCount(roomNumber);
-            ApplyRestorationState(placedCount);
+            _currentRestoredCount = GameProgression.GetPedestalsRestoredCount(roomNumber);
+            int tier = GetRestorationTier(_currentRestoredCount);
+            ApplyRestorationTier(tier);
+        }
+
+        public static int GetRestorationTier(int restoredCount)
+        {
+            if (restoredCount >= 5) return 3; // 100% restored (5/5)
+            if (restoredCount >= 3) return 2; // 67% restored (3-4/5)
+            if (restoredCount >= 2) return 1; // 33% restored (2/5)
+            return 0;                         // 0% restored (0-1/5)
+        }
+
+        public static int GetRestorationPercentage(int restoredCount)
+        {
+            if (restoredCount >= 5) return 100;
+            if (restoredCount >= 3) return 67;
+            if (restoredCount >= 2) return 33;
+            return 0;
         }
 
         public void EnsureReferences()
@@ -133,20 +148,21 @@ namespace TopDownGame
         }
 
         /// <summary>
-        /// Immediately sets the room's visual appearance based purely on how many artifacts
-        /// have been placed on pedestals (0..5).
+        /// Immediately sets the room's visual appearance based on restoration tier:
+        /// Tier 0: 0 or 1 placed -> 0% (Ruined)
+        /// Tier 1: 2 placed -> 33% (Partially Restored)
+        /// Tier 2: 3-4 placed -> 67% (Advanced Restored)
+        /// Tier 3: 5 placed -> 100% (Fully Restored)
         /// </summary>
-        public void ApplyRestorationState(int restoredCount)
+        public void ApplyRestorationTier(int tier)
         {
             EnsureReferences();
-            _currentRestoredCount = Mathf.Clamp(restoredCount, 0, 5);
-
             if (roomBackgroundRenderer == null) return;
 
-            switch (_currentRestoredCount)
+            switch (tier)
             {
                 case 0:
-                    // 0% - 100% Ruined
+                    // 0% restored: 0 or 1 artifact placed (100% Ruined)
                     roomBackgroundRenderer.sprite = stage0RuinedSprite;
                     roomBackgroundRenderer.color = Color.white;
                     if (blendOverlayRenderer != null) blendOverlayRenderer.gameObject.SetActive(false);
@@ -158,24 +174,7 @@ namespace TopDownGame
                     break;
 
                 case 1:
-                    // 20% - Ruined with 40% Partial blend
-                    roomBackgroundRenderer.sprite = stage0RuinedSprite;
-                    roomBackgroundRenderer.color = Color.white;
-                    if (blendOverlayRenderer != null)
-                    {
-                        blendOverlayRenderer.gameObject.SetActive(true);
-                        blendOverlayRenderer.sprite = stage1PartialSprite;
-                        blendOverlayRenderer.color = new Color(1f, 1f, 1f, 0.40f);
-                    }
-                    if (globalLight != null)
-                    {
-                        globalLight.color = Color.Lerp(LightColorStage0, LightColorStage1, 0.35f);
-                        globalLight.intensity = 0.86f;
-                    }
-                    break;
-
-                case 2:
-                    // 33% / 40% - 100% Partially Restored (Stage 1)
+                    // 33% restored: 2/5 artifacts placed (Partially Restored)
                     roomBackgroundRenderer.sprite = stage1PartialSprite;
                     roomBackgroundRenderer.color = Color.white;
                     if (blendOverlayRenderer != null) blendOverlayRenderer.gameObject.SetActive(false);
@@ -186,43 +185,26 @@ namespace TopDownGame
                     }
                     break;
 
-                case 3:
-                    // 67% / 60% - Partial with 45% Restored blend
+                case 2:
+                    // 67% restored: 3-4/5 artifacts placed (Advanced Restored with golden gleam overlay)
                     roomBackgroundRenderer.sprite = stage1PartialSprite;
                     roomBackgroundRenderer.color = Color.white;
                     if (blendOverlayRenderer != null)
                     {
                         blendOverlayRenderer.gameObject.SetActive(true);
                         blendOverlayRenderer.sprite = stage2RestoredSprite;
-                        blendOverlayRenderer.color = new Color(1f, 1f, 1f, 0.45f);
+                        blendOverlayRenderer.color = new Color(1f, 1f, 1f, 0.50f);
                     }
                     if (globalLight != null)
                     {
                         globalLight.color = Color.Lerp(LightColorStage1, LightColorStage2, 0.55f);
-                        globalLight.intensity = 1.02f;
+                        globalLight.intensity = 1.04f;
                     }
                     break;
 
-                case 4:
-                    // 80% - Partial with 80% Restored blend
-                    roomBackgroundRenderer.sprite = stage1PartialSprite;
-                    roomBackgroundRenderer.color = Color.white;
-                    if (blendOverlayRenderer != null)
-                    {
-                        blendOverlayRenderer.gameObject.SetActive(true);
-                        blendOverlayRenderer.sprite = stage2RestoredSprite;
-                        blendOverlayRenderer.color = new Color(1f, 1f, 1f, 0.80f);
-                    }
-                    if (globalLight != null)
-                    {
-                        globalLight.color = Color.Lerp(LightColorStage1, LightColorStage2, 0.85f);
-                        globalLight.intensity = 1.07f;
-                    }
-                    break;
-
-                case 5:
+                case 3:
                 default:
-                    // 100% - Fully Restored / Pristine (Stage 2)
+                    // 100% restored: 5/5 artifacts placed (Pristine Golden Glory)
                     roomBackgroundRenderer.sprite = stage2RestoredSprite;
                     roomBackgroundRenderer.color = Color.white;
                     if (blendOverlayRenderer != null) blendOverlayRenderer.gameObject.SetActive(false);
@@ -240,7 +222,18 @@ namespace TopDownGame
             if (rNum != roomNumber) return;
 
             int newRestored = GameProgression.GetPedestalsRestoredCount(roomNumber);
-            if (newRestored > _currentRestoredCount && !_isTransitioning)
+            int oldTier = GetRestorationTier(_currentRestoredCount);
+            int newTier = GetRestorationTier(newRestored);
+
+            _currentRestoredCount = newRestored;
+
+            // ONLY trigger room transformation when the tier actually upgrades!
+            // Placing 1st artifact: oldTier=0, newTier=0 -> NO transformation! (0% stays ruined)
+            // Placing 2nd artifact: oldTier=0, newTier=1 -> TRANSFORMS to 33%!
+            // Placing 3rd artifact: oldTier=1, newTier=2 -> TRANSFORMS to 67%!
+            // Placing 4th artifact: oldTier=2, newTier=2 -> NO transformation (stays 67%)!
+            // Placing 5th artifact: oldTier=2, newTier=3 -> TRANSFORMS to 100%!
+            if (newTier > oldTier && !_isTransitioning)
             {
                 Vector3 origin = Vector3.zero;
                 var pedestals = FindObjectsByType<ArtifactInteractable>(FindObjectsSortMode.None);
@@ -253,11 +246,16 @@ namespace TopDownGame
                     }
                 }
 
-                StartCoroutine(RestorationSequence(_currentRestoredCount, newRestored, origin, artifactName));
+                StartCoroutine(RestorationSequence(oldTier, newTier, newRestored, origin, artifactName));
+            }
+            else
+            {
+                // Tier didn't change (e.g. 1st artifact or 4th artifact), just apply state cleanly
+                ApplyRestorationTier(newTier);
             }
         }
 
-        public IEnumerator RestorationSequence(int fromCount, int toCount, Vector3 burstOrigin, string artifactName)
+        public IEnumerator RestorationSequence(int fromTier, int toTier, int restoredCount, Vector3 burstOrigin, string artifactName)
         {
             if (_isTransitioning) yield break;
             _isTransitioning = true;
@@ -280,35 +278,30 @@ namespace TopDownGame
             var sparkles = SpawnSparkleMotes(25);
 
             // 6. Transition Background Visuals over 1.4 seconds
-            int safeFrom = Mathf.Clamp(fromCount, 0, 5);
-            int safeTo = Mathf.Clamp(toCount, 0, 5);
-
             float startLightIntensity = globalLight != null ? globalLight.intensity : LightIntensityStage0;
             Color startLightColor = globalLight != null ? globalLight.color : LightColorStage0;
 
             float targetLightIntensity = LightIntensityStage0;
             Color targetLightColor = LightColorStage0;
-            switch (safeTo)
+            Sprite targetOverlaySprite = stage0RuinedSprite;
+
+            switch (toTier)
             {
                 case 1:
-                    targetLightIntensity = 0.86f;
-                    targetLightColor = Color.Lerp(LightColorStage0, LightColorStage1, 0.35f);
-                    break;
-                case 2:
                     targetLightIntensity = LightIntensityStage1;
                     targetLightColor = LightColorStage1;
+                    targetOverlaySprite = stage1PartialSprite;
+                    break;
+                case 2:
+                    targetLightIntensity = 1.04f;
+                    targetLightColor = Color.Lerp(LightColorStage1, LightColorStage2, 0.55f);
+                    targetOverlaySprite = stage2RestoredSprite;
                     break;
                 case 3:
-                    targetLightIntensity = 1.02f;
-                    targetLightColor = Color.Lerp(LightColorStage1, LightColorStage2, 0.55f);
-                    break;
-                case 4:
-                    targetLightIntensity = 1.07f;
-                    targetLightColor = Color.Lerp(LightColorStage1, LightColorStage2, 0.85f);
-                    break;
-                case 5:
+                default:
                     targetLightIntensity = LightIntensityStage2;
                     targetLightColor = LightColorStage2;
+                    targetOverlaySprite = stage2RestoredSprite;
                     break;
             }
 
@@ -319,7 +312,7 @@ namespace TopDownGame
             overlayObj.transform.localScale = roomBackgroundRenderer.transform.localScale;
 
             var overlaySr = overlayObj.AddComponent<SpriteRenderer>();
-            overlaySr.sprite = safeTo >= 3 ? stage2RestoredSprite : (safeTo >= 1 ? stage1PartialSprite : stage0RuinedSprite);
+            overlaySr.sprite = targetOverlaySprite;
             overlaySr.sortingOrder = roomBackgroundRenderer.sortingOrder + 2;
             overlaySr.color = new Color(1f, 1f, 1f, 0f);
 
@@ -334,7 +327,7 @@ namespace TopDownGame
 
                 if (overlaySr != null)
                 {
-                    overlaySr.color = new Color(1f, 1f, 1f, smoothT * 0.75f);
+                    overlaySr.color = new Color(1f, 1f, 1f, smoothT * 0.85f);
                 }
 
                 if (ringObj != null)
@@ -358,8 +351,8 @@ namespace TopDownGame
                 yield return null;
             }
 
-            // Apply definitive restoration state
-            ApplyRestorationState(safeTo);
+            // Apply definitive restoration state for this tier
+            ApplyRestorationTier(toTier);
 
             if (overlayObj != null) Destroy(overlayObj);
             if (ringObj != null) Destroy(ringObj);
@@ -369,63 +362,44 @@ namespace TopDownGame
                 if (sp != null) Destroy(sp);
             }
 
-            // Show celebratory banner with exact restoration percentage
-            ShowRestorationBanner(safeTo, artifactName);
+            // Show celebratory banner for the reached threshold
+            ShowRestorationBanner(toTier, restoredCount, artifactName);
 
             _isTransitioning = false;
         }
 
-        private void ShowRestorationBanner(int count, string artifactName)
+        private void ShowRestorationBanner(int tier, int count, string artifactName)
         {
-            string artLabel = string.IsNullOrEmpty(artifactName) ? "Artifact" : artifactName;
-
-            switch (count)
+            switch (tier)
             {
                 case 1:
-                    NotificationBannerUI.Show(
-                        $"ROOM {roomNumber} RESTORATION: 20%",
-                        $"Restored '{artLabel}' to its pedestal! (1/5 placed)\nAncient corruption begins to weaken.",
-                        5.0f,
-                        new Color(1f, 0.85f, 0.35f, 1f),
-                        "✦"
-                    );
-                    break;
-
-                case 2:
+                    // 2/5 artifacts -> 33% restored
                     NotificationBannerUI.Show(
                         $"ROOM {roomNumber} RESTORATION: 33%",
-                        $"Restored '{artLabel}' to its pedestal! (2/5 placed)\nCobwebs and rubble dissolve from the chamber.",
+                        $"2/5 artifacts restored to pedestals!\nCobwebs and heavy rubble dissolve from the chamber.",
                         5.0f,
                         new Color(1f, 0.88f, 0.35f, 1f),
                         "✦"
                     );
                     break;
 
-                case 3:
+                case 2:
+                    // 3-4/5 artifacts -> 67% restored
                     NotificationBannerUI.Show(
                         $"ROOM {roomNumber} RESTORATION: 67%",
-                        $"Restored '{artLabel}' to its pedestal! (3/5 placed)\nGolden light breaks through as the floor restores.",
+                        $"{count}/5 artifacts restored to pedestals!\nGolden light breaks through as the ancient floor restores.",
                         5.0f,
                         new Color(1f, 0.92f, 0.40f, 1f),
                         "✦"
                     );
                     break;
 
-                case 4:
-                    NotificationBannerUI.Show(
-                        $"ROOM {roomNumber} RESTORATION: 80%",
-                        $"Restored '{artLabel}' to its pedestal! (4/5 placed)\nThe chamber is almost fully restored!",
-                        5.0f,
-                        new Color(0.35f, 0.95f, 0.55f, 1f),
-                        "✦"
-                    );
-                    break;
-
-                case 5:
+                case 3:
                 default:
+                    // 5/5 artifacts -> 100% restored
                     NotificationBannerUI.Show(
                         $"ROOM {roomNumber} 100% PURIFIED!",
-                        $"All 5 artifacts restored to pedestals!\nThe chamber radiates with eternal golden glory!",
+                        $"All 5/5 artifacts restored to pedestals!\nThe chamber is fully restored to its eternal golden glory!",
                         6.0f,
                         new Color(0.2f, 0.95f, 0.45f, 1f),
                         "★"
@@ -609,40 +583,44 @@ namespace TopDownGame
             return clip;
         }
 
-        [ContextMenu("Test Place 1 (20%)")]
+        [ContextMenu("Test Place 1 (0% - No Room Transform)")]
         public void TestPlace1()
         {
-            StartCoroutine(RestorationSequence(0, 1, Vector3.zero, "Sample Artifact"));
+            // 1 artifact does NOT trigger room restoration
+            _currentRestoredCount = 1;
+            ApplyRestorationTier(GetRestorationTier(1));
         }
 
-        [ContextMenu("Test Place 2 (33%)")]
+        [ContextMenu("Test Place 2 (33% Restored)")]
         public void TestPlace2()
         {
-            StartCoroutine(RestorationSequence(1, 2, Vector3.zero, "Sample Artifact"));
+            StartCoroutine(RestorationSequence(0, 1, 2, Vector3.zero, "Sample Artifact 2"));
         }
 
-        [ContextMenu("Test Place 3 (67%)")]
+        [ContextMenu("Test Place 3 (67% Restored)")]
         public void TestPlace3()
         {
-            StartCoroutine(RestorationSequence(2, 3, Vector3.zero, "Sample Artifact"));
+            StartCoroutine(RestorationSequence(1, 2, 3, Vector3.zero, "Sample Artifact 3"));
         }
 
-        [ContextMenu("Test Place 4 (80%)")]
+        [ContextMenu("Test Place 4 (67% - Same Tier, No Transform)")]
         public void TestPlace4()
         {
-            StartCoroutine(RestorationSequence(3, 4, Vector3.zero, "Sample Artifact"));
+            _currentRestoredCount = 4;
+            ApplyRestorationTier(GetRestorationTier(4));
         }
 
-        [ContextMenu("Test Place 5 (100%)")]
+        [ContextMenu("Test Place 5 (100% Fully Restored)")]
         public void TestPlace5()
         {
-            StartCoroutine(RestorationSequence(4, 5, Vector3.zero, "Final Artifact"));
+            StartCoroutine(RestorationSequence(2, 3, 5, Vector3.zero, "Sample Artifact 5"));
         }
 
         [ContextMenu("Reset to 0% (Ruined)")]
         public void TestResetTo0()
         {
-            ApplyRestorationState(0);
+            _currentRestoredCount = 0;
+            ApplyRestorationTier(0);
         }
     }
 }

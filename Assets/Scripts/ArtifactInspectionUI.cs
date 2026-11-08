@@ -749,18 +749,15 @@ namespace TopDownGame
                 dialogueText.text = $"I placed the {item.name} back on its pedestal where it belongs!";
             }
 
-            // Check room restoration status
+            // Check room door unlock status
             int retrieved = GameProgression.GetRoomRetrievedCount(rNum);
             int restored = GameProgression.GetPedestalsRestoredCount(rNum);
-            if (restored == 1)
+            if (restored == 1 && rNum < 12)
             {
-                string nextMsg = (rNum < 12)
-                    ? $"You restored an artifact to Room {rNum}!\nReal World Room {rNum + 1} is now OPEN!"
-                    : $"You restored an artifact to Room {rNum}!";
                 NotificationBannerUI.Show(
-                    $"ROOM {rNum} RESTORED!",
-                    nextMsg,
-                    6.0f,
+                    $"ROOM {rNum + 1} UNLOCKED!",
+                    $"First artifact placed on pedestal! (1/5 placed)\nReal World Room {rNum + 1} is now OPEN in the hallway!",
+                    5.5f,
                     new Color(0.2f, 0.95f, 0.4f, 1f),
                     "★"
                 );
