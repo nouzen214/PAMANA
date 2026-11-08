@@ -7,11 +7,11 @@ namespace TopDownGame
 {
     /// <summary>
     /// Controls dynamic room restoration visuals and transition animations
-    /// based on specific artifact placement thresholds:
+    /// based on strict artifact placement thresholds:
     /// - 0 or 1 artifact: 0% restored (Ruined) -> 1st artifact does NOT restore the room.
-    /// - 2/5 artifacts: 33% restored (Partially Restored) -> triggers 33% transformation.
-    /// - 3-4/5 artifacts: 67% restored (Advanced Restored) -> triggers 67% transformation.
-    /// - 5/5 artifacts: 100% restored (Fully Restored / Pristine) -> triggers 100% transformation.
+    /// - 2/5 artifacts: 33% room restored -> triggers 33% transformation.
+    /// - 3-4/5 artifacts: 67% room restored (Clean Stone) -> triggers 67% transformation.
+    /// - 5/5 artifacts: 100% room restored (Golden Sanctuary) -> triggers 100% transformation.
     /// </summary>
     public class RoomRestorationController : MonoBehaviour
     {
@@ -19,13 +19,13 @@ namespace TopDownGame
         [SerializeField] private int roomNumber = 1;
 
         [Header("Restoration Stage Sprites")]
-        [SerializeField] private Sprite stage0RuinedSprite;
-        [SerializeField] private Sprite stage1PartialSprite;
-        [SerializeField] private Sprite stage2RestoredSprite;
+        [SerializeField] private Sprite stage0RuinedSprite;    // 0% (0-1 artifacts)
+        [SerializeField] private Sprite stage1PartialSprite;   // 33% (2 artifacts)
+        [SerializeField] private Sprite stage2AdvancedSprite;  // 67% (3-4 artifacts)
+        [SerializeField] private Sprite stage3PristineSprite;  // 100% (5 artifacts)
 
         [Header("Scene References")]
         [SerializeField] private SpriteRenderer roomBackgroundRenderer;
-        [SerializeField] private SpriteRenderer blendOverlayRenderer;
         [SerializeField] private Light2D globalLight;
 
         [Header("Audio")]
@@ -37,13 +37,16 @@ namespace TopDownGame
 
         // Stage Lighting profiles
         private readonly Color LightColorStage0 = new Color(0.70f, 0.65f, 0.55f, 1.0f);
-        private const float LightIntensityStage0 = 0.80f;
+        private const float LightIntensityStage0 = 0.78f;
 
-        private readonly Color LightColorStage1 = new Color(0.88f, 0.82f, 0.70f, 1.0f);
-        private const float LightIntensityStage1 = 0.95f;
+        private readonly Color LightColorStage1 = new Color(0.80f, 0.75f, 0.65f, 1.0f);
+        private const float LightIntensityStage1 = 0.88f;
 
-        private readonly Color LightColorStage2 = new Color(1.00f, 0.94f, 0.80f, 1.0f);
-        private const float LightIntensityStage2 = 1.12f;
+        private readonly Color LightColorStage2 = new Color(0.90f, 0.84f, 0.72f, 1.0f);
+        private const float LightIntensityStage2 = 0.98f;
+
+        private readonly Color LightColorStage3 = new Color(1.00f, 0.94f, 0.80f, 1.0f);
+        private const float LightIntensityStage3 = 1.15f;
 
         private void Awake()
         {
@@ -65,7 +68,7 @@ namespace TopDownGame
             roomNumber = rNumber;
             EnsureReferences();
 
-            // Strictly apply current placed pedestal count without any animation
+            // Strictly apply current placed pedestal count without any animation on room enter
             _currentRestoredCount = GameProgression.GetPedestalsRestoredCount(roomNumber);
             int tier = GetRestorationTier(_currentRestoredCount);
             ApplyRestorationTier(tier);
@@ -92,9 +95,11 @@ namespace TopDownGame
             if (stage0RuinedSprite == null)
                 stage0RuinedSprite = Resources.Load<Sprite>("RoomStages/Room_Area_Ruined");
             if (stage1PartialSprite == null)
-                stage1PartialSprite = Resources.Load<Sprite>("RoomStages/Room_Area_PartiallyRestored");
-            if (stage2RestoredSprite == null)
-                stage2RestoredSprite = Resources.Load<Sprite>("RoomStages/Room_Area_Restored");
+                stage1PartialSprite = Resources.Load<Sprite>("RoomStages/Room_Area_33Percent");
+            if (stage2AdvancedSprite == null)
+                stage2AdvancedSprite = Resources.Load<Sprite>("RoomStages/Room_Area_PartiallyRestored");
+            if (stage3PristineSprite == null)
+                stage3PristineSprite = Resources.Load<Sprite>("RoomStages/Room_Area_Restored");
 
             if (roomBackgroundRenderer == null)
             {
@@ -105,24 +110,14 @@ namespace TopDownGame
                 }
             }
 
-            if (roomBackgroundRenderer != null && blendOverlayRenderer == null)
+            // Remove any old blend overlay if present to keep hierarchy clean
+            if (roomBackgroundRenderer != null)
             {
-                var existingBlend = roomBackgroundRenderer.transform.Find("RoomBackground_BlendOverlay");
-                if (existingBlend != null)
+                var oldBlend = roomBackgroundRenderer.transform.Find("RoomBackground_BlendOverlay");
+                if (oldBlend != null)
                 {
-                    blendOverlayRenderer = existingBlend.GetComponent<SpriteRenderer>();
-                }
-                else
-                {
-                    var blendObj = new GameObject("RoomBackground_BlendOverlay");
-                    blendObj.transform.SetParent(roomBackgroundRenderer.transform, false);
-                    blendObj.transform.localPosition = Vector3.zero;
-                    blendObj.transform.localRotation = Quaternion.identity;
-                    blendObj.transform.localScale = Vector3.one;
-
-                    blendOverlayRenderer = blendObj.AddComponent<SpriteRenderer>();
-                    blendOverlayRenderer.sortingOrder = roomBackgroundRenderer.sortingOrder + 1;
-                    blendObj.SetActive(false);
+                    if (Application.isPlaying) Destroy(oldBlend.gameObject);
+                    else DestroyImmediate(oldBlend.gameObject);
                 }
             }
 
@@ -147,73 +142,59 @@ namespace TopDownGame
             }
         }
 
+        public Sprite GetSpriteForTier(int tier)
+        {
+            EnsureReferences();
+            switch (tier)
+            {
+                case 1:
+                    return stage1PartialSprite != null ? stage1PartialSprite : stage0RuinedSprite;
+                case 2:
+                    return stage2AdvancedSprite != null ? stage2AdvancedSprite : stage1PartialSprite;
+                case 3:
+                    return stage3PristineSprite != null ? stage3PristineSprite : stage2AdvancedSprite;
+                default:
+                    return stage0RuinedSprite;
+            }
+        }
+
         /// <summary>
         /// Immediately sets the room's visual appearance based on restoration tier:
         /// Tier 0: 0 or 1 placed -> 0% (Ruined)
         /// Tier 1: 2 placed -> 33% (Partially Restored)
-        /// Tier 2: 3-4 placed -> 67% (Advanced Restored)
-        /// Tier 3: 5 placed -> 100% (Fully Restored)
+        /// Tier 2: 3-4 placed -> 67% (Clean Stone Room)
+        /// Tier 3: 5 placed -> 100% (Pristine Golden Sanctuary)
         /// </summary>
         public void ApplyRestorationTier(int tier)
         {
             EnsureReferences();
             if (roomBackgroundRenderer == null) return;
 
-            switch (tier)
+            roomBackgroundRenderer.sprite = GetSpriteForTier(tier);
+            roomBackgroundRenderer.color = Color.white;
+
+            if (globalLight != null)
             {
-                case 0:
-                    // 0% restored: 0 or 1 artifact placed (100% Ruined)
-                    roomBackgroundRenderer.sprite = stage0RuinedSprite;
-                    roomBackgroundRenderer.color = Color.white;
-                    if (blendOverlayRenderer != null) blendOverlayRenderer.gameObject.SetActive(false);
-                    if (globalLight != null)
-                    {
+                switch (tier)
+                {
+                    case 0:
                         globalLight.color = LightColorStage0;
                         globalLight.intensity = LightIntensityStage0;
-                    }
-                    break;
-
-                case 1:
-                    // 33% restored: 2/5 artifacts placed (Partially Restored)
-                    roomBackgroundRenderer.sprite = stage1PartialSprite;
-                    roomBackgroundRenderer.color = Color.white;
-                    if (blendOverlayRenderer != null) blendOverlayRenderer.gameObject.SetActive(false);
-                    if (globalLight != null)
-                    {
+                        break;
+                    case 1:
                         globalLight.color = LightColorStage1;
                         globalLight.intensity = LightIntensityStage1;
-                    }
-                    break;
-
-                case 2:
-                    // 67% restored: 3-4/5 artifacts placed (Advanced Restored with golden gleam overlay)
-                    roomBackgroundRenderer.sprite = stage1PartialSprite;
-                    roomBackgroundRenderer.color = Color.white;
-                    if (blendOverlayRenderer != null)
-                    {
-                        blendOverlayRenderer.gameObject.SetActive(true);
-                        blendOverlayRenderer.sprite = stage2RestoredSprite;
-                        blendOverlayRenderer.color = new Color(1f, 1f, 1f, 0.50f);
-                    }
-                    if (globalLight != null)
-                    {
-                        globalLight.color = Color.Lerp(LightColorStage1, LightColorStage2, 0.55f);
-                        globalLight.intensity = 1.04f;
-                    }
-                    break;
-
-                case 3:
-                default:
-                    // 100% restored: 5/5 artifacts placed (Pristine Golden Glory)
-                    roomBackgroundRenderer.sprite = stage2RestoredSprite;
-                    roomBackgroundRenderer.color = Color.white;
-                    if (blendOverlayRenderer != null) blendOverlayRenderer.gameObject.SetActive(false);
-                    if (globalLight != null)
-                    {
+                        break;
+                    case 2:
                         globalLight.color = LightColorStage2;
                         globalLight.intensity = LightIntensityStage2;
-                    }
-                    break;
+                        break;
+                    case 3:
+                    default:
+                        globalLight.color = LightColorStage3;
+                        globalLight.intensity = LightIntensityStage3;
+                        break;
+                }
             }
         }
 
@@ -283,25 +264,22 @@ namespace TopDownGame
 
             float targetLightIntensity = LightIntensityStage0;
             Color targetLightColor = LightColorStage0;
-            Sprite targetOverlaySprite = stage0RuinedSprite;
+            Sprite targetOverlaySprite = GetSpriteForTier(toTier);
 
             switch (toTier)
             {
                 case 1:
                     targetLightIntensity = LightIntensityStage1;
                     targetLightColor = LightColorStage1;
-                    targetOverlaySprite = stage1PartialSprite;
                     break;
                 case 2:
-                    targetLightIntensity = 1.04f;
-                    targetLightColor = Color.Lerp(LightColorStage1, LightColorStage2, 0.55f);
-                    targetOverlaySprite = stage2RestoredSprite;
+                    targetLightIntensity = LightIntensityStage2;
+                    targetLightColor = LightColorStage2;
                     break;
                 case 3:
                 default:
-                    targetLightIntensity = LightIntensityStage2;
-                    targetLightColor = LightColorStage2;
-                    targetOverlaySprite = stage2RestoredSprite;
+                    targetLightIntensity = LightIntensityStage3;
+                    targetLightColor = LightColorStage3;
                     break;
             }
 
@@ -327,7 +305,7 @@ namespace TopDownGame
 
                 if (overlaySr != null)
                 {
-                    overlaySr.color = new Color(1f, 1f, 1f, smoothT * 0.85f);
+                    overlaySr.color = new Color(1f, 1f, 1f, smoothT);
                 }
 
                 if (ringObj != null)
@@ -373,10 +351,10 @@ namespace TopDownGame
             switch (tier)
             {
                 case 1:
-                    // 2/5 artifacts -> 33% restored
+                    // 2/5 artifacts -> 33% room restored
                     NotificationBannerUI.Show(
                         $"ROOM {roomNumber} RESTORATION: 33%",
-                        $"2/5 artifacts restored to pedestals!\nCobwebs and heavy rubble dissolve from the chamber.",
+                        $"2/5 artifacts restored to pedestals!\nCobwebs and rubble dissolve from the chamber.",
                         5.0f,
                         new Color(1f, 0.88f, 0.35f, 1f),
                         "✦"
@@ -384,10 +362,10 @@ namespace TopDownGame
                     break;
 
                 case 2:
-                    // 3-4/5 artifacts -> 67% restored
+                    // 3-4/5 artifacts -> 67% room restored
                     NotificationBannerUI.Show(
                         $"ROOM {roomNumber} RESTORATION: 67%",
-                        $"{count}/5 artifacts restored to pedestals!\nGolden light breaks through as the ancient floor restores.",
+                        $"{count}/5 artifacts restored to pedestals!\nThe chamber is 67% restored with clean ancient stone masonry.",
                         5.0f,
                         new Color(1f, 0.92f, 0.40f, 1f),
                         "✦"
@@ -396,7 +374,7 @@ namespace TopDownGame
 
                 case 3:
                 default:
-                    // 5/5 artifacts -> 100% restored
+                    // 5/5 artifacts -> 100% room restored
                     NotificationBannerUI.Show(
                         $"ROOM {roomNumber} 100% PURIFIED!",
                         $"All 5/5 artifacts restored to pedestals!\nThe chamber is fully restored to its eternal golden glory!",
@@ -586,7 +564,6 @@ namespace TopDownGame
         [ContextMenu("Test Place 1 (0% - No Room Transform)")]
         public void TestPlace1()
         {
-            // 1 artifact does NOT trigger room restoration
             _currentRestoredCount = 1;
             ApplyRestorationTier(GetRestorationTier(1));
         }
