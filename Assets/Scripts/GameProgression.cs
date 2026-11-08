@@ -222,14 +222,8 @@ namespace TopDownGame
 
         public static void SetRoomRetrievedCount(int roomNumber, int count)
         {
-            int oldStage = GetRoomRestorationStage(roomNumber);
             PlayerPrefs.SetInt($"GameProgression_Room{roomNumber}_RetrievedCount", count);
             PlayerPrefs.Save();
-            int newStage = GetRoomRestorationStage(roomNumber);
-            if (newStage > oldStage)
-            {
-                OnRoomRestorationStageChanged?.Invoke(roomNumber, newStage);
-            }
         }
 
         public static int GetRoomRetrievedCount(int roomNumber)
@@ -241,12 +235,10 @@ namespace TopDownGame
         {
             if (roomNumber <= 0) return 0;
             int restored = GetPedestalsRestoredCount(roomNumber);
-            int retrieved = GetRoomRetrievedCount(roomNumber);
-            int count = Mathf.Max(restored, retrieved);
 
-            if (count >= 5) return 2; // Fully Restored
-            if (count >= 1) return 1; // Partially Restored
-            return 0;                 // Ruined
+            if (restored >= 5) return 2; // Fully Restored
+            if (restored >= 2) return 1; // Partially Restored
+            return 0;                    // Ruined
         }
 
         public static int GetRoomSeenRestorationStage(int roomNumber)

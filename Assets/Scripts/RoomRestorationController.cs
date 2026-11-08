@@ -7,10 +7,13 @@ namespace TopDownGame
 {
     /// <summary>
     /// Controls dynamic room restoration visuals and transition animations
-    /// based on the number of artifacts retrieved or restored.
-    /// Stage 0: Ruined (0 artifacts)
-    /// Stage 1: Partially Restored (1-4 artifacts)
-    /// Stage 2: Fully Restored / Pristine (5 artifacts)
+    /// SOLELY based on the number of artifacts actually placed on pedestals in the room.
+    /// 0 placed = 0% (Ruined)
+    /// 1 placed = 20%
+    /// 2 placed = 33% (Partially Restored)
+    /// 3 placed = 67% (Advanced Restored)
+    /// 4 placed = 80%
+    /// 5 placed = 100% (Fully Restored / Pristine)
     /// </summary>
     public class RoomRestorationController : MonoBehaviour
     {
@@ -24,24 +27,25 @@ namespace TopDownGame
 
         [Header("Scene References")]
         [SerializeField] private SpriteRenderer roomBackgroundRenderer;
+        [SerializeField] private SpriteRenderer blendOverlayRenderer;
         [SerializeField] private Light2D globalLight;
 
         [Header("Audio")]
         [SerializeField] private AudioSource audioSource;
 
-        private int _currentStage = -1;
+        private int _currentRestoredCount = -1;
         private bool _isTransitioning = false;
         private AudioClip _cachedChimeClip;
 
         // Stage Lighting profiles
         private readonly Color LightColorStage0 = new Color(0.70f, 0.65f, 0.55f, 1.0f);
-        private const float LightIntensityStage0 = 0.82f;
+        private const float LightIntensityStage0 = 0.80f;
 
         private readonly Color LightColorStage1 = new Color(0.88f, 0.82f, 0.70f, 1.0f);
         private const float LightIntensityStage1 = 0.95f;
 
         private readonly Color LightColorStage2 = new Color(1.00f, 0.94f, 0.80f, 1.0f);
-        private const float LightIntensityStage2 = 1.10f;
+        private const float LightIntensityStage2 = 1.12f;
 
         private void Awake()
         {
@@ -51,20 +55,21 @@ namespace TopDownGame
         private void OnEnable()
         {
             GameProgression.OnPedestalRestored += HandlePedestalRestored;
-            GameProgression.OnRoomRestorationStageChanged += HandleStageChanged;
         }
 
         private void OnDisable()
         {
             GameProgression.OnPedestalRestored -= HandlePedestalRestored;
-            GameProgression.OnRoomRestorationStageChanged -= HandleStageChanged;
         }
 
         public void Initialize(int rNumber)
         {
             roomNumber = rNumber;
             EnsureReferences();
-            CheckAndApplyRestoration(true);
+
+            // Strictly apply current placed pedestal count without any animation
+            int placedCount = GameProgression.GetPedestalsRestoredCount(roomNumber);
+            ApplyRestorationState(placedCount);
         }
 
         public void EnsureReferences()
@@ -85,6 +90,27 @@ namespace TopDownGame
                 }
             }
 
+            if (roomBackgroundRenderer != null && blendOverlayRenderer == null)
+            {
+                var existingBlend = roomBackgroundRenderer.transform.Find("RoomBackground_BlendOverlay");
+                if (existingBlend != null)
+                {
+                    blendOverlayRenderer = existingBlend.GetComponent<SpriteRenderer>();
+                }
+                else
+                {
+                    var blendObj = new GameObject("RoomBackground_BlendOverlay");
+                    blendObj.transform.SetParent(roomBackgroundRenderer.transform, false);
+                    blendObj.transform.localPosition = Vector3.zero;
+                    blendObj.transform.localRotation = Quaternion.identity;
+                    blendObj.transform.localScale = Vector3.one;
+
+                    blendOverlayRenderer = blendObj.AddComponent<SpriteRenderer>();
+                    blendOverlayRenderer.sortingOrder = roomBackgroundRenderer.sortingOrder + 1;
+                    blendObj.SetActive(false);
+                }
+            }
+
             if (globalLight == null)
             {
                 var lightObj = GameObject.Find("Global Light 2D");
@@ -101,105 +127,120 @@ namespace TopDownGame
                 {
                     audioSource = gameObject.AddComponent<AudioSource>();
                     audioSource.playOnAwake = false;
-                    audioSource.spatialBlend = 0f; // 2D UI / environmental chime
+                    audioSource.spatialBlend = 0f;
                 }
             }
         }
 
-        public Sprite GetSpriteForStage(int stage)
+        /// <summary>
+        /// Immediately sets the room's visual appearance based purely on how many artifacts
+        /// have been placed on pedestals (0..5).
+        /// </summary>
+        public void ApplyRestorationState(int restoredCount)
         {
             EnsureReferences();
-            switch (stage)
-            {
-                case 1:
-                    return stage1PartialSprite != null ? stage1PartialSprite : stage0RuinedSprite;
-                case 2:
-                    return stage2RestoredSprite != null ? stage2RestoredSprite : stage1PartialSprite;
-                default:
-                    return stage0RuinedSprite;
-            }
-        }
+            _currentRestoredCount = Mathf.Clamp(restoredCount, 0, 5);
 
-        public void ApplyStageVisual(int stage)
-        {
-            EnsureReferences();
-            _currentStage = Mathf.Clamp(stage, 0, 2);
+            if (roomBackgroundRenderer == null) return;
 
-            if (roomBackgroundRenderer != null)
+            switch (_currentRestoredCount)
             {
-                var spr = GetSpriteForStage(_currentStage);
-                if (spr != null)
-                {
-                    roomBackgroundRenderer.sprite = spr;
-                }
-            }
-
-            if (globalLight != null)
-            {
-                switch (_currentStage)
-                {
-                    case 0:
+                case 0:
+                    // 0% - 100% Ruined
+                    roomBackgroundRenderer.sprite = stage0RuinedSprite;
+                    roomBackgroundRenderer.color = Color.white;
+                    if (blendOverlayRenderer != null) blendOverlayRenderer.gameObject.SetActive(false);
+                    if (globalLight != null)
+                    {
                         globalLight.color = LightColorStage0;
                         globalLight.intensity = LightIntensityStage0;
-                        break;
-                    case 1:
+                    }
+                    break;
+
+                case 1:
+                    // 20% - Ruined with 40% Partial blend
+                    roomBackgroundRenderer.sprite = stage0RuinedSprite;
+                    roomBackgroundRenderer.color = Color.white;
+                    if (blendOverlayRenderer != null)
+                    {
+                        blendOverlayRenderer.gameObject.SetActive(true);
+                        blendOverlayRenderer.sprite = stage1PartialSprite;
+                        blendOverlayRenderer.color = new Color(1f, 1f, 1f, 0.40f);
+                    }
+                    if (globalLight != null)
+                    {
+                        globalLight.color = Color.Lerp(LightColorStage0, LightColorStage1, 0.35f);
+                        globalLight.intensity = 0.86f;
+                    }
+                    break;
+
+                case 2:
+                    // 33% / 40% - 100% Partially Restored (Stage 1)
+                    roomBackgroundRenderer.sprite = stage1PartialSprite;
+                    roomBackgroundRenderer.color = Color.white;
+                    if (blendOverlayRenderer != null) blendOverlayRenderer.gameObject.SetActive(false);
+                    if (globalLight != null)
+                    {
                         globalLight.color = LightColorStage1;
                         globalLight.intensity = LightIntensityStage1;
-                        break;
-                    case 2:
+                    }
+                    break;
+
+                case 3:
+                    // 67% / 60% - Partial with 45% Restored blend
+                    roomBackgroundRenderer.sprite = stage1PartialSprite;
+                    roomBackgroundRenderer.color = Color.white;
+                    if (blendOverlayRenderer != null)
+                    {
+                        blendOverlayRenderer.gameObject.SetActive(true);
+                        blendOverlayRenderer.sprite = stage2RestoredSprite;
+                        blendOverlayRenderer.color = new Color(1f, 1f, 1f, 0.45f);
+                    }
+                    if (globalLight != null)
+                    {
+                        globalLight.color = Color.Lerp(LightColorStage1, LightColorStage2, 0.55f);
+                        globalLight.intensity = 1.02f;
+                    }
+                    break;
+
+                case 4:
+                    // 80% - Partial with 80% Restored blend
+                    roomBackgroundRenderer.sprite = stage1PartialSprite;
+                    roomBackgroundRenderer.color = Color.white;
+                    if (blendOverlayRenderer != null)
+                    {
+                        blendOverlayRenderer.gameObject.SetActive(true);
+                        blendOverlayRenderer.sprite = stage2RestoredSprite;
+                        blendOverlayRenderer.color = new Color(1f, 1f, 1f, 0.80f);
+                    }
+                    if (globalLight != null)
+                    {
+                        globalLight.color = Color.Lerp(LightColorStage1, LightColorStage2, 0.85f);
+                        globalLight.intensity = 1.07f;
+                    }
+                    break;
+
+                case 5:
+                default:
+                    // 100% - Fully Restored / Pristine (Stage 2)
+                    roomBackgroundRenderer.sprite = stage2RestoredSprite;
+                    roomBackgroundRenderer.color = Color.white;
+                    if (blendOverlayRenderer != null) blendOverlayRenderer.gameObject.SetActive(false);
+                    if (globalLight != null)
+                    {
                         globalLight.color = LightColorStage2;
                         globalLight.intensity = LightIntensityStage2;
-                        break;
-                }
+                    }
+                    break;
             }
-        }
-
-        public void CheckAndApplyRestoration(bool isEntrance = false)
-        {
-            if (roomNumber <= 0) return;
-
-            int targetStage = GameProgression.GetRoomRestorationStage(roomNumber);
-            int seenStage = GameProgression.GetRoomSeenRestorationStage(roomNumber);
-
-            if (isEntrance)
-            {
-                if (targetStage > seenStage)
-                {
-                    // Start at previously seen stage, then play the glorious entrance transformation!
-                    ApplyStageVisual(seenStage);
-                    StartCoroutine(DelayedEntranceTransformation(seenStage, targetStage));
-                }
-                else
-                {
-                    ApplyStageVisual(targetStage);
-                }
-            }
-            else
-            {
-                if (targetStage > _currentStage)
-                {
-                    StartCoroutine(RestorationSequence(_currentStage, targetStage, null, false));
-                }
-                else
-                {
-                    ApplyStageVisual(targetStage);
-                }
-            }
-        }
-
-        private IEnumerator DelayedEntranceTransformation(int fromStage, int toStage)
-        {
-            // Give the room banner and camera 0.6s to initialize before transformation begins
-            yield return new WaitForSeconds(0.6f);
-            yield return RestorationSequence(fromStage, toStage, Vector3.zero, true);
         }
 
         private void HandlePedestalRestored(int rNum, string artifactName)
         {
             if (rNum != roomNumber) return;
 
-            int targetStage = GameProgression.GetRoomRestorationStage(roomNumber);
-            if (targetStage > _currentStage && !_isTransitioning)
+            int newRestored = GameProgression.GetPedestalsRestoredCount(roomNumber);
+            if (newRestored > _currentRestoredCount && !_isTransitioning)
             {
                 Vector3 origin = Vector3.zero;
                 var pedestals = FindObjectsByType<ArtifactInteractable>(FindObjectsSortMode.None);
@@ -211,69 +252,77 @@ namespace TopDownGame
                         break;
                     }
                 }
-                StartCoroutine(RestorationSequence(_currentStage, targetStage, origin, false));
+
+                StartCoroutine(RestorationSequence(_currentRestoredCount, newRestored, origin, artifactName));
             }
         }
 
-        private void HandleStageChanged(int rNum, int newStage)
-        {
-            if (rNum != roomNumber) return;
-            if (newStage > _currentStage && !_isTransitioning)
-            {
-                StartCoroutine(RestorationSequence(_currentStage, newStage, Vector3.zero, false));
-            }
-        }
-
-        public IEnumerator RestorationSequence(int fromStage, int toStage, Vector3? burstOrigin, bool isEntrance)
+        public IEnumerator RestorationSequence(int fromCount, int toCount, Vector3 burstOrigin, string artifactName)
         {
             if (_isTransitioning) yield break;
             _isTransitioning = true;
 
             EnsureReferences();
-            var targetSprite = GetSpriteForStage(toStage);
-            if (roomBackgroundRenderer == null || targetSprite == null)
-            {
-                ApplyStageVisual(toStage);
-                GameProgression.SetRoomSeenRestorationStage(roomNumber, toStage);
-                _isTransitioning = false;
-                yield break;
-            }
 
-            Vector3 origin = burstOrigin ?? Vector3.zero;
-
-            // 1. Play synthesized celestial chime
+            // 1. Play celestial crystal chime
             PlayRestorationChime();
 
             // 2. Camera pulse & gentle rumble
             StartCoroutine(CameraImpulseRoutine());
 
-            // 3. Spawn Pedestal Halo Pulses
-            SpawnPedestalAuras();
+            // 3. Spawn Pedestal Aura Ring on the restored pedestal
+            SpawnPedestalAuras(burstOrigin);
 
-            // 4. Create Cross-Fade Overlay
-            var overlayObj = new GameObject("RoomBackground_TransitionOverlay");
+            // 4. Spawn Expanding Radiant Shockwave Ring directly from the restored pedestal
+            var ringObj = CreateShockwaveRing(burstOrigin);
+
+            // 5. Spawn Ascending Golden Sparkle Motes
+            var sparkles = SpawnSparkleMotes(25);
+
+            // 6. Transition Background Visuals over 1.4 seconds
+            int safeFrom = Mathf.Clamp(fromCount, 0, 5);
+            int safeTo = Mathf.Clamp(toCount, 0, 5);
+
+            float startLightIntensity = globalLight != null ? globalLight.intensity : LightIntensityStage0;
+            Color startLightColor = globalLight != null ? globalLight.color : LightColorStage0;
+
+            float targetLightIntensity = LightIntensityStage0;
+            Color targetLightColor = LightColorStage0;
+            switch (safeTo)
+            {
+                case 1:
+                    targetLightIntensity = 0.86f;
+                    targetLightColor = Color.Lerp(LightColorStage0, LightColorStage1, 0.35f);
+                    break;
+                case 2:
+                    targetLightIntensity = LightIntensityStage1;
+                    targetLightColor = LightColorStage1;
+                    break;
+                case 3:
+                    targetLightIntensity = 1.02f;
+                    targetLightColor = Color.Lerp(LightColorStage1, LightColorStage2, 0.55f);
+                    break;
+                case 4:
+                    targetLightIntensity = 1.07f;
+                    targetLightColor = Color.Lerp(LightColorStage1, LightColorStage2, 0.85f);
+                    break;
+                case 5:
+                    targetLightIntensity = LightIntensityStage2;
+                    targetLightColor = LightColorStage2;
+                    break;
+            }
+
+            // Create temporary transition cross-fade overlay
+            var overlayObj = new GameObject("RoomBackground_TransitionFX");
             overlayObj.transform.position = roomBackgroundRenderer.transform.position;
             overlayObj.transform.rotation = roomBackgroundRenderer.transform.rotation;
             overlayObj.transform.localScale = roomBackgroundRenderer.transform.localScale;
 
             var overlaySr = overlayObj.AddComponent<SpriteRenderer>();
-            overlaySr.sprite = targetSprite;
-            overlaySr.sortingOrder = roomBackgroundRenderer.sortingOrder + 1;
+            overlaySr.sprite = safeTo >= 3 ? stage2RestoredSprite : (safeTo >= 1 ? stage1PartialSprite : stage0RuinedSprite);
+            overlaySr.sortingOrder = roomBackgroundRenderer.sortingOrder + 2;
             overlaySr.color = new Color(1f, 1f, 1f, 0f);
 
-            // 5. Spawn Expanding Radiant Shockwave Ring
-            var ringObj = CreateShockwaveRing(origin);
-
-            // 6. Spawn Ascending Golden Sparkle Motes
-            var sparkles = SpawnSparkleMotes(25);
-
-            // 7. Light2D Profile Setup
-            Color startLightColor = globalLight != null ? globalLight.color : LightColorStage0;
-            float startLightIntensity = globalLight != null ? globalLight.intensity : LightIntensityStage0;
-            Color targetLightColor = toStage == 2 ? LightColorStage2 : LightColorStage1;
-            float targetLightIntensity = toStage == 2 ? LightIntensityStage2 : LightIntensityStage1;
-
-            // 8. Cross-Fade Animation Loop (1.4 seconds)
             float elapsed = 0f;
             float duration = 1.4f;
 
@@ -283,26 +332,23 @@ namespace TopDownGame
                 float t = Mathf.Clamp01(elapsed / duration);
                 float smoothT = Mathf.SmoothStep(0f, 1f, t);
 
-                // Blend overlay background
                 if (overlaySr != null)
                 {
-                    overlaySr.color = new Color(1f, 1f, 1f, smoothT);
+                    overlaySr.color = new Color(1f, 1f, 1f, smoothT * 0.75f);
                 }
 
-                // Expand and fade shockwave ring
                 if (ringObj != null)
                 {
-                    float ringScale = Mathf.Lerp(1f, 16f, t);
+                    float ringScale = Mathf.Lerp(0.8f, 16f, t);
                     ringObj.transform.localScale = new Vector3(ringScale, ringScale, 1f);
                     var ringSr = ringObj.GetComponent<SpriteRenderer>();
                     if (ringSr != null)
                     {
-                        float alpha = Mathf.Sin(t * Mathf.PI) * 0.75f;
+                        float alpha = Mathf.Sin(t * Mathf.PI) * 0.85f;
                         ringSr.color = new Color(1f, 0.92f, 0.5f, alpha);
                     }
                 }
 
-                // Interpolate Global Light 2D
                 if (globalLight != null)
                 {
                     globalLight.color = Color.Lerp(startLightColor, targetLightColor, smoothT);
@@ -312,43 +358,80 @@ namespace TopDownGame
                 yield return null;
             }
 
-            // 9. Complete Background Transition
-            roomBackgroundRenderer.sprite = targetSprite;
-            _currentStage = toStage;
-            GameProgression.SetRoomSeenRestorationStage(roomNumber, toStage);
+            // Apply definitive restoration state
+            ApplyRestorationState(safeTo);
 
             if (overlayObj != null) Destroy(overlayObj);
             if (ringObj != null) Destroy(ringObj);
 
-            // Clean up sparkle motes
             foreach (var sp in sparkles)
             {
                 if (sp != null) Destroy(sp);
             }
 
-            // 10. Display Celebratory Banner
-            if (toStage == 2)
-            {
-                NotificationBannerUI.Show(
-                    $"ROOM {roomNumber} FULLY PURIFIED!",
-                    "All artifacts restored! The ancient chamber shines with eternal golden light!",
-                    5.5f,
-                    new Color(0.2f, 0.95f, 0.45f, 1f),
-                    "★"
-                );
-            }
-            else if (toStage == 1)
-            {
-                NotificationBannerUI.Show(
-                    $"ROOM {roomNumber} RESTORATION (STAGE 1)",
-                    "Ancient curse weakened! Debris and cobwebs have dissolved from the chamber.",
-                    5.0f,
-                    new Color(1f, 0.88f, 0.35f, 1f),
-                    "✦"
-                );
-            }
+            // Show celebratory banner with exact restoration percentage
+            ShowRestorationBanner(safeTo, artifactName);
 
             _isTransitioning = false;
+        }
+
+        private void ShowRestorationBanner(int count, string artifactName)
+        {
+            string artLabel = string.IsNullOrEmpty(artifactName) ? "Artifact" : artifactName;
+
+            switch (count)
+            {
+                case 1:
+                    NotificationBannerUI.Show(
+                        $"ROOM {roomNumber} RESTORATION: 20%",
+                        $"Restored '{artLabel}' to its pedestal! (1/5 placed)\nAncient corruption begins to weaken.",
+                        5.0f,
+                        new Color(1f, 0.85f, 0.35f, 1f),
+                        "✦"
+                    );
+                    break;
+
+                case 2:
+                    NotificationBannerUI.Show(
+                        $"ROOM {roomNumber} RESTORATION: 33%",
+                        $"Restored '{artLabel}' to its pedestal! (2/5 placed)\nCobwebs and rubble dissolve from the chamber.",
+                        5.0f,
+                        new Color(1f, 0.88f, 0.35f, 1f),
+                        "✦"
+                    );
+                    break;
+
+                case 3:
+                    NotificationBannerUI.Show(
+                        $"ROOM {roomNumber} RESTORATION: 67%",
+                        $"Restored '{artLabel}' to its pedestal! (3/5 placed)\nGolden light breaks through as the floor restores.",
+                        5.0f,
+                        new Color(1f, 0.92f, 0.40f, 1f),
+                        "✦"
+                    );
+                    break;
+
+                case 4:
+                    NotificationBannerUI.Show(
+                        $"ROOM {roomNumber} RESTORATION: 80%",
+                        $"Restored '{artLabel}' to its pedestal! (4/5 placed)\nThe chamber is almost fully restored!",
+                        5.0f,
+                        new Color(0.35f, 0.95f, 0.55f, 1f),
+                        "✦"
+                    );
+                    break;
+
+                case 5:
+                default:
+                    NotificationBannerUI.Show(
+                        $"ROOM {roomNumber} 100% PURIFIED!",
+                        $"All 5 artifacts restored to pedestals!\nThe chamber radiates with eternal golden glory!",
+                        6.0f,
+                        new Color(0.2f, 0.95f, 0.45f, 1f),
+                        "★"
+                    );
+                    break;
+            }
         }
 
         private GameObject CreateShockwaveRing(Vector3 position)
@@ -360,8 +443,8 @@ namespace TopDownGame
             var sr = ring.AddComponent<SpriteRenderer>();
             sr.sprite = Resources.Load<Sprite>("PortalGlow");
             if (sr.sprite == null) sr.sprite = Resources.Load<Sprite>("SilhouetteGlow");
-            sr.sortingOrder = (roomBackgroundRenderer != null ? roomBackgroundRenderer.sortingOrder : -10) + 2;
-            sr.color = new Color(1f, 0.92f, 0.5f, 0.8f);
+            sr.sortingOrder = (roomBackgroundRenderer != null ? roomBackgroundRenderer.sortingOrder : -10) + 3;
+            sr.color = new Color(1f, 0.92f, 0.5f, 0.85f);
 
             return ring;
         }
@@ -416,26 +499,21 @@ namespace TopDownGame
             if (mote != null) Destroy(mote);
         }
 
-        private void SpawnPedestalAuras()
+        private void SpawnPedestalAuras(Vector3 origin)
         {
-            var pedestals = FindObjectsByType<ArtifactInteractable>(FindObjectsSortMode.None);
             var glowSpr = Resources.Load<Sprite>("PortalGlow");
             if (glowSpr == null) glowSpr = Resources.Load<Sprite>("SilhouetteGlow");
 
-            foreach (var p in pedestals)
-            {
-                if (p == null) continue;
-                var aura = new GameObject("PedestalAura");
-                aura.transform.position = new Vector3(p.transform.position.x, p.transform.position.y + 0.3f, 0f);
-                aura.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+            var aura = new GameObject("PedestalAura");
+            aura.transform.position = new Vector3(origin.x, origin.y + 0.3f, 0f);
+            aura.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
 
-                var sr = aura.AddComponent<SpriteRenderer>();
-                sr.sprite = glowSpr;
-                sr.sortingOrder = 4;
-                sr.color = new Color(1f, 0.9f, 0.4f, 0.85f);
+            var sr = aura.AddComponent<SpriteRenderer>();
+            sr.sprite = glowSpr;
+            sr.sortingOrder = 4;
+            sr.color = new Color(1f, 0.9f, 0.4f, 0.85f);
 
-                StartCoroutine(AuraPulseRoutine(aura, sr));
-            }
+            StartCoroutine(AuraPulseRoutine(aura, sr));
         }
 
         private IEnumerator AuraPulseRoutine(GameObject aura, SpriteRenderer sr)
@@ -447,9 +525,9 @@ namespace TopDownGame
             {
                 elapsed += Time.unscaledDeltaTime;
                 float t = elapsed / duration;
-                float scale = Mathf.Lerp(0.5f, 2.2f, t);
+                float scale = Mathf.Lerp(0.5f, 2.5f, t);
                 aura.transform.localScale = new Vector3(scale, scale, 1f);
-                float alpha = Mathf.Sin(t * Mathf.PI) * 0.8f;
+                float alpha = Mathf.Sin(t * Mathf.PI) * 0.85f;
                 sr.color = new Color(1f, 0.9f, 0.4f, alpha);
                 yield return null;
             }
@@ -531,22 +609,40 @@ namespace TopDownGame
             return clip;
         }
 
-        [ContextMenu("Test Transform to Stage 1")]
-        public void TestTransformToStage1()
+        [ContextMenu("Test Place 1 (20%)")]
+        public void TestPlace1()
         {
-            StartCoroutine(RestorationSequence(_currentStage, 1, Vector3.zero, false));
+            StartCoroutine(RestorationSequence(0, 1, Vector3.zero, "Sample Artifact"));
         }
 
-        [ContextMenu("Test Transform to Stage 2")]
-        public void TestTransformToStage2()
+        [ContextMenu("Test Place 2 (33%)")]
+        public void TestPlace2()
         {
-            StartCoroutine(RestorationSequence(_currentStage, 2, Vector3.zero, false));
+            StartCoroutine(RestorationSequence(1, 2, Vector3.zero, "Sample Artifact"));
         }
 
-        [ContextMenu("Reset to Stage 0")]
-        public void TestResetToStage0()
+        [ContextMenu("Test Place 3 (67%)")]
+        public void TestPlace3()
         {
-            ApplyStageVisual(0);
+            StartCoroutine(RestorationSequence(2, 3, Vector3.zero, "Sample Artifact"));
+        }
+
+        [ContextMenu("Test Place 4 (80%)")]
+        public void TestPlace4()
+        {
+            StartCoroutine(RestorationSequence(3, 4, Vector3.zero, "Sample Artifact"));
+        }
+
+        [ContextMenu("Test Place 5 (100%)")]
+        public void TestPlace5()
+        {
+            StartCoroutine(RestorationSequence(4, 5, Vector3.zero, "Final Artifact"));
+        }
+
+        [ContextMenu("Reset to 0% (Ruined)")]
+        public void TestResetTo0()
+        {
+            ApplyRestorationState(0);
         }
     }
 }
