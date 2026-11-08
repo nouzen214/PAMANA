@@ -3,6 +3,7 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 
@@ -1161,6 +1162,8 @@ namespace TopDownGame.Editor
                 vicBody.text = victoryMessage;
             }
 
+            ConfigurePauseMenu(scene);
+
             EditorUtility.SetDirty(qbm);
             EditorUtility.SetDirty(mbc);
             EditorSceneManager.MarkSceneDirty(scene);
@@ -1324,6 +1327,165 @@ namespace TopDownGame.Editor
                 }
             }
             return null;
+        }
+
+        [MenuItem("Tools/Setup/Setup Pause Menu In All Battle Scenes")]
+        public static void SetupPauseMenuInAllBattleScenes()
+        {
+            EnsureSpriteImport("Assets/UI/Pause/Pause_Scroll_Frame.png");
+            EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_Resume_Normal.png");
+            EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_Resume_Hover.png");
+            EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_Retreat_Normal.png");
+            EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_Retreat_Hover.png");
+
+            string[] battleScenes = new string[]
+            {
+                "Assets/Scenes/BattleScene.unity",
+                "Assets/Scenes/BattleScene_2.unity",
+                "Assets/Scenes/BattleScene_3.unity",
+                "Assets/Scenes/BattleScene_4.unity",
+                "Assets/Scenes/BattleScene_5.unity",
+                "Assets/Scenes/BattleScene_6.unity",
+                "Assets/Scenes/BattleScene_7.unity",
+                "Assets/Scenes/BattleScene_8.unity",
+                "Assets/Scenes/BattleScene_9.unity",
+                "Assets/Scenes/BattleScene_10.unity",
+                "Assets/Scenes/BattleScene_11.unity",
+                "Assets/Scenes/BattleScene_12.unity"
+            };
+
+            foreach (var path in battleScenes)
+            {
+                if (File.Exists(path))
+                {
+                    var scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
+                    ConfigurePauseMenu(scene);
+                }
+            }
+            Debug.Log("[BattleSceneGenerator] Configured new Pause Menu across all 12 Battle Scenes!");
+        }
+
+        public static void ConfigurePauseMenu(Scene scene)
+        {
+            var sprScroll = LoadSprite("Assets/UI/Pause/Pause_Scroll_Frame.png");
+            var sprResumeNorm = LoadSprite("Assets/UI/Pause/Pause_Btn_Resume_Normal.png");
+            var sprResumeHov = LoadSprite("Assets/UI/Pause/Pause_Btn_Resume_Hover.png");
+            var sprRetreatNorm = LoadSprite("Assets/UI/Pause/Pause_Btn_Retreat_Normal.png");
+            var sprRetreatHov = LoadSprite("Assets/UI/Pause/Pause_Btn_Retreat_Hover.png");
+
+            var sm = GameObject.Find("SettingsModal");
+            if (sm == null)
+            {
+                var canvas = GameObject.Find("BattleCanvas");
+                if (canvas != null)
+                {
+                    var t = canvas.transform.Find("SettingsModal");
+                    if (t != null) sm = t.gameObject;
+                }
+            }
+            if (sm == null)
+            {
+                var all = Resources.FindObjectsOfTypeAll<GameObject>();
+                foreach (var go in all)
+                {
+                    if (go.name == "SettingsModal" && go.scene == scene)
+                    {
+                        sm = go;
+                        break;
+                    }
+                }
+            }
+            if (sm == null) return;
+
+            var qbm = Object.FindFirstObjectByType<QuizBattleManager>();
+
+            // Dimmer
+            var smImg = sm.GetComponent<Image>();
+            if (smImg == null) smImg = sm.AddComponent<Image>();
+            smImg.color = new Color(0f, 0f, 0f, 0.75f);
+
+            var windowTr = sm.transform.Find("Window");
+            if (windowTr == null) return;
+            var windowRt = windowTr.GetComponent<RectTransform>();
+            var windowImg = windowTr.GetComponent<Image>();
+            if (windowImg == null) windowImg = windowTr.gameObject.AddComponent<Image>();
+
+            windowRt.sizeDelta = new Vector2(720f, 520f);
+            windowRt.anchoredPosition = Vector2.zero;
+            windowImg.sprite = sprScroll;
+            windowImg.color = Color.white;
+            windowImg.preserveAspect = true;
+
+            var titleTr = windowTr.Find("Title");
+            if (titleTr != null) titleTr.gameObject.SetActive(false);
+
+            Button resumeBtn = null;
+            var resumeTr = windowTr.Find("ResumeButton");
+            if (resumeTr != null)
+            {
+                var resumeRt = resumeTr.GetComponent<RectTransform>();
+                resumeRt.anchoredPosition = new Vector2(0f, 22f);
+                resumeRt.sizeDelta = new Vector2(320f, 101f);
+                var rImg = resumeTr.GetComponent<Image>();
+                if (rImg == null) rImg = resumeTr.gameObject.AddComponent<Image>();
+                rImg.sprite = sprResumeNorm;
+                rImg.color = Color.white;
+                rImg.preserveAspect = true;
+
+                resumeBtn = resumeTr.GetComponent<Button>();
+                if (resumeBtn == null) resumeBtn = resumeTr.gameObject.AddComponent<Button>();
+                resumeBtn.targetGraphic = rImg;
+                resumeBtn.transition = Selectable.Transition.SpriteSwap;
+                var ss = resumeBtn.spriteState;
+                ss.highlightedSprite = sprResumeHov;
+                ss.pressedSprite = sprResumeHov;
+                ss.selectedSprite = sprResumeHov;
+                resumeBtn.spriteState = ss;
+
+                var txt = resumeTr.Find("Text");
+                if (txt != null) txt.gameObject.SetActive(false);
+            }
+
+            Button exitBtn = null;
+            var exitTr = windowTr.Find("ExitButton");
+            if (exitTr != null)
+            {
+                var exitRt = exitTr.GetComponent<RectTransform>();
+                exitRt.anchoredPosition = new Vector2(0f, -95f);
+                exitRt.sizeDelta = new Vector2(320f, 101f);
+                var eImg = exitTr.GetComponent<Image>();
+                if (eImg == null) eImg = exitTr.gameObject.AddComponent<Image>();
+                eImg.sprite = sprRetreatNorm;
+                eImg.color = Color.white;
+                eImg.preserveAspect = true;
+
+                exitBtn = exitTr.GetComponent<Button>();
+                if (exitBtn == null) exitBtn = exitTr.gameObject.AddComponent<Button>();
+                exitBtn.targetGraphic = eImg;
+                exitBtn.transition = Selectable.Transition.SpriteSwap;
+                var ss = exitBtn.spriteState;
+                ss.highlightedSprite = sprRetreatHov;
+                ss.pressedSprite = sprRetreatHov;
+                ss.selectedSprite = sprRetreatHov;
+                exitBtn.spriteState = ss;
+
+                var txt = exitTr.Find("Text");
+                if (txt != null) txt.gameObject.SetActive(false);
+            }
+
+            if (qbm != null)
+            {
+                var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+                qbm.GetType().GetField("settingsModal", flags)?.SetValue(qbm, sm);
+                if (resumeBtn != null) qbm.GetType().GetField("settingsCloseButton", flags)?.SetValue(qbm, resumeBtn);
+                if (exitBtn != null) qbm.GetType().GetField("settingsExitHallwayButton", flags)?.SetValue(qbm, exitBtn);
+                EditorUtility.SetDirty(qbm);
+            }
+
+            sm.SetActive(false);
+            EditorUtility.SetDirty(sm);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
         }
     }
 }

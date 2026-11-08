@@ -827,6 +827,22 @@ namespace TopDownGame
             Debug.Log("[QuizBattleManager] Battle LOST! Player health depleted!");
         }
 
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (settingsModal != null && settingsModal.activeSelf)
+                {
+                    OnCloseSettingsClicked();
+                }
+                else if ((victoryModal == null || !victoryModal.activeSelf) &&
+                         (defeatModal == null || !defeatModal.activeSelf))
+                {
+                    OnSettingsClicked();
+                }
+            }
+        }
+
         public void OnSettingsClicked()
         {
             if (settingsModal != null) settingsModal.SetActive(true);
