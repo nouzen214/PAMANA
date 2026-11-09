@@ -94,6 +94,7 @@ namespace TopDownGame
                 accentBorderImage.color = accentColor;
             }
 
+            gameObject.SetActive(true);
             if (_displayCoroutine != null)
             {
                 StopCoroutine(_displayCoroutine);

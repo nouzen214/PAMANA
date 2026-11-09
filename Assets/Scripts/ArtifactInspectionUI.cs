@@ -47,6 +47,7 @@ namespace TopDownGame
 
         [Header("Close All / Background Tap")]
         [SerializeField] private Button backgroundTapButton;
+        [SerializeField] private Button dialogueArrowButton;
 
         private ArtifactInteractable _currentArtifact;
         private PlayerMovement _playerMovement;
@@ -82,13 +83,15 @@ namespace TopDownGame
                 restoreArtifactButton.onClick.AddListener(OnRestoreArtifactClicked);
 
             if (closePlaqueButton != null)
-                closePlaqueButton.onClick.AddListener(Close);
+                closePlaqueButton.onClick.AddListener(OnDialogueArrowClicked);
 
             if (closeArtifactDetailButton != null)
-                closeArtifactDetailButton.onClick.AddListener(Close);
+                closeArtifactDetailButton.onClick.AddListener(OnDialogueArrowClicked);
 
             if (backgroundTapButton != null)
                 backgroundTapButton.onClick.AddListener(Close);
+
+            EnsureDialogueArrowButton();
 
             if (rootPanel != null)
                 rootPanel.SetActive(false);
@@ -201,14 +204,7 @@ namespace TopDownGame
                 var kb = UnityEngine.InputSystem.Keyboard.current;
                 if (kb.escapeKey.wasPressedThisFrame)
                 {
-                    if (_restorePickerModal != null && _restorePickerModal.activeSelf)
-                    {
-                        CloseRestorePicker();
-                    }
-                    else
-                    {
-                        Close();
-                    }
+                    OnDialogueArrowClicked();
                     return;
                 }
 
@@ -232,7 +228,7 @@ namespace TopDownGame
                 {
                     if (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.eKey.wasPressedThisFrame)
                     {
-                        Close();
+                        OnDialogueArrowClicked();
                     }
                 }
             }
@@ -330,6 +326,7 @@ namespace TopDownGame
             }
 
             UpdateChoiceButtons();
+            EnsureDialogueArrowButton();
 
             if (rootPanel != null)
                 rootPanel.SetActive(true);
@@ -351,7 +348,135 @@ namespace TopDownGame
             if (inspectArtifactButton != null) inspectArtifactButton.gameObject.SetActive(true);
             if (inspectPlaqueButton != null) inspectPlaqueButton.gameObject.SetActive(true);
 
+            EnsureDialogueArrowButton();
             CleanAllChoiceButtons();
+        }
+
+        public void OnDialogueArrowClicked()
+        {
+            if (_restorePickerModal != null && _restorePickerModal.activeSelf)
+            {
+                CloseRestorePicker();
+                return;
+            }
+
+            if ((artifactPopup != null && artifactPopup.activeSelf) || (plaquePopup != null && plaquePopup.activeSelf))
+            {
+                ReturnToChoiceMenu();
+                return;
+            }
+
+            Close();
+        }
+
+        public void ReturnToChoiceMenu()
+        {
+            if (plaquePopup != null) plaquePopup.SetActive(false);
+            if (artifactPopup != null) artifactPopup.SetActive(false);
+            if (_restorePickerModal != null) _restorePickerModal.SetActive(false);
+
+            UpdateChoiceButtons();
+
+            if (dialogueText != null && _currentArtifact != null)
+            {
+                int rNum = _currentArtifact.RoomNumber;
+                bool isPedestalRestored = _currentArtifact.IsRestored;
+                bool allRead = GameProgression.AreAllPlaquesRead(rNum);
+                int readCount = GameProgression.GetPlaquesReadCount(rNum);
+                bool hasMatchingInBag = DoesPlayerHaveArtifactForPedestal(_currentArtifact);
+                bool battleDone = GameProgression.HasRetrievedRoomArtifact(rNum);
+
+                if (isPedestalRestored)
+                {
+                    dialogueText.text = $"The {_currentArtifact.ArtifactName} has been safely restored to this pedestal!";
+                }
+                else if (hasMatchingInBag)
+                {
+                    dialogueText.text = "I have a matching artifact in my bag! I should place it on this pedestal.";
+                }
+                else if (battleDone)
+                {
+                    dialogueText.text = "This pedestal is empty. The artifact was lost in the Alterworld battle and was not recovered.";
+                }
+                else if (allRead)
+                {
+                    if (rNum == 1)
+                        dialogueText.text = "I have studied all 5 plaques in Room 1! The mysterious portal in the museum lobby is now awakened!";
+                    else
+                        dialogueText.text = $"I have studied all 5 plaques in Room {rNum}! The Alterworld trial for Room {rNum} is now unlocked!";
+                }
+                else
+                {
+                    dialogueText.text = $"I need to study all 5 historical plaques in this room ({readCount}/5 studied). What should I do?";
+                }
+                dialogueText.color = new Color(0.18f, 0.18f, 0.18f, 1f);
+            }
+        }
+
+        private void EnsureDialogueArrowButton()
+        {
+            if (dialogueArrowButton == null)
+            {
+                Transform dbox = dialogueText != null ? dialogueText.transform.parent : null;
+                if (dbox == null && rootPanel != null)
+                {
+                    dbox = rootPanel.transform.Find("DialogueBox");
+                }
+                if (dbox == null)
+                {
+                    var dboxes = Resources.FindObjectsOfTypeAll<GameObject>();
+                    foreach (var go in dboxes)
+                    {
+                        if (go.name == "DialogueBox" && (rootPanel == null || go.transform.IsChildOf(rootPanel.transform)))
+                        {
+                            dbox = go.transform;
+                            break;
+                        }
+                    }
+                }
+
+                if (dbox != null)
+                {
+                    var existing = dbox.Find("DialogueArrowButton");
+                    if (existing != null)
+                    {
+                        dialogueArrowButton = existing.GetComponent<Button>();
+                    }
+                    else
+                    {
+                        var btnObj = new GameObject("DialogueArrowButton", typeof(RectTransform), typeof(Image), typeof(Button));
+                        btnObj.transform.SetParent(dbox, false);
+
+                        var rt = btnObj.GetComponent<RectTransform>();
+                        rt.anchorMin = new Vector2(1f, 0f);
+                        rt.anchorMax = new Vector2(1f, 0f);
+                        rt.pivot = new Vector2(0.5f, 0.5f);
+                        rt.anchoredPosition = new Vector2(-67f, 41.5f);
+                        rt.sizeDelta = new Vector2(85f, 75f);
+
+                        var img = btnObj.GetComponent<Image>();
+                        img.color = new Color(1f, 1f, 1f, 0.001f);
+                        img.raycastTarget = true;
+
+                        dialogueArrowButton = btnObj.GetComponent<Button>();
+                        dialogueArrowButton.targetGraphic = img;
+
+                        var colors = dialogueArrowButton.colors;
+                        colors.normalColor = new Color(1f, 1f, 1f, 0.001f);
+                        colors.highlightedColor = new Color(1f, 0.85f, 0.3f, 0.35f);
+                        colors.pressedColor = new Color(0.9f, 0.6f, 0.1f, 0.55f);
+                        colors.selectedColor = new Color(1f, 0.85f, 0.3f, 0.35f);
+                        dialogueArrowButton.colors = colors;
+                    }
+                }
+            }
+
+            if (dialogueArrowButton != null)
+            {
+                dialogueArrowButton.onClick.RemoveListener(OnDialogueArrowClicked);
+                dialogueArrowButton.onClick.AddListener(OnDialogueArrowClicked);
+                dialogueArrowButton.gameObject.SetActive(true);
+            }
         }
 
         private bool DoesPlayerHaveArtifactForPedestal(ArtifactInteractable pedestal)
@@ -771,6 +896,7 @@ namespace TopDownGame
             if (choiceContainer != null) choiceContainer.SetActive(false);
             if (artifactPopup != null) artifactPopup.SetActive(false);
             if (_restorePickerModal != null) _restorePickerModal.SetActive(false);
+            EnsureDialogueArrowButton();
 
             if (plaquePopup != null)
             {
@@ -838,6 +964,7 @@ namespace TopDownGame
             if (choiceContainer != null) choiceContainer.SetActive(false);
             if (plaquePopup != null) plaquePopup.SetActive(false);
             if (_restorePickerModal != null) _restorePickerModal.SetActive(false);
+            EnsureDialogueArrowButton();
 
             int rNum = _currentArtifact != null ? _currentArtifact.RoomNumber : 1;
             bool isPedestalRestored = _currentArtifact != null && _currentArtifact.IsRestored;

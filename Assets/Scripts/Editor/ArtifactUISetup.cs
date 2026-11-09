@@ -1043,6 +1043,27 @@ namespace TopDownGame.Editor
             diagTmp.fontSize = 25f;
             diagTmp.color = new Color(0.18f, 0.12f, 0.08f, 1f);
 
+            // 2f. Dialogue Arrow Button (Acts as close / back button on bottom-right arrow)
+            var arrowBtnObj = new GameObject("DialogueArrowButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            arrowBtnObj.transform.SetParent(dboxObj.transform, false);
+            var arrowRt = arrowBtnObj.GetComponent<RectTransform>();
+            arrowRt.anchorMin = new Vector2(1f, 0f);
+            arrowRt.anchorMax = new Vector2(1f, 0f);
+            arrowRt.pivot = new Vector2(0.5f, 0.5f);
+            arrowRt.anchoredPosition = new Vector2(-67f, 41.5f);
+            arrowRt.sizeDelta = new Vector2(85f, 75f);
+            var arrowImg = arrowBtnObj.GetComponent<Image>();
+            arrowImg.color = new Color(1f, 1f, 1f, 0.001f);
+            arrowImg.raycastTarget = true;
+            var arrowBtn = arrowBtnObj.GetComponent<Button>();
+            arrowBtn.targetGraphic = arrowImg;
+            var aColors = arrowBtn.colors;
+            aColors.normalColor = new Color(1f, 1f, 1f, 0.001f);
+            aColors.highlightedColor = new Color(1f, 0.85f, 0.3f, 0.35f);
+            aColors.pressedColor = new Color(0.9f, 0.6f, 0.1f, 0.55f);
+            aColors.selectedColor = new Color(1f, 0.85f, 0.3f, 0.35f);
+            arrowBtn.colors = aColors;
+
             // 3. Choice Buttons Container
             var choiceBox = new GameObject("ChoiceButtons", typeof(RectTransform));
             choiceBox.transform.SetParent(rootPanel.transform, false);
@@ -1189,6 +1210,7 @@ namespace TopDownGame.Editor
             SetField(uiCtrl, "artifactDetailBodyText", null);
             SetField(uiCtrl, "closeArtifactDetailButton", closeArtBtn);
             SetField(uiCtrl, "backgroundTapButton", null);
+            SetField(uiCtrl, "dialogueArrowButton", arrowBtn);
 
             EditorUtility.SetDirty(uiCtrl);
 
