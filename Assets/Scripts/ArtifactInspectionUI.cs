@@ -456,8 +456,8 @@ namespace TopDownGame
                         rt.anchorMin = new Vector2(1f, 0f);
                         rt.anchorMax = new Vector2(1f, 0f);
                         rt.pivot = new Vector2(0.5f, 0.5f);
-                        rt.anchoredPosition = new Vector2(-67f, 41.5f);
-                        rt.sizeDelta = new Vector2(85f, 75f);
+                        rt.anchoredPosition = new Vector2(-45f, 20f);
+                        rt.sizeDelta = new Vector2(50f, 35f);
 
                         var img = btnObj.GetComponent<Image>();
                         img.color = new Color(1f, 1f, 1f, 0.001f);
@@ -623,7 +623,7 @@ namespace TopDownGame
             subRt.sizeDelta = new Vector2(700f, 25f);
             var subTmp = subObj.GetComponent<TextMeshProUGUI>();
             subTmp.text = "Pick an artifact from your bag to place on this pedestal:";
-            subTmp.fontSize = 16f;
+            subTmp.fontSize = 20f;
             subTmp.alignment = TextAlignmentOptions.Center;
             subTmp.color = new Color(0.4f, 0.3f, 0.15f, 1f);
 
@@ -772,7 +772,7 @@ namespace TopDownGame
                 nameRt.sizeDelta = new Vector2(-195f, 26f);
                 var nameTmp = nameObj.GetComponent<TextMeshProUGUI>();
                 nameTmp.text = item.name;
-                nameTmp.fontSize = 17f;
+                nameTmp.fontSize = 20f;
                 nameTmp.fontStyle = FontStyles.Bold;
                 nameTmp.color = new Color(0.96f, 0.85f, 0.55f, 1f);
 
@@ -787,7 +787,7 @@ namespace TopDownGame
                 descRt.sizeDelta = new Vector2(-195f, -38f);
                 var descTmp = descObj.GetComponent<TextMeshProUGUI>();
                 descTmp.text = item.description;
-                descTmp.fontSize = 12f;
+                descTmp.fontSize = 15f;
                 descTmp.color = new Color(0.85f, 0.85f, 0.85f, 0.9f);
                 descTmp.overflowMode = TextOverflowModes.Ellipsis;
 
@@ -812,7 +812,7 @@ namespace TopDownGame
                 placeTxtRt.offsetMax = Vector2.zero;
                 var placeTmp = placeTxtObj.GetComponent<TextMeshProUGUI>();
                 placeTmp.text = "PLACE";
-                placeTmp.fontSize = 15f;
+                placeTmp.fontSize = 17f;
                 placeTmp.fontStyle = FontStyles.Bold;
                 placeTmp.alignment = TextAlignmentOptions.Center;
                 placeTmp.color = Color.white;

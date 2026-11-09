@@ -269,12 +269,12 @@ namespace TopDownGame
 
             var nameTmp = nameObj.GetComponent<TextMeshProUGUI>();
             nameTmp.text = item.name;
-            nameTmp.fontSize = 16f;
+            nameTmp.fontSize = 18f;
             nameTmp.fontStyle = FontStyles.Bold;
             nameTmp.color = new Color(0.98f, 0.88f, 0.55f, 1f);
             nameTmp.enableAutoSizing = true;
-            nameTmp.fontSizeMin = 13f;
-            nameTmp.fontSizeMax = 16f;
+            nameTmp.fontSizeMin = 14f;
+            nameTmp.fontSizeMax = 18f;
             nameTmp.textWrappingMode = TextWrappingModes.Normal;
             nameTmp.overflowMode = TextOverflowModes.Ellipsis;
 
@@ -290,7 +290,7 @@ namespace TopDownGame
 
             var descTmp = descObj.GetComponent<TextMeshProUGUI>();
             descTmp.text = item.description;
-            descTmp.fontSize = 11.5f;
+            descTmp.fontSize = 14.5f;
             descTmp.color = new Color(0.88f, 0.85f, 0.80f, 0.95f);
             descTmp.textWrappingMode = TextWrappingModes.Normal;
             descTmp.overflowMode = TextOverflowModes.Ellipsis;
@@ -364,7 +364,7 @@ namespace TopDownGame
             countRt.sizeDelta = new Vector2(500f, 30f);
             var countTmp = countObj.GetComponent<TextMeshProUGUI>();
             countTmp.text = "ARTIFACTS COLLECTED: 0";
-            countTmp.fontSize = 18f;
+            countTmp.fontSize = 22f;
             countTmp.fontStyle = FontStyles.Bold;
             countTmp.alignment = TextAlignmentOptions.Center;
             countTmp.color = new Color(0.45f, 0.35f, 0.2f, 1f);

@@ -982,8 +982,8 @@ namespace TopDownGame.Editor
             dboxRt.anchorMin = new Vector2(0.5f, 0f);
             dboxRt.anchorMax = new Vector2(0.5f, 0f);
             dboxRt.pivot = new Vector2(0.5f, 0f);
-            dboxRt.anchoredPosition = new Vector2(110f, 35f);
-            dboxRt.sizeDelta = new Vector2(1050f, 287f);
+            dboxRt.anchoredPosition = new Vector2(145f, 35f);
+            dboxRt.sizeDelta = new Vector2(1380f, 151f);
             var dboxImg = dboxObj.GetComponent<Image>();
             dboxImg.sprite = dboxSprite;
             dboxImg.preserveAspect = true;
@@ -1022,11 +1022,11 @@ namespace TopDownGame.Editor
             nameRt.anchorMin = new Vector2(0f, 1f);
             nameRt.anchorMax = new Vector2(0f, 1f);
             nameRt.pivot = new Vector2(0f, 1f);
-            nameRt.anchoredPosition = new Vector2(120f, -30f);
-            nameRt.sizeDelta = new Vector2(230f, 45f);
+            nameRt.anchoredPosition = new Vector2(82f, -8f);
+            nameRt.sizeDelta = new Vector2(160f, 26f);
             var nameTmp = nameObj.GetComponent<TextMeshProUGUI>();
             nameTmp.text = "Darrel";
-            nameTmp.fontSize = 28f;
+            nameTmp.fontSize = 21f;
             nameTmp.fontStyle = FontStyles.Bold;
             nameTmp.color = new Color(1f, 0.95f, 0.85f, 1f);
 
@@ -1036,11 +1036,14 @@ namespace TopDownGame.Editor
             var diagRt = diagObj.GetComponent<RectTransform>();
             diagRt.anchorMin = new Vector2(0f, 0f);
             diagRt.anchorMax = new Vector2(1f, 1f);
-            diagRt.offsetMin = new Vector2(55f, 30f);
-            diagRt.offsetMax = new Vector2(-110f, -100f);
+            diagRt.offsetMin = new Vector2(40f, 18f);
+            diagRt.offsetMax = new Vector2(-75f, -38f);
             var diagTmp = diagObj.GetComponent<TextMeshProUGUI>();
             diagTmp.text = "what should i do";
-            diagTmp.fontSize = 25f;
+            diagTmp.fontSize = 28f;
+            diagTmp.enableAutoSizing = true;
+            diagTmp.fontSizeMin = 22f;
+            diagTmp.fontSizeMax = 28f;
             diagTmp.color = new Color(0.18f, 0.12f, 0.08f, 1f);
 
             // 2f. Dialogue Arrow Button (Acts as close / back button on bottom-right arrow)
@@ -1050,8 +1053,8 @@ namespace TopDownGame.Editor
             arrowRt.anchorMin = new Vector2(1f, 0f);
             arrowRt.anchorMax = new Vector2(1f, 0f);
             arrowRt.pivot = new Vector2(0.5f, 0.5f);
-            arrowRt.anchoredPosition = new Vector2(-67f, 41.5f);
-            arrowRt.sizeDelta = new Vector2(85f, 75f);
+            arrowRt.anchoredPosition = new Vector2(-45f, 20f);
+            arrowRt.sizeDelta = new Vector2(50f, 35f);
             var arrowImg = arrowBtnObj.GetComponent<Image>();
             arrowImg.color = new Color(1f, 1f, 1f, 0.001f);
             arrowImg.raycastTarget = true;
@@ -1110,7 +1113,7 @@ namespace TopDownGame.Editor
             var pTitleTmp = pTitleObj.GetComponent<TextMeshProUGUI>();
             pTitleTmp.text = "...";
             pTitleTmp.alignment = TextAlignmentOptions.Center;
-            pTitleTmp.fontSize = 32f;
+            pTitleTmp.fontSize = 34f;
             pTitleTmp.fontStyle = FontStyles.Bold;
             pTitleTmp.color = new Color(0.28f, 0.18f, 0.10f, 1f);
 
@@ -1125,7 +1128,10 @@ namespace TopDownGame.Editor
             var pBodyTmp = pBodyObj.GetComponent<TextMeshProUGUI>();
             pBodyTmp.text = "...";
             pBodyTmp.alignment = TextAlignmentOptions.Center;
-            pBodyTmp.fontSize = 24f;
+            pBodyTmp.fontSize = 28f;
+            pBodyTmp.enableAutoSizing = true;
+            pBodyTmp.fontSizeMin = 22f;
+            pBodyTmp.fontSizeMax = 28f;
             pBodyTmp.color = new Color(0.24f, 0.16f, 0.10f, 1f);
 
             var closePlaqueBtnObj = CreatePlaqueCloseButton("ClosePlaqueButton", plaquePopupObj, plaqueSprite);
@@ -1251,7 +1257,7 @@ namespace TopDownGame.Editor
             var lTmp = lObj.GetComponent<TextMeshProUGUI>();
             lTmp.text = text;
             lTmp.alignment = TextAlignmentOptions.Center;
-            lTmp.fontSize = 21f;
+            lTmp.fontSize = 26f;
             lTmp.fontStyle = FontStyles.Bold;
             lTmp.color = new Color(0.18f, 0.12f, 0.08f, 1f);
 
@@ -1290,7 +1296,7 @@ namespace TopDownGame.Editor
             var tmp = txtObj.GetComponent<TextMeshProUGUI>();
             tmp.text = "Back";
             tmp.alignment = TextAlignmentOptions.Center;
-            tmp.fontSize = 18f;
+            tmp.fontSize = 22f;
             tmp.fontStyle = FontStyles.Bold;
             tmp.color = new Color(0.24f, 0.16f, 0.10f, 1f);
 
