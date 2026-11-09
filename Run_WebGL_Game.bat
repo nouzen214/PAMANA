@@ -1,8 +1,10 @@
 @echo off
+title PAMANA WebGL Game
 echo =======================================================
 echo  Launching PAMANA WebGL Game in your default browser...
 echo =======================================================
-start "" http://localhost:8000/index.html
-cd /d "%~dp0Builds\WebGL"
-python serve_webgl.py
+echo.
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0docs\serve_webgl.ps1"
+
 pause
