@@ -1022,8 +1022,8 @@ namespace TopDownGame.Editor
             nameRt.anchorMin = new Vector2(0f, 1f);
             nameRt.anchorMax = new Vector2(0f, 1f);
             nameRt.pivot = new Vector2(0f, 1f);
-            nameRt.anchoredPosition = new Vector2(85f, -28f);
-            nameRt.sizeDelta = new Vector2(260f, 45f);
+            nameRt.anchoredPosition = new Vector2(120f, -30f);
+            nameRt.sizeDelta = new Vector2(230f, 45f);
             var nameTmp = nameObj.GetComponent<TextMeshProUGUI>();
             nameTmp.text = "Darrel";
             nameTmp.fontSize = 28f;
