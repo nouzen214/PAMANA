@@ -148,7 +148,7 @@ namespace TopDownGame
                 if (t != null) monsterPortraitContainer = t.gameObject;
             }
 
-            EnsureMonsterPortrait();
+            EnsureMonsterPortrait(false);
         }
 
         private void Start()
@@ -378,13 +378,11 @@ namespace TopDownGame
             }
         }
 
-        public void EnsureMonsterPortrait()
+        public void EnsureMonsterPortrait(bool setActive = true)
         {
             var go = MonsterPortraitContainerGO;
             if (go != null)
             {
-                go.SetActive(true);
-
                 // Ensure Frame and Avatar are active and have a valid sprite
                 var avatarTr = go.transform.Find("Frame/Avatar") ?? go.transform.Find("Avatar");
                 if (avatarTr != null)
@@ -421,6 +419,8 @@ namespace TopDownGame
 
                 var heartsTr = go.transform.Find("MonsterHearts");
                 if (heartsTr != null) heartsTr.gameObject.SetActive(true);
+
+                go.SetActive(setActive);
             }
         }
 
@@ -429,12 +429,15 @@ namespace TopDownGame
             _selectedSlotIndex = -1;
             string pName = GetPlayerCharacterName();
 
-            // Hide question dialogue and choices when choosing an artifact, but ALWAYS keep enemy portrait active!
+            // Do NOT show enemy icon and health immediately; they only appear when the user clicks an artifact
             if (TopDialogueBoxGO != null)
             {
                 TopDialogueBoxGO.SetActive(false);
             }
-            EnsureMonsterPortrait();
+            if (MonsterPortraitContainerGO != null)
+            {
+                MonsterPortraitContainerGO.SetActive(false);
+            }
             if (choicesContainer != null)
             {
                 choicesContainer.SetActive(false);
@@ -492,15 +495,12 @@ namespace TopDownGame
 
             _selectedSlotIndex = index;
 
-            // Reveal question, enemy dialogue, enemy portrait, and choices
+            // Reveal question, enemy dialogue, enemy portrait, and choices when an artifact is clicked
             if (TopDialogueBoxGO != null)
             {
                 TopDialogueBoxGO.SetActive(true);
             }
-            if (MonsterPortraitContainerGO != null)
-            {
-                MonsterPortraitContainerGO.SetActive(true);
-            }
+            EnsureMonsterPortrait(true);
             if (choicesContainer != null)
             {
                 choicesContainer.SetActive(true);
