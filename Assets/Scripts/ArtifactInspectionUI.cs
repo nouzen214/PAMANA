@@ -776,40 +776,24 @@ namespace TopDownGame
             windowRt.anchorMax = new Vector2(0.5f, 0.5f);
             windowRt.pivot = new Vector2(0.5f, 0.5f);
             windowRt.anchoredPosition = Vector2.zero;
-            windowRt.sizeDelta = new Vector2(850f, 520f);
+            windowRt.sizeDelta = new Vector2(899f, 492f);
             var winImg = windowObj.GetComponent<Image>();
-            winImg.color = new Color(0.97f, 0.94f, 0.88f, 1f);
+            winImg.color = Color.white;
+            winImg.type = Image.Type.Simple;
+            var sprSel = Resources.Load<Sprite>("UI/SelectArtifact_Frame");
+#if UNITY_EDITOR
+            if (sprSel == null) sprSel = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/SelectArtifact_Frame.png");
+#endif
+            if (sprSel != null) winImg.sprite = sprSel;
 
-            // Title
+            // Title & Subtitle are baked into the flap art of SelectArtifact_Frame, so we keep them hidden
             var titleObj = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
             titleObj.transform.SetParent(windowObj.transform, false);
-            var titleRt = titleObj.GetComponent<RectTransform>();
-            titleRt.anchorMin = new Vector2(0.5f, 1f);
-            titleRt.anchorMax = new Vector2(0.5f, 1f);
-            titleRt.pivot = new Vector2(0.5f, 1f);
-            titleRt.anchoredPosition = new Vector2(0f, -25f);
-            titleRt.sizeDelta = new Vector2(600f, 35f);
-            var titleTmp = titleObj.GetComponent<TextMeshProUGUI>();
-            titleTmp.text = "SELECT ARTIFACT TO RESTORE";
-            titleTmp.fontSize = 26f;
-            titleTmp.fontStyle = FontStyles.Bold;
-            titleTmp.alignment = TextAlignmentOptions.Center;
-            titleTmp.color = new Color(0.18f, 0.12f, 0.05f, 1f);
+            titleObj.SetActive(false);
 
-            // Subtitle
             var subObj = new GameObject("Subtitle", typeof(RectTransform), typeof(TextMeshProUGUI));
             subObj.transform.SetParent(windowObj.transform, false);
-            var subRt = subObj.GetComponent<RectTransform>();
-            subRt.anchorMin = new Vector2(0.5f, 1f);
-            subRt.anchorMax = new Vector2(0.5f, 1f);
-            subRt.pivot = new Vector2(0.5f, 1f);
-            subRt.anchoredPosition = new Vector2(0f, -60f);
-            subRt.sizeDelta = new Vector2(700f, 25f);
-            var subTmp = subObj.GetComponent<TextMeshProUGUI>();
-            subTmp.text = "Pick an artifact from your bag to place on this pedestal:";
-            subTmp.fontSize = 20f;
-            subTmp.alignment = TextAlignmentOptions.Center;
-            subTmp.color = new Color(0.4f, 0.3f, 0.15f, 1f);
+            subObj.SetActive(false);
 
             // Grid Container
             var gridObj = new GameObject("Grid", typeof(RectTransform), typeof(GridLayoutGroup));
@@ -818,13 +802,15 @@ namespace TopDownGame
             gridRt.anchorMin = new Vector2(0.5f, 0.5f);
             gridRt.anchorMax = new Vector2(0.5f, 0.5f);
             gridRt.pivot = new Vector2(0.5f, 0.5f);
-            gridRt.anchoredPosition = new Vector2(0f, -20f);
-            gridRt.sizeDelta = new Vector2(760f, 340f);
+            gridRt.anchoredPosition = new Vector2(0f, -36f);
+            gridRt.sizeDelta = new Vector2(790f, 325f);
             var glg = gridObj.GetComponent<GridLayoutGroup>();
-            glg.cellSize = new Vector2(360f, 95f);
-            glg.spacing = new Vector2(20f, 15f);
+            glg.cellSize = new Vector2(382f, 95f);
+            glg.spacing = new Vector2(16f, 12f);
+            glg.padding = new RectOffset(0, 0, 0, 0);
             glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             glg.constraintCount = 2;
+            glg.childAlignment = TextAnchor.UpperLeft;
 
             // Empty Notice
             var emptyNoticeObj = new GameObject("EmptyNotice", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -833,13 +819,13 @@ namespace TopDownGame
             enRt.anchorMin = new Vector2(0.5f, 0.5f);
             enRt.anchorMax = new Vector2(0.5f, 0.5f);
             enRt.pivot = new Vector2(0.5f, 0.5f);
-            enRt.anchoredPosition = Vector2.zero;
+            enRt.anchoredPosition = new Vector2(0f, -36f);
             enRt.sizeDelta = new Vector2(650f, 80f);
             var enTmp = emptyNoticeObj.GetComponent<TextMeshProUGUI>();
             enTmp.text = "Your bag is empty.\nYou have no recovered artifacts to place.";
             enTmp.fontSize = 20f;
             enTmp.alignment = TextAlignmentOptions.Center;
-            enTmp.color = new Color(0.5f, 0.35f, 0.2f, 0.85f);
+            enTmp.color = new Color(0.85f, 0.80f, 0.70f, 0.95f);
 
             // Close Button
             var closeBtnObj = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
@@ -848,10 +834,13 @@ namespace TopDownGame
             closeRt.anchorMin = new Vector2(1f, 1f);
             closeRt.anchorMax = new Vector2(1f, 1f);
             closeRt.pivot = new Vector2(1f, 1f);
-            closeRt.anchoredPosition = new Vector2(-20f, -20f);
-            closeRt.sizeDelta = new Vector2(40f, 40f);
+            closeRt.anchoredPosition = new Vector2(-16f, -16f);
+            closeRt.sizeDelta = new Vector2(34f, 34f);
             var closeImg = closeBtnObj.GetComponent<Image>();
-            closeImg.color = new Color(0.7f, 0.2f, 0.2f, 1f);
+            closeImg.color = new Color(0.72f, 0.20f, 0.18f, 0.95f);
+            var closeOutline = closeBtnObj.AddComponent<Outline>();
+            closeOutline.effectColor = new Color(0.35f, 0.08f, 0.06f, 0.9f);
+            closeOutline.effectDistance = new Vector2(1f, -1f);
             var closeBtn = closeBtnObj.GetComponent<Button>();
             closeBtn.onClick.AddListener(CloseRestorePicker);
 
@@ -864,7 +853,7 @@ namespace TopDownGame
             closeTxtRt.offsetMax = Vector2.zero;
             var closeTmp = closeTxtObj.GetComponent<TextMeshProUGUI>();
             closeTmp.text = "X";
-            closeTmp.fontSize = 22f;
+            closeTmp.fontSize = 20f;
             closeTmp.fontStyle = FontStyles.Bold;
             closeTmp.alignment = TextAlignmentOptions.Center;
             closeTmp.color = Color.white;
@@ -906,7 +895,7 @@ namespace TopDownGame
                 outline.effectDistance = new Vector2(1.5f, -1.5f);
 
                 var cardRt = cardObj.GetComponent<RectTransform>();
-                cardRt.sizeDelta = new Vector2(360f, 95f);
+                cardRt.sizeDelta = new Vector2(382f, 95f);
 
                 // Icon Frame (light parchment background for high contrast)
                 var iconFrameObj = new GameObject("IconFrame", typeof(RectTransform), typeof(Image));
@@ -915,15 +904,24 @@ namespace TopDownGame
                 iconFrameRt.anchorMin = new Vector2(0f, 0.5f);
                 iconFrameRt.anchorMax = new Vector2(0f, 0.5f);
                 iconFrameRt.pivot = new Vector2(0f, 0.5f);
-                iconFrameRt.anchoredPosition = new Vector2(12f, 0f);
-                iconFrameRt.sizeDelta = new Vector2(74f, 74f);
+                iconFrameRt.anchoredPosition = new Vector2(10f, 0f);
+                iconFrameRt.sizeDelta = new Vector2(76f, 76f);
 
                 var frameImg = iconFrameObj.GetComponent<Image>();
                 frameImg.color = new Color(0.92f, 0.88f, 0.80f, 1f);
 
                 var frameOutline = iconFrameObj.AddComponent<Outline>();
-                frameOutline.effectColor = new Color(0.42f, 0.32f, 0.22f, 0.6f);
+                frameOutline.effectColor = new Color(0.45f, 0.35f, 0.22f, 0.6f);
                 frameOutline.effectDistance = new Vector2(1f, -1f);
+
+                var icBackObj = new GameObject("Backing", typeof(RectTransform), typeof(Image));
+                icBackObj.transform.SetParent(iconFrameObj.transform, false);
+                var icBackRt = icBackObj.GetComponent<RectTransform>();
+                icBackRt.anchorMin = Vector2.zero;
+                icBackRt.anchorMax = Vector2.one;
+                icBackRt.offsetMin = new Vector2(3f, 3f);
+                icBackRt.offsetMax = new Vector2(-3f, -3f);
+                icBackObj.GetComponent<Image>().color = new Color(0.85f, 0.80f, 0.72f, 0.7f);
 
                 // Icon
                 var iconObj = new GameObject("Icon", typeof(RectTransform), typeof(Image));
@@ -934,9 +932,27 @@ namespace TopDownGame
                 iconRt.offsetMin = new Vector2(5f, 5f);
                 iconRt.offsetMax = new Vector2(-5f, -5f);
                 var iconImg = iconObj.GetComponent<Image>();
-                if (item.icon != null)
+                var itemSpr = item.icon;
+#if UNITY_EDITOR
+                if (itemSpr == null && !string.IsNullOrEmpty(item.name))
                 {
-                    iconImg.sprite = item.icon;
+                    string lower = item.name.ToLowerInvariant();
+                    string path = null;
+                    if (lower.Contains("spectacles") || lower.Contains("glasses")) path = "Assets/Sprites/Artifacts/Artifact_Glasses.png";
+                    else if (lower.Contains("stamp") || lower.Contains("seal")) path = "Assets/Sprites/Artifacts/Artifact_Stamp.png";
+                    else if (lower.Contains("pen") || lower.Contains("nib") || lower.Contains("quill")) path = "Assets/Sprites/Artifacts/Artifact_PenNib.png";
+                    else if (lower.Contains("notebook") || lower.Contains("book") || lower.Contains("journal")) path = "Assets/Sprites/Artifacts/Artifact_Book.png";
+                    else if (lower.Contains("locket") || lower.Contains("pendant")) path = "Assets/Sprites/Artifacts/Artifact_Locket.png";
+                    else if (lower.Contains("galley") || lower.Contains("proof")) path = "Assets/Sprites/Artifacts/Artifact_GalleyProofSheets.png";
+                    else if (lower.Contains("matrix") || lower.Contains("press")) path = "Assets/Sprites/Artifacts/Artifact_PrintingPressMatrix.png";
+                    else if (lower.Contains("fili") || lower.Contains("novel") || lower.Contains("edition")) path = "Assets/Sprites/Artifacts/Artifact_FirstEditionNovelCopy.png";
+                    else if (lower.Contains("stove")) path = "Assets/Sprites/Artifacts/Artifact_AlcoholCookingStove.png";
+                    if (path != null) itemSpr = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                }
+#endif
+                if (itemSpr != null)
+                {
+                    iconImg.sprite = itemSpr;
                     iconImg.color = Color.white;
                 }
                 else
@@ -945,37 +961,26 @@ namespace TopDownGame
                 }
                 iconImg.preserveAspect = true;
 
-                // Name
+                // Name (spacious and clear, leaving room for Place button - description removed completely)
                 var nameObj = new GameObject("Name", typeof(RectTransform), typeof(TextMeshProUGUI));
                 nameObj.transform.SetParent(cardObj.transform, false);
                 var nameRt = nameObj.GetComponent<RectTransform>();
-                nameRt.anchorMin = new Vector2(0f, 1f);
-                nameRt.anchorMax = new Vector2(1f, 1f);
-                nameRt.pivot = new Vector2(0f, 1f);
-                nameRt.anchoredPosition = new Vector2(95f, -10f);
-                nameRt.sizeDelta = new Vector2(-195f, 26f);
+                nameRt.anchorMin = Vector2.zero;
+                nameRt.anchorMax = Vector2.one;
+                nameRt.offsetMin = new Vector2(98f, 6f);
+                nameRt.offsetMax = new Vector2(-128f, -6f);
                 var nameTmp = nameObj.GetComponent<TextMeshProUGUI>();
                 nameTmp.text = item.name;
-                nameTmp.fontSize = 20f;
+                nameTmp.fontSize = 19f;
                 nameTmp.fontStyle = FontStyles.Bold;
-                nameTmp.color = new Color(0.96f, 0.85f, 0.55f, 1f);
+                nameTmp.color = new Color(1f, 0.93f, 0.75f, 1f);
+                nameTmp.alignment = TextAlignmentOptions.MidlineLeft;
+                nameTmp.enableAutoSizing = true;
+                nameTmp.fontSizeMin = 14f;
+                nameTmp.fontSizeMax = 20f;
+                nameTmp.textWrappingMode = TextWrappingModes.Normal;
 
-                // Description
-                var descObj = new GameObject("Desc", typeof(RectTransform), typeof(TextMeshProUGUI));
-                descObj.transform.SetParent(cardObj.transform, false);
-                var descRt = descObj.GetComponent<RectTransform>();
-                descRt.anchorMin = new Vector2(0f, 0f);
-                descRt.anchorMax = new Vector2(1f, 1f);
-                descRt.pivot = new Vector2(0f, 0f);
-                descRt.anchoredPosition = new Vector2(95f, 8f);
-                descRt.sizeDelta = new Vector2(-195f, -38f);
-                var descTmp = descObj.GetComponent<TextMeshProUGUI>();
-                descTmp.text = item.description;
-                descTmp.fontSize = 15f;
-                descTmp.color = new Color(0.85f, 0.85f, 0.85f, 0.9f);
-                descTmp.overflowMode = TextOverflowModes.Ellipsis;
-
-                // "PLACE" Button
+                // Wooden "Place" Button
                 var placeBtnObj = new GameObject("PlaceButton", typeof(RectTransform), typeof(Image), typeof(Button));
                 placeBtnObj.transform.SetParent(cardObj.transform, false);
                 var placeRt = placeBtnObj.GetComponent<RectTransform>();
@@ -983,25 +988,27 @@ namespace TopDownGame
                 placeRt.anchorMax = new Vector2(1f, 0.5f);
                 placeRt.pivot = new Vector2(1f, 0.5f);
                 placeRt.anchoredPosition = new Vector2(-10f, 0f);
-                placeRt.sizeDelta = new Vector2(85f, 38f);
-                var placeImg = placeBtnObj.GetComponent<Image>();
-                placeImg.color = new Color(0.18f, 0.65f, 0.32f, 1f);
+                placeRt.sizeDelta = new Vector2(112f, 35f);
 
-                var placeTxtObj = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
-                placeTxtObj.transform.SetParent(placeBtnObj.transform, false);
-                var placeTxtRt = placeTxtObj.GetComponent<RectTransform>();
-                placeTxtRt.anchorMin = Vector2.zero;
-                placeTxtRt.anchorMax = Vector2.one;
-                placeTxtRt.offsetMin = Vector2.zero;
-                placeTxtRt.offsetMax = Vector2.zero;
-                var placeTmp = placeTxtObj.GetComponent<TextMeshProUGUI>();
-                placeTmp.text = "PLACE";
-                placeTmp.fontSize = 17f;
-                placeTmp.fontStyle = FontStyles.Bold;
-                placeTmp.alignment = TextAlignmentOptions.Center;
-                placeTmp.color = Color.white;
+                var sprBtnNorm = Resources.Load<Sprite>("UI/Button_Place_Normal");
+                var sprBtnHov = Resources.Load<Sprite>("UI/Button_Place_Hover");
+#if UNITY_EDITOR
+                if (sprBtnNorm == null) sprBtnNorm = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Button_Place_Normal.png");
+                if (sprBtnHov == null) sprBtnHov = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Button_Place_Hover.png");
+#endif
+                var placeImg = placeBtnObj.GetComponent<Image>();
+                placeImg.sprite = sprBtnNorm;
+                placeImg.type = Image.Type.Simple;
+                placeImg.color = Color.white;
 
                 var placeBtn = placeBtnObj.GetComponent<Button>();
+                placeBtn.transition = Selectable.Transition.SpriteSwap;
+                var ss = new SpriteState();
+                ss.highlightedSprite = sprBtnHov;
+                ss.pressedSprite = sprBtnHov;
+                ss.selectedSprite = sprBtnHov;
+                placeBtn.spriteState = ss;
+
                 var itemCaptured = item;
                 placeBtn.onClick.AddListener(() => TryPlaceArtifact(itemCaptured));
 

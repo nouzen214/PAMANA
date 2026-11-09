@@ -900,11 +900,18 @@ namespace TopDownGame.Editor
             dialogRt.anchorMax = new Vector2(0.5f, 0.5f);
             dialogRt.pivot = new Vector2(0.5f, 0.5f);
             dialogRt.anchoredPosition = Vector2.zero;
-            dialogRt.sizeDelta = new Vector2(850f, 540f);
+            dialogRt.sizeDelta = new Vector2(899f, 492f);
 
             var dialogImg = dialogObj.GetComponent<Image>();
             if (dialogImg == null) dialogImg = dialogObj.AddComponent<Image>();
-            if (sprParchment != null)
+            var sprBag = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/BagInventory_Frame.png");
+            if (sprBag != null)
+            {
+                dialogImg.sprite = sprBag;
+                dialogImg.type = Image.Type.Simple;
+                dialogImg.color = Color.white;
+            }
+            else if (sprParchment != null)
             {
                 dialogImg.sprite = sprParchment;
                 dialogImg.type = Image.Type.Sliced;
@@ -916,43 +923,31 @@ namespace TopDownGame.Editor
             }
 
             var titleObj = GetOrCreateChild(dialogObj.transform, "TitleText");
-            var titleRt = titleObj.GetComponent<RectTransform>();
-            titleRt.anchorMin = new Vector2(0.5f, 1f);
-            titleRt.anchorMax = new Vector2(0.5f, 1f);
-            titleRt.pivot = new Vector2(0.5f, 1f);
-            titleRt.anchoredPosition = new Vector2(0f, -25f);
-            titleRt.sizeDelta = new Vector2(500f, 40f);
-
-            var titleTmp = titleObj.GetComponent<TextMeshProUGUI>();
-            if (titleTmp == null) titleTmp = titleObj.AddComponent<TextMeshProUGUI>();
-            titleTmp.text = "BAG / INVENTORY";
-            titleTmp.fontSize = 28f;
-            titleTmp.fontStyle = FontStyles.Bold;
-            titleTmp.alignment = TextAlignmentOptions.Center;
-            titleTmp.color = new Color(0.24f, 0.16f, 0.08f, 1f);
+            titleObj.SetActive(false); // Baked into flap art
 
             var countObj = GetOrCreateChild(dialogObj.transform, "CountText");
             var countRt = countObj.GetComponent<RectTransform>();
-            countRt.anchorMin = new Vector2(0.5f, 1f);
-            countRt.anchorMax = new Vector2(0.5f, 1f);
-            countRt.pivot = new Vector2(0.5f, 1f);
-            countRt.anchoredPosition = new Vector2(0f, -65f);
-            countRt.sizeDelta = new Vector2(400f, 30f);
+            countRt.anchorMin = new Vector2(0.5f, 0.5f);
+            countRt.anchorMax = new Vector2(0.5f, 0.5f);
+            countRt.pivot = new Vector2(0f, 0.5f);
+            countRt.anchoredPosition = new Vector2(82f, 169f);
+            countRt.sizeDelta = new Vector2(120f, 30f);
 
             var countTmp = countObj.GetComponent<TextMeshProUGUI>();
             if (countTmp == null) countTmp = countObj.AddComponent<TextMeshProUGUI>();
-            countTmp.text = "Items collected: 0";
-            countTmp.fontSize = 18f;
-            countTmp.alignment = TextAlignmentOptions.Center;
-            countTmp.color = new Color(0.38f, 0.28f, 0.16f, 1f);
+            countTmp.text = "0";
+            countTmp.fontSize = 22f;
+            countTmp.fontStyle = FontStyles.Bold;
+            countTmp.alignment = TextAlignmentOptions.MidlineLeft;
+            countTmp.color = new Color(0.24f, 0.16f, 0.08f, 1f);
 
             var scrollObj = GetOrCreateChild(dialogObj.transform, "ArtifactScrollView");
             var scrollRt = scrollObj.GetComponent<RectTransform>();
             scrollRt.anchorMin = new Vector2(0.5f, 0.5f);
             scrollRt.anchorMax = new Vector2(0.5f, 0.5f);
             scrollRt.pivot = new Vector2(0.5f, 0.5f);
-            scrollRt.anchoredPosition = new Vector2(0f, -30f);
-            scrollRt.sizeDelta = new Vector2(760f, 360f);
+            scrollRt.anchoredPosition = new Vector2(0f, -36f);
+            scrollRt.sizeDelta = new Vector2(790f, 325f);
 
             var scrollRect = scrollObj.GetComponent<ScrollRect>();
             if (scrollRect == null) scrollRect = scrollObj.AddComponent<ScrollRect>();
@@ -980,17 +975,18 @@ namespace TopDownGame.Editor
             gridRt.anchorMax = new Vector2(1f, 1f);
             gridRt.pivot = new Vector2(0.5f, 1f);
             gridRt.anchoredPosition = Vector2.zero;
-            gridRt.sizeDelta = new Vector2(0f, 360f);
+            gridRt.sizeDelta = new Vector2(0f, 325f);
 
             var glg = gridObj.GetComponent<GridLayoutGroup>();
             if (glg == null) glg = gridObj.AddComponent<GridLayoutGroup>();
-            glg.cellSize = new Vector2(140f, 140f);
-            glg.spacing = new Vector2(25f, 25f);
+            glg.cellSize = new Vector2(382f, 95f);
+            glg.spacing = new Vector2(16f, 12f);
+            glg.padding = new RectOffset(0, 0, 0, 0);
             glg.startCorner = GridLayoutGroup.Corner.UpperLeft;
             glg.startAxis = GridLayoutGroup.Axis.Horizontal;
-            glg.childAlignment = TextAnchor.UpperCenter;
+            glg.childAlignment = TextAnchor.UpperLeft;
             glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            glg.constraintCount = 4;
+            glg.constraintCount = 2;
 
             var csf = gridObj.GetComponent<ContentSizeFitter>();
             if (csf == null) csf = gridObj.AddComponent<ContentSizeFitter>();
@@ -1004,27 +1000,32 @@ namespace TopDownGame.Editor
             enRt.anchorMin = new Vector2(0.5f, 0.5f);
             enRt.anchorMax = new Vector2(0.5f, 0.5f);
             enRt.pivot = new Vector2(0.5f, 0.5f);
-            enRt.anchoredPosition = Vector2.zero;
-            enRt.sizeDelta = new Vector2(600f, 100f);
+            enRt.anchoredPosition = new Vector2(0f, -36f);
+            enRt.sizeDelta = new Vector2(650f, 100f);
 
             var enTmp = emptyNoticeObj.GetComponent<TextMeshProUGUI>();
             if (enTmp == null) enTmp = emptyNoticeObj.AddComponent<TextMeshProUGUI>();
-            enTmp.text = "No artifacts in your bag yet.\nAnswer quizzes correctly to recover the artifacts!";
+            enTmp.text = "No artifacts in your bag yet.\nAnswer quizzes correctly in Alterworld trials to recover artifacts!";
             enTmp.fontSize = 20f;
             enTmp.alignment = TextAlignmentOptions.Center;
-            enTmp.color = new Color(0.45f, 0.35f, 0.2f, 0.85f);
+            enTmp.color = new Color(0.85f, 0.80f, 0.70f, 0.95f);
 
             var closeBtnObj = GetOrCreateChild(dialogObj.transform, "CloseButton");
             var closeRt = closeBtnObj.GetComponent<RectTransform>();
             closeRt.anchorMin = new Vector2(1f, 1f);
             closeRt.anchorMax = new Vector2(1f, 1f);
             closeRt.pivot = new Vector2(1f, 1f);
-            closeRt.anchoredPosition = new Vector2(-20f, -20f);
-            closeRt.sizeDelta = new Vector2(45f, 45f);
+            closeRt.anchoredPosition = new Vector2(-16f, -16f);
+            closeRt.sizeDelta = new Vector2(34f, 34f);
 
             var closeImg = closeBtnObj.GetComponent<Image>();
             if (closeImg == null) closeImg = closeBtnObj.AddComponent<Image>();
-            closeImg.color = new Color(0.7f, 0.2f, 0.2f, 1f);
+            closeImg.color = new Color(0.72f, 0.20f, 0.18f, 0.95f);
+
+            var closeOutline = closeBtnObj.GetComponent<Outline>();
+            if (closeOutline == null) closeOutline = closeBtnObj.AddComponent<Outline>();
+            closeOutline.effectColor = new Color(0.35f, 0.08f, 0.06f, 0.9f);
+            closeOutline.effectDistance = new Vector2(1f, -1f);
 
             var closeBtn = closeBtnObj.GetComponent<Button>();
             if (closeBtn == null) closeBtn = closeBtnObj.AddComponent<Button>();
@@ -1039,7 +1040,7 @@ namespace TopDownGame.Editor
             var closeTmp = closeTxtObj.GetComponent<TextMeshProUGUI>();
             if (closeTmp == null) closeTmp = closeTxtObj.AddComponent<TextMeshProUGUI>();
             closeTmp.text = "X";
-            closeTmp.fontSize = 22f;
+            closeTmp.fontSize = 20f;
             closeTmp.fontStyle = FontStyles.Bold;
             closeTmp.alignment = TextAlignmentOptions.Center;
             closeTmp.color = Color.white;
@@ -1056,7 +1057,7 @@ namespace TopDownGame.Editor
             if (spGrid != null) spGrid.objectReferenceValue = gridObj.transform;
 
             var spTitle = soModal.FindProperty("titleText");
-            if (spTitle != null) spTitle.objectReferenceValue = titleTmp;
+            if (spTitle != null) spTitle.objectReferenceValue = null;
 
             var spCount = soModal.FindProperty("countText");
             if (spCount != null) spCount.objectReferenceValue = countTmp;

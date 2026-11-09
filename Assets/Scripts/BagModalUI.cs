@@ -42,11 +42,140 @@ namespace TopDownGame
                 dimmerButton.onClick.AddListener(CloseBag);
             }
 
+            EnsureFrameStyle();
             ConfigureGridContainer();
 
             if (modalRoot != null)
             {
                 modalRoot.SetActive(false);
+            }
+        }
+
+        private void EnsureFrameStyle()
+        {
+            // Find window/dialog box
+            Transform winTr = null;
+            if (itemsGridContainer != null)
+            {
+                // itemsGridContainer could be inside Viewport or directly under Window
+                winTr = itemsGridContainer.parent;
+                if (winTr != null && winTr.name == "Viewport")
+                {
+                    var sv = winTr.parent;
+                    if (sv != null) winTr = sv.parent;
+                }
+            }
+            if (winTr == null && modalRoot != null)
+            {
+                winTr = modalRoot.transform.Find("Window");
+                if (winTr == null) winTr = modalRoot.transform.Find("DialogBox");
+            }
+
+            if (winTr != null)
+            {
+                var winRt = winTr.GetComponent<RectTransform>();
+                if (winRt != null)
+                {
+                    winRt.anchorMin = new Vector2(0.5f, 0.5f);
+                    winRt.anchorMax = new Vector2(0.5f, 0.5f);
+                    winRt.pivot = new Vector2(0.5f, 0.5f);
+                    winRt.anchoredPosition = Vector2.zero;
+                    winRt.sizeDelta = new Vector2(899f, 492f);
+                }
+
+                var winImg = winTr.GetComponent<Image>();
+                if (winImg != null)
+                {
+                    var spr = Resources.Load<Sprite>("UI/BagInventory_Frame");
+#if UNITY_EDITOR
+                    if (spr == null)
+                    {
+                        spr = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/BagInventory_Frame.png");
+                    }
+#endif
+                    if (spr != null)
+                    {
+                        winImg.sprite = spr;
+                        winImg.type = Image.Type.Simple;
+                        winImg.color = Color.white;
+                    }
+                }
+
+                // If inside a ScrollView, adjust ScrollView / Grid positions to sit right in the slate area
+                if (itemsGridContainer != null)
+                {
+                    Transform targetTr = itemsGridContainer;
+                    if (targetTr.parent != null && targetTr.parent.name == "Viewport")
+                    {
+                        var sv = targetTr.parent.parent;
+                        if (sv != null) targetTr = sv;
+                    }
+
+                    var tRt = targetTr.GetComponent<RectTransform>();
+                    if (tRt != null)
+                    {
+                        tRt.anchorMin = new Vector2(0.5f, 0.5f);
+                        tRt.anchorMax = new Vector2(0.5f, 0.5f);
+                        tRt.pivot = new Vector2(0.5f, 0.5f);
+                        tRt.anchoredPosition = new Vector2(0f, -36f);
+                        tRt.sizeDelta = new Vector2(790f, 325f);
+                    }
+                }
+
+                // Close button positioned on top-right brass corner
+                if (closeButton != null)
+                {
+                    var cRt = closeButton.GetComponent<RectTransform>();
+                    if (cRt != null)
+                    {
+                        cRt.anchorMin = new Vector2(1f, 1f);
+                        cRt.anchorMax = new Vector2(1f, 1f);
+                        cRt.pivot = new Vector2(1f, 1f);
+                        cRt.anchoredPosition = new Vector2(-16f, -16f);
+                        cRt.sizeDelta = new Vector2(34f, 34f);
+                    }
+                }
+
+                // Redundant title is hidden (since "BAG / INVENTORY" is baked in flap art)
+                if (titleText != null)
+                {
+                    titleText.gameObject.SetActive(false);
+                }
+
+                // Count text positioned right after "ARTIFACT COLLECTED:" on the flap
+                if (countText != null)
+                {
+                    var cRt = countText.GetComponent<RectTransform>();
+                    if (cRt != null)
+                    {
+                        cRt.anchorMin = new Vector2(0.5f, 0.5f);
+                        cRt.anchorMax = new Vector2(0.5f, 0.5f);
+                        cRt.pivot = new Vector2(0f, 0.5f);
+                        cRt.anchoredPosition = new Vector2(82f, 169f);
+                        cRt.sizeDelta = new Vector2(120f, 30f);
+                    }
+                    countText.alignment = TextAlignmentOptions.MidlineLeft;
+                    countText.fontStyle = FontStyles.Bold;
+                    countText.fontSize = 22f;
+                    countText.color = new Color(0.24f, 0.16f, 0.08f, 1f);
+                }
+
+                // Empty notice text
+                if (emptyNoticeText != null)
+                {
+                    var enRt = emptyNoticeText.GetComponent<RectTransform>();
+                    if (enRt != null)
+                    {
+                        enRt.anchorMin = new Vector2(0.5f, 0.5f);
+                        enRt.anchorMax = new Vector2(0.5f, 0.5f);
+                        enRt.pivot = new Vector2(0.5f, 0.5f);
+                        enRt.anchoredPosition = new Vector2(0f, -36f);
+                        enRt.sizeDelta = new Vector2(650f, 100f);
+                    }
+                    emptyNoticeText.text = "No artifacts in your bag yet.\nAnswer quizzes correctly in Alterworld trials to recover artifacts!";
+                    emptyNoticeText.fontSize = 20f;
+                    emptyNoticeText.color = new Color(0.85f, 0.80f, 0.70f, 0.95f);
+                }
             }
         }
 
@@ -57,9 +186,9 @@ namespace TopDownGame
             var glg = itemsGridContainer.GetComponent<GridLayoutGroup>();
             if (glg == null) glg = itemsGridContainer.gameObject.AddComponent<GridLayoutGroup>();
 
-            glg.cellSize = new Vector2(350f, 105f);
-            glg.spacing = new Vector2(20f, 15f);
-            glg.padding = new RectOffset(20, 20, 15, 15);
+            glg.cellSize = new Vector2(382f, 95f);
+            glg.spacing = new Vector2(16f, 12f);
+            glg.padding = new RectOffset(0, 0, 0, 0);
             glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             glg.constraintCount = 2;
             glg.childAlignment = TextAnchor.UpperLeft;
@@ -131,13 +260,14 @@ namespace TopDownGame
 
         public void RefreshUI()
         {
+            EnsureFrameStyle();
             ConfigureGridContainer();
 
             var items = PlayerInventory.Items;
 
             if (countText != null)
             {
-                countText.text = $"ARTIFACTS COLLECTED: {items.Count}";
+                countText.text = $"{items.Count}";
             }
 
             if (emptyNoticeText != null)
@@ -200,40 +330,50 @@ namespace TopDownGame
             cardObj.transform.SetParent(parent, false);
 
             var img = cardObj.GetComponent<Image>();
-            img.color = new Color(0.20f, 0.16f, 0.13f, 0.98f);
+            img.color = new Color(0.18f, 0.14f, 0.11f, 0.96f);
 
             var outline = cardObj.AddComponent<Outline>();
-            outline.effectColor = new Color(0.68f, 0.52f, 0.32f, 0.85f);
+            outline.effectColor = new Color(0.72f, 0.58f, 0.36f, 0.85f);
             outline.effectDistance = new Vector2(1.5f, -1.5f);
 
             var cardRt = cardObj.GetComponent<RectTransform>();
-            cardRt.sizeDelta = new Vector2(350f, 105f);
+            cardRt.sizeDelta = new Vector2(382f, 95f);
 
-            // Icon Frame (light aged parchment square so dark artifact sprites stand out with high contrast)
+            // Icon Frame (light aged parchment square so artifact sprites stand out with high contrast)
             var iconFrameObj = new GameObject("IconFrame", typeof(RectTransform), typeof(Image));
             iconFrameObj.transform.SetParent(cardObj.transform, false);
             var iconFrameRt = iconFrameObj.GetComponent<RectTransform>();
             iconFrameRt.anchorMin = new Vector2(0f, 0.5f);
             iconFrameRt.anchorMax = new Vector2(0f, 0.5f);
             iconFrameRt.pivot = new Vector2(0f, 0.5f);
-            iconFrameRt.anchoredPosition = new Vector2(12f, 0f);
-            iconFrameRt.sizeDelta = new Vector2(80f, 80f);
+            iconFrameRt.anchoredPosition = new Vector2(10f, 0f);
+            iconFrameRt.sizeDelta = new Vector2(76f, 76f);
 
             var frameImg = iconFrameObj.GetComponent<Image>();
             frameImg.color = new Color(0.92f, 0.88f, 0.80f, 1f);
 
             var frameOutline = iconFrameObj.AddComponent<Outline>();
-            frameOutline.effectColor = new Color(0.42f, 0.32f, 0.22f, 0.6f);
+            frameOutline.effectColor = new Color(0.45f, 0.35f, 0.22f, 0.6f);
             frameOutline.effectDistance = new Vector2(1f, -1f);
 
-            // Artifact Icon
+            // Subtle inner backing to make bright/white items pop sharply
+            var icBackObj = new GameObject("Backing", typeof(RectTransform), typeof(Image));
+            icBackObj.transform.SetParent(iconFrameObj.transform, false);
+            var icBackRt = icBackObj.GetComponent<RectTransform>();
+            icBackRt.anchorMin = Vector2.zero;
+            icBackRt.anchorMax = Vector2.one;
+            icBackRt.offsetMin = new Vector2(3f, 3f);
+            icBackRt.offsetMax = new Vector2(-3f, -3f);
+            icBackObj.GetComponent<Image>().color = new Color(0.85f, 0.80f, 0.72f, 0.7f);
+
+            // Artifact Icon (prominent, clear, 66x66)
             var iconObj = new GameObject("Icon", typeof(RectTransform), typeof(Image));
             iconObj.transform.SetParent(iconFrameObj.transform, false);
             var iconRt = iconObj.GetComponent<RectTransform>();
             iconRt.anchorMin = Vector2.zero;
             iconRt.anchorMax = Vector2.one;
-            iconRt.offsetMin = new Vector2(6f, 6f);
-            iconRt.offsetMax = new Vector2(-6f, -6f);
+            iconRt.offsetMin = new Vector2(5f, 5f);
+            iconRt.offsetMax = new Vector2(-5f, -5f);
 
             var iconImg = iconObj.GetComponent<Image>();
             var spr = ResolveArtifactSprite(item);
@@ -248,53 +388,25 @@ namespace TopDownGame
             }
             iconImg.preserveAspect = true;
 
-            // Info Container (Right side)
-            var infoObj = new GameObject("Info", typeof(RectTransform));
-            infoObj.transform.SetParent(cardObj.transform, false);
-            var infoRt = infoObj.GetComponent<RectTransform>();
-            infoRt.anchorMin = Vector2.zero;
-            infoRt.anchorMax = Vector2.one;
-            infoRt.offsetMin = new Vector2(104f, 8f);
-            infoRt.offsetMax = new Vector2(-12f, -8f);
-
-            // Item Name
+            // Item Name (spacious, bold, large, centered vertically - no description clutter)
             var nameObj = new GameObject("Name", typeof(RectTransform), typeof(TextMeshProUGUI));
-            nameObj.transform.SetParent(infoObj.transform, false);
+            nameObj.transform.SetParent(cardObj.transform, false);
             var nameRt = nameObj.GetComponent<RectTransform>();
-            nameRt.anchorMin = new Vector2(0f, 1f);
-            nameRt.anchorMax = new Vector2(1f, 1f);
-            nameRt.pivot = new Vector2(0f, 1f);
-            nameRt.anchoredPosition = new Vector2(0f, 0f);
-            nameRt.sizeDelta = new Vector2(0f, 26f);
+            nameRt.anchorMin = Vector2.zero;
+            nameRt.anchorMax = Vector2.one;
+            nameRt.offsetMin = new Vector2(100f, 6f);
+            nameRt.offsetMax = new Vector2(-12f, -6f);
 
             var nameTmp = nameObj.GetComponent<TextMeshProUGUI>();
             nameTmp.text = item.name;
-            nameTmp.fontSize = 18f;
+            nameTmp.fontSize = 21f;
             nameTmp.fontStyle = FontStyles.Bold;
-            nameTmp.color = new Color(0.98f, 0.88f, 0.55f, 1f);
+            nameTmp.color = new Color(1f, 0.93f, 0.75f, 1f);
+            nameTmp.alignment = TextAlignmentOptions.MidlineLeft;
             nameTmp.enableAutoSizing = true;
-            nameTmp.fontSizeMin = 14f;
-            nameTmp.fontSizeMax = 18f;
+            nameTmp.fontSizeMin = 15f;
+            nameTmp.fontSizeMax = 22f;
             nameTmp.textWrappingMode = TextWrappingModes.Normal;
-            nameTmp.overflowMode = TextOverflowModes.Ellipsis;
-
-            // Item Description
-            var descObj = new GameObject("Desc", typeof(RectTransform), typeof(TextMeshProUGUI));
-            descObj.transform.SetParent(infoObj.transform, false);
-            var descRt = descObj.GetComponent<RectTransform>();
-            descRt.anchorMin = Vector2.zero;
-            descRt.anchorMax = Vector2.one;
-            descRt.pivot = new Vector2(0f, 0f);
-            descRt.offsetMin = Vector2.zero;
-            descRt.offsetMax = new Vector2(0f, -28f);
-
-            var descTmp = descObj.GetComponent<TextMeshProUGUI>();
-            descTmp.text = item.description;
-            descTmp.fontSize = 14.5f;
-            descTmp.color = new Color(0.88f, 0.85f, 0.80f, 0.95f);
-            descTmp.textWrappingMode = TextWrappingModes.Normal;
-            descTmp.overflowMode = TextOverflowModes.Ellipsis;
-            descTmp.alignment = TextAlignmentOptions.TopLeft;
 
             return cardObj;
         }
@@ -333,41 +445,31 @@ namespace TopDownGame
             windowRt.anchorMax = new Vector2(0.5f, 0.5f);
             windowRt.pivot = new Vector2(0.5f, 0.5f);
             windowRt.anchoredPosition = Vector2.zero;
-            windowRt.sizeDelta = new Vector2(850f, 540f);
+            windowRt.sizeDelta = new Vector2(899f, 492f);
             var winImg = windowObj.GetComponent<Image>();
-            winImg.color = new Color(0.97f, 0.94f, 0.88f, 1f);
+            winImg.color = Color.white;
+            winImg.type = Image.Type.Simple;
+            var sprBag = Resources.Load<Sprite>("UI/BagInventory_Frame");
+#if UNITY_EDITOR
+            if (sprBag == null) sprBag = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/BagInventory_Frame.png");
+#endif
+            if (sprBag != null) winImg.sprite = sprBag;
 
-            // Title
-            var titleObj = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
-            titleObj.transform.SetParent(windowObj.transform, false);
-            var titleRt = titleObj.GetComponent<RectTransform>();
-            titleRt.anchorMin = new Vector2(0.5f, 1f);
-            titleRt.anchorMax = new Vector2(0.5f, 1f);
-            titleRt.pivot = new Vector2(0.5f, 1f);
-            titleRt.anchoredPosition = new Vector2(0f, -25f);
-            titleRt.sizeDelta = new Vector2(500f, 40f);
-            var titleTmp = titleObj.GetComponent<TextMeshProUGUI>();
-            titleTmp.text = "BAG / INVENTORY";
-            titleTmp.fontSize = 28f;
-            titleTmp.fontStyle = FontStyles.Bold;
-            titleTmp.alignment = TextAlignmentOptions.Center;
-            titleTmp.color = new Color(0.18f, 0.12f, 0.05f, 1f);
-
-            // Count
+            // Count Text (positioned on flap next to "ARTIFACT COLLECTED:")
             var countObj = new GameObject("Count", typeof(RectTransform), typeof(TextMeshProUGUI));
             countObj.transform.SetParent(windowObj.transform, false);
             var countRt = countObj.GetComponent<RectTransform>();
-            countRt.anchorMin = new Vector2(0.5f, 1f);
-            countRt.anchorMax = new Vector2(0.5f, 1f);
-            countRt.pivot = new Vector2(0.5f, 1f);
-            countRt.anchoredPosition = new Vector2(0f, -65f);
-            countRt.sizeDelta = new Vector2(500f, 30f);
+            countRt.anchorMin = new Vector2(0.5f, 0.5f);
+            countRt.anchorMax = new Vector2(0.5f, 0.5f);
+            countRt.pivot = new Vector2(0f, 0.5f);
+            countRt.anchoredPosition = new Vector2(82f, 169f);
+            countRt.sizeDelta = new Vector2(120f, 30f);
             var countTmp = countObj.GetComponent<TextMeshProUGUI>();
-            countTmp.text = "ARTIFACTS COLLECTED: 0";
+            countTmp.text = "0";
             countTmp.fontSize = 22f;
             countTmp.fontStyle = FontStyles.Bold;
-            countTmp.alignment = TextAlignmentOptions.Center;
-            countTmp.color = new Color(0.45f, 0.35f, 0.2f, 1f);
+            countTmp.alignment = TextAlignmentOptions.MidlineLeft;
+            countTmp.color = new Color(0.24f, 0.16f, 0.08f, 1f);
 
             // Grid Container
             var gridObj = new GameObject("Grid", typeof(RectTransform), typeof(GridLayoutGroup));
@@ -376,12 +478,12 @@ namespace TopDownGame
             gridRt.anchorMin = new Vector2(0.5f, 0.5f);
             gridRt.anchorMax = new Vector2(0.5f, 0.5f);
             gridRt.pivot = new Vector2(0.5f, 0.5f);
-            gridRt.anchoredPosition = new Vector2(0f, -20f);
-            gridRt.sizeDelta = new Vector2(760f, 360f);
+            gridRt.anchoredPosition = new Vector2(0f, -36f);
+            gridRt.sizeDelta = new Vector2(790f, 325f);
             var glg = gridObj.GetComponent<GridLayoutGroup>();
-            glg.cellSize = new Vector2(350f, 105f);
-            glg.spacing = new Vector2(20f, 15f);
-            glg.padding = new RectOffset(20, 20, 15, 15);
+            glg.cellSize = new Vector2(382f, 95f);
+            glg.spacing = new Vector2(16f, 12f);
+            glg.padding = new RectOffset(0, 0, 0, 0);
             glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             glg.constraintCount = 2;
             glg.childAlignment = TextAnchor.UpperLeft;
@@ -393,13 +495,13 @@ namespace TopDownGame
             enRt.anchorMin = new Vector2(0.5f, 0.5f);
             enRt.anchorMax = new Vector2(0.5f, 0.5f);
             enRt.pivot = new Vector2(0.5f, 0.5f);
-            enRt.anchoredPosition = Vector2.zero;
-            enRt.sizeDelta = new Vector2(600f, 100f);
+            enRt.anchoredPosition = new Vector2(0f, -36f);
+            enRt.sizeDelta = new Vector2(650f, 100f);
             var enTmp = emptyNoticeObj.GetComponent<TextMeshProUGUI>();
-            enTmp.text = "No artifacts in your bag yet.\nAnswer quizzes correctly to recover the artifacts!";
+            enTmp.text = "No artifacts in your bag yet.\nAnswer quizzes correctly in Alterworld trials to recover artifacts!";
             enTmp.fontSize = 20f;
             enTmp.alignment = TextAlignmentOptions.Center;
-            enTmp.color = new Color(0.45f, 0.35f, 0.2f, 0.8f);
+            enTmp.color = new Color(0.85f, 0.80f, 0.70f, 0.95f);
 
             // Close Button
             var closeBtnObj = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
@@ -408,10 +510,13 @@ namespace TopDownGame
             closeRt.anchorMin = new Vector2(1f, 1f);
             closeRt.anchorMax = new Vector2(1f, 1f);
             closeRt.pivot = new Vector2(1f, 1f);
-            closeRt.anchoredPosition = new Vector2(-20f, -20f);
-            closeRt.sizeDelta = new Vector2(45f, 45f);
+            closeRt.anchoredPosition = new Vector2(-16f, -16f);
+            closeRt.sizeDelta = new Vector2(34f, 34f);
             var closeImg = closeBtnObj.GetComponent<Image>();
-            closeImg.color = new Color(0.7f, 0.2f, 0.2f, 1f);
+            closeImg.color = new Color(0.72f, 0.20f, 0.18f, 0.95f);
+            var closeOutline = closeBtnObj.AddComponent<Outline>();
+            closeOutline.effectColor = new Color(0.35f, 0.08f, 0.06f, 0.9f);
+            closeOutline.effectDistance = new Vector2(1f, -1f);
             var closeBtn = closeBtnObj.GetComponent<Button>();
 
             var closeTxtObj = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -423,7 +528,7 @@ namespace TopDownGame
             closeTxtRt.offsetMax = Vector2.zero;
             var closeTmp = closeTxtObj.GetComponent<TextMeshProUGUI>();
             closeTmp.text = "X";
-            closeTmp.fontSize = 22f;
+            closeTmp.fontSize = 20f;
             closeTmp.fontStyle = FontStyles.Bold;
             closeTmp.alignment = TextAlignmentOptions.Center;
             closeTmp.color = Color.white;
@@ -431,7 +536,7 @@ namespace TopDownGame
             var bagModal = modalObj.AddComponent<BagModalUI>();
             bagModal.modalRoot = modalObj;
             bagModal.itemsGridContainer = gridObj.transform;
-            bagModal.titleText = titleTmp;
+            bagModal.titleText = null;
             bagModal.countText = countTmp;
             bagModal.emptyNoticeText = enTmp;
             bagModal.closeButton = closeBtn;
