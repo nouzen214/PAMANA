@@ -437,7 +437,10 @@ namespace TopDownGame
             {
                 foreach (Transform child in canvasTr)
                 {
-                    if (child.gameObject != rootPanel && child.gameObject.activeSelf)
+                    if (child.gameObject != rootPanel &&
+                        child.gameObject.name != "NotificationBanner" &&
+                        child.GetComponent<NotificationBannerUI>() == null &&
+                        child.gameObject.activeSelf)
                     {
                         _hiddenHudObjects.Add(child.gameObject);
                         child.gameObject.SetActive(false);
@@ -1110,41 +1113,38 @@ namespace TopDownGame
                 bool isNew = GameProgression.RecordPlaqueRead(rNum, pId);
                 int totalRead = GameProgression.GetPlaquesReadCount(rNum);
 
-                if (isNew)
+                if (totalRead >= 5)
                 {
-                    if (totalRead >= 5)
+                    if (rNum == 1)
                     {
-                        if (rNum == 1)
-                        {
-                            NotificationBannerUI.Show(
-                                "PORTAL AWAKENED!",
-                                "All 5 plaques in Room 1 studied!\nA mysterious portal has opened in the museum lobby!",
-                                6.0f,
-                                new Color(0.2f, 0.95f, 0.95f, 1f),
-                                "★"
-                            );
-                        }
-                        else
-                        {
-                            NotificationBannerUI.Show(
-                                $"BATTLE {rNum} UNLOCKED!",
-                                $"All 5 plaques in Room {rNum} studied!\nThe Alterworld trial for Room {rNum} is now accessible!",
-                                6.0f,
-                                new Color(0.2f, 0.95f, 0.4f, 1f),
-                                "★"
-                            );
-                        }
+                        NotificationBannerUI.Show(
+                            "PORTAL AWAKENED!",
+                            "All 5 plaques in Room 1 studied!\nA mysterious portal has opened in the museum lobby!",
+                            6.0f,
+                            new Color(0.24f, 0.14f, 0.07f, 1f),
+                            "★"
+                        );
                     }
                     else
                     {
                         NotificationBannerUI.Show(
-                            "PLAQUE STUDIED",
-                            $"Plaques studied: {totalRead}/5 in Room {rNum}",
-                            2.5f,
-                            new Color(1f, 0.85f, 0.35f, 1f),
-                            "i"
+                            $"ALTERWORLD BATTLE {rNum} UNLOCKED!",
+                            $"All 5 plaques & clues studied in Room {rNum}!\nEnter the Alterworld portal in the Lobby to start the battle!",
+                            6.5f,
+                            new Color(0.24f, 0.14f, 0.07f, 1f),
+                            "★"
                         );
                     }
+                }
+                else
+                {
+                    NotificationBannerUI.Show(
+                        isNew ? "PLAQUE STUDIED" : "PLAQUE REVIEWED",
+                        $"Plaques studied: {totalRead}/5 in Room {rNum}",
+                        3.5f,
+                        new Color(0.24f, 0.14f, 0.07f, 1f),
+                        "i"
+                    );
                 }
             }
         }

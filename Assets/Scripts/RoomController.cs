@@ -82,13 +82,9 @@ namespace TopDownGame
                         $"ROOM {currentRoom}",
                         $"You have recovered artifacts in your bag!\nWalk up to each pedestal and interact to place them ({restored}/{retrieved} placed).",
                         5.5f,
-                        new Color(0.2f, 0.92f, 0.5f, 1f),
+                        new Color(0.24f, 0.14f, 0.07f, 1f),
                         "★"
                     );
-                }
-                else if (restored >= 1)
-                {
-                    // At least 1 artifact restored, progression unlocked
                 }
                 else if (!GameProgression.AreAllPlaquesRead(currentRoom))
                 {
@@ -96,9 +92,19 @@ namespace TopDownGame
                     NotificationBannerUI.Show(
                         $"ROOM {currentRoom}",
                         $"Read all 5 artifact plaques in this room to unlock the Alterworld trial! ({readCount}/5 studied)",
-                        4.5f,
-                        new Color(1f, 0.88f, 0.4f, 1f),
+                        5.0f,
+                        new Color(0.24f, 0.14f, 0.07f, 1f),
                         "i"
+                    );
+                }
+                else if (!GameProgression.HasRetrievedRoomArtifact(currentRoom))
+                {
+                    NotificationBannerUI.Show(
+                        $"ROOM {currentRoom}",
+                        $"All 5 plaques studied! (5/5)\nEnter the Lobby portal to face the Alterworld trial for Room {currentRoom}!",
+                        5.5f,
+                        new Color(0.24f, 0.14f, 0.07f, 1f),
+                        "★"
                     );
                 }
             }

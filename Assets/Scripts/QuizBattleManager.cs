@@ -223,6 +223,15 @@ namespace TopDownGame
 
             // Initial Dialogue State
             SetInitialDialogue();
+
+            // Initial Battle Notification
+            NotificationBannerUI.Show(
+                $"ALTERWORLD BATTLE {roomNumber}",
+                $"Trial of Room {roomNumber}: Select a corrupted artifact below to challenge the monster!",
+                5.0f,
+                new Color(0.24f, 0.14f, 0.07f, 1f),
+                "⚔"
+            );
         }
 
         private string GetPlayerCharacterName()
@@ -664,15 +673,27 @@ namespace TopDownGame
             _retrievedCount++;
             PlayerInventory.AddArtifact(slot.artifactId, slot.artifactName, slot.artifactSprite, slot.artifactDescription);
 
-            bool justRetrieved = GameProgression.RetrieveRoomArtifact(roomNumber);
-            if (justRetrieved)
+            GameProgression.RetrieveRoomArtifact(roomNumber);
+            GameProgression.SetRoomRetrievedCount(roomNumber, _retrievedCount);
+
+            if (_retrievedCount >= artifactSlots.Count)
+            {
+                NotificationBannerUI.Show(
+                    "ALL ARTIFACTS RECOVERED!",
+                    $"You recovered '{slot.artifactName}'! All {artifactSlots.Count} artifacts saved in Room {roomNumber}!",
+                    5.0f,
+                    new Color(0.18f, 0.40f, 0.16f, 1f),
+                    "★"
+                );
+            }
+            else
             {
                 NotificationBannerUI.Show(
                     "ARTIFACT RECOVERED!",
-                    $"You recovered an artifact! Bring it back inside Room {roomNumber} in the Real World to open Room {roomNumber + 1}!",
-                    5.5f,
-                    new Color(0.2f, 0.9f, 0.4f, 1f),
-                    "!"
+                    $"You recovered the {slot.artifactName}! ({_retrievedCount}/{artifactSlots.Count} retrieved)",
+                    4.5f,
+                    new Color(0.18f, 0.40f, 0.16f, 1f),
+                    "★"
                 );
             }
 
@@ -705,6 +726,14 @@ namespace TopDownGame
             string failMsg = $"<color=#C82333><b>INCORRECT!</b></color> The monster counterattacked! You lost 1 HP and failed to retrieve {slot.artifactName}!";
             if (playerDialogueText != null) playerDialogueText.text = failMsg;
             if (dialogueBodyText != null) dialogueBodyText.text = failMsg;
+
+            NotificationBannerUI.Show(
+                "INCORRECT ANSWER!",
+                $"Monster counterattacked! You took 1 damage and failed to retrieve '{slot.artifactName}'.",
+                3.5f,
+                new Color(0.55f, 0.12f, 0.10f, 1f),
+                "!"
+            );
 
             // 1. Mark artifact as failed (NOT retrieved, player does NOT get it)
             slot.isFailed = true;
@@ -805,6 +834,14 @@ namespace TopDownGame
                 GameProgression.RetrieveRoomArtifact(roomNumber);
                 GameProgression.SetRoomRetrievedCount(roomNumber, _retrievedCount);
 
+                NotificationBannerUI.Show(
+                    "BATTLE VICTORY!",
+                    $"Retrieved {_retrievedCount}/{artifactSlots.Count} artifacts! Bring them to Room {roomNumber} in the Real World.",
+                    5.5f,
+                    new Color(0.18f, 0.40f, 0.16f, 1f),
+                    "★"
+                );
+
                 if (victoryModal != null)
                 {
                     var bodyText = victoryModal.transform.Find("Window/Body")?.GetComponent<TMP_Text>();
@@ -858,6 +895,14 @@ namespace TopDownGame
                 GameProgression.RetrieveRoomArtifact(roomNumber);
                 GameProgression.SetRoomRetrievedCount(roomNumber, _retrievedCount);
 
+                NotificationBannerUI.Show(
+                    "TRIAL ENDED",
+                    $"You fell in battle, but kept {_retrievedCount} recovered artifact(s)!",
+                    5.0f,
+                    new Color(0.24f, 0.14f, 0.07f, 1f),
+                    "!"
+                );
+
                 if (defeatModal != null)
                 {
                     var titleText = defeatModal.transform.Find("Window/Title")?.GetComponent<TMP_Text>();
@@ -874,6 +919,14 @@ namespace TopDownGame
             {
                 // FAILED: 0 artifacts retrieved! Must retake the battle to progress
                 GameProgression.SetRoomRetrievedCount(roomNumber, 0);
+
+                NotificationBannerUI.Show(
+                    "TRIAL FAILED",
+                    "You were defeated and recovered 0 artifacts! Retake the battle to progress.",
+                    5.0f,
+                    new Color(0.55f, 0.12f, 0.10f, 1f),
+                    "!"
+                );
 
                 if (defeatModal != null)
                 {
