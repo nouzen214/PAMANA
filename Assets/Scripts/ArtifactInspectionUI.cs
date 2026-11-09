@@ -52,7 +52,6 @@ namespace TopDownGame
         private PlayerMovement _playerMovement;
         private bool _isOpen = false;
         private readonly List<GameObject> _hiddenHudObjects = new List<GameObject>();
-        private SpriteRenderer _hiddenPlayerSr;
 
         // Restore from Bag Picker Modal
         private GameObject _restorePickerModal;
@@ -254,16 +253,6 @@ namespace TopDownGame
                 _playerMovement.enabled = false;
                 var rb = _playerMovement.GetComponent<Rigidbody2D>();
                 if (rb != null) rb.linearVelocity = Vector2.zero;
-
-                _hiddenPlayerSr = _playerMovement.GetComponentInChildren<SpriteRenderer>();
-                if (_hiddenPlayerSr != null && _hiddenPlayerSr.enabled)
-                {
-                    _hiddenPlayerSr.enabled = false;
-                }
-                else
-                {
-                    _hiddenPlayerSr = null;
-                }
             }
 
             // Hide other gameplay HUD elements (Joystick, Hearts, Room Banner, Home Button)
@@ -931,16 +920,13 @@ namespace TopDownGame
             }
             _hiddenHudObjects.Clear();
 
-            // Restore player sprite
-            if (_hiddenPlayerSr != null)
-            {
-                _hiddenPlayerSr.enabled = true;
-                _hiddenPlayerSr = null;
-            }
-
-            // Re-enable player movement
+            // Re-enable player movement & ensure player sprite is enabled
             if (_playerMovement != null)
+            {
                 _playerMovement.enabled = true;
+                var sr = _playerMovement.GetComponentInChildren<SpriteRenderer>(true);
+                if (sr != null) sr.enabled = true;
+            }
 
             _currentArtifact = null;
         }
