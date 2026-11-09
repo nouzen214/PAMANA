@@ -4,22 +4,17 @@ using UnityEngine;
 namespace TopDownGame
 {
     /// <summary>
-    /// Placed on the bottom exit doorway trigger of a Room scene.
-    /// Exits back to Lobby when player presses Interact ([E] / Controller / Touch).
-    /// Prevents any accidental or instant exit on scene load with an entry grace period.
+    /// Attached to the bottom exit doorway trigger of each Room scene (Room_1 to Room_12).
+    /// When the player walks through the doorway, automatically exits back to the hallway/lobby.
+    /// Pure walkthrough trigger — no [E] prompt or interaction button required.
+    /// Includes a brief cooldown after entering the room to prevent accidental instant bounce-back.
     /// </summary>
     [RequireComponent(typeof(Collider2D))]
-    public class RoomExit : DoorController
+    public class RoomExit : MonoBehaviour
     {
         [Header("Exit Settings")]
-        [Tooltip("Prompt displayed to player near exit")]
-        [SerializeField] private string exitPrompt = "[E] Exit Room";
-
-        [Tooltip("Grace period in seconds after entering room before exit can be triggered")]
-        [SerializeField] private float entryCooldown = 0.8f;
-
-        [Tooltip("If true, walking down into the doorway triggers exit after the cooldown")]
-        [SerializeField] private bool autoExitOnWalkDown = false;
+        [Tooltip("Grace period in seconds after entering room before exit trigger activates")]
+        [SerializeField] private float entryCooldown = 0.5f;
 
         private bool _isExiting = false;
         private bool _canExit = false;
@@ -36,29 +31,23 @@ namespace TopDownGame
             _canExit = true;
         }
 
-        public override void Interact()
+        private void OnTriggerEnter2D(Collider2D other)
         {
-            if (!_canExit || _isExiting) return;
-            PerformExit();
-        }
-
-        public override string GetPromptText(string openText, string closeText)
-        {
-            return exitPrompt;
+            TryExit(other);
         }
 
         private void OnTriggerStay2D(Collider2D other)
         {
+            TryExit(other);
+        }
+
+        private void TryExit(Collider2D other)
+        {
             if (!_canExit || _isExiting) return;
 
-            // Only trigger auto-exit if explicitly enabled AND player is intentionally moving downward
-            if (autoExitOnWalkDown && other.CompareTag("Player"))
+            if (other.CompareTag("Player") || other.gameObject.name == "Player")
             {
-                var input = other.GetComponent<PlayerInputHandler>();
-                if (input != null && input.MoveInput.y < -0.3f)
-                {
-                    PerformExit();
-                }
+                PerformExit();
             }
         }
 
@@ -66,7 +55,7 @@ namespace TopDownGame
         {
             if (_isExiting) return;
             _isExiting = true;
-            Debug.Log("[RoomExit] Returning to Lobby...");
+            Debug.Log("[RoomExit] Player walked through exit doorway. Returning to hallway/lobby...");
             RoomTransitionManager.ExitToLobby();
         }
     }
