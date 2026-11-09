@@ -1082,7 +1082,7 @@ namespace TopDownGame.Editor
             vlg.childForceExpandWidth = false;
             vlg.childForceExpandHeight = false;
 
-            var btnRestoreObj  = CreateChoiceButton("RestoreArtifactButton", "place from bag", Vector2.zero, choiceBox, plaqueSprite);
+            var btnRestoreObj  = CreateChoiceButton("RestoreArtifactButton", "Place from bag", Vector2.zero, choiceBox, plaqueSprite);
             var btnArtifactObj = CreateChoiceButton("InspectArtifactButton", "inspect artifact", Vector2.zero, choiceBox, plaqueSprite);
             var btnPlaqueObj   = CreateChoiceButton("InspectPlaqueButton",   "inspect plaque",   Vector2.zero, choiceBox, plaqueSprite);
 

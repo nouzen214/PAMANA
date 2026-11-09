@@ -8,7 +8,7 @@ namespace TopDownGame
 {
     /// <summary>
     /// UI Controller for the Artifact Inspection modal with dialogue box,
-    /// dynamic character avatar, and choice prompts ("inspect artifact" / "inspect plaque" / "place from bag").
+    /// dynamic character avatar, and choice prompts ("inspect artifact" / "inspect plaque" / "Place from bag").
     /// Allows the player to open their bag and select which recovered artifact to restore to the pedestal.
     /// </summary>
     public class ArtifactInspectionUI : MonoBehaviour
@@ -160,7 +160,7 @@ namespace TopDownGame
                     var txt = btnObj.GetComponentInChildren<TMP_Text>();
                     if (txt != null)
                     {
-                        txt.text = "place from bag";
+                        txt.text = "Place from bag";
                         txt.alignment = TextAlignmentOptions.Center;
                     }
                     restoreArtifactButton = btnObj.GetComponent<Button>();
@@ -191,6 +191,11 @@ namespace TopDownGame
 
             if (restoreArtifactButton != null)
             {
+                var txt = restoreArtifactButton.GetComponentInChildren<TMP_Text>();
+                if (txt != null)
+                {
+                    txt.text = "Place from bag";
+                }
                 restoreArtifactButton.gameObject.SetActive(true);
             }
         }
@@ -342,7 +347,7 @@ namespace TopDownGame
             EnsureRestoreButton();
             if (restoreArtifactButton != null)
             {
-                // Option "place from bag" is always visible on all artifacts
+                // Option "Place from bag" is always visible on all artifacts
                 restoreArtifactButton.gameObject.SetActive(true);
             }
             if (inspectArtifactButton != null) inspectArtifactButton.gameObject.SetActive(true);
