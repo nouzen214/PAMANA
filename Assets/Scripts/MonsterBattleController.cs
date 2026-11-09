@@ -53,12 +53,35 @@ namespace TopDownGame
                 _originalLocalScale = transform.localScale;
             }
 
+            if (monsterPortraitImage == null)
+            {
+                var canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
+                if (canvas != null)
+                {
+                    var tr = canvas.transform.Find("MonsterPortraitContainer/Frame/Avatar") ?? canvas.transform.Find("MonsterPortraitContainer/Avatar");
+                    if (tr != null) monsterPortraitImage = tr.GetComponent<Image>();
+                }
+            }
+
+            if (monsterPortraitTransform == null && monsterPortraitImage != null)
+            {
+                monsterPortraitTransform = monsterPortraitImage.transform;
+            }
+
             if (monsterPortraitTransform != null)
             {
                 _portraitOriginalLocalPos = monsterPortraitTransform.localPosition;
             }
+
             if (monsterPortraitImage != null)
             {
+                if (monsterPortraitImage.sprite == null && monsterSprite != null)
+                {
+                    monsterPortraitImage.sprite = monsterSprite;
+                }
+                monsterPortraitImage.enabled = true;
+                monsterPortraitImage.gameObject.SetActive(true);
+                if (monsterPortraitImage.color.a < 0.1f) monsterPortraitImage.color = Color.white;
                 _portraitOriginalColor = monsterPortraitImage.color;
             }
 
@@ -76,6 +99,10 @@ namespace TopDownGame
             if (monsterImage != null && sprite != null)
             {
                 monsterImage.sprite = sprite;
+            }
+            if (monsterPortraitImage != null && sprite != null && monsterPortraitImage.sprite == null)
+            {
+                monsterPortraitImage.sprite = sprite;
             }
         }
 

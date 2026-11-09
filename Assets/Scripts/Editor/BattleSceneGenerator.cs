@@ -1118,15 +1118,26 @@ namespace TopDownGame.Editor
             if (mImgObj != null) mImgObj.GetComponent<Image>().sprite = enemySpr;
 
             var canvas = Object.FindAnyObjectByType<Canvas>();
+            var mpcTr = canvas != null ? canvas.transform.Find("MonsterPortraitContainer") : null;
+            if (mpcTr != null)
+            {
+                mpcTr.gameObject.SetActive(true);
+                qbm.GetType().GetField("monsterPortraitContainer", flags)?.SetValue(qbm, mpcTr.gameObject);
+                EditorUtility.SetDirty(qbm);
+            }
             var pImgTr = canvas != null ? (canvas.transform.Find("MonsterPortraitContainer/Frame/Avatar") ?? canvas.transform.Find("MonsterPortraitContainer/Avatar")) : null;
             if (pImgTr != null)
             {
+                pImgTr.gameObject.SetActive(true);
                 var pImg = pImgTr.GetComponent<Image>();
                 if (pImg != null)
                 {
                     pImg.sprite = avatarSpr != null ? avatarSpr : enemySpr;
+                    pImg.enabled = true;
+                    pImg.color = Color.white;
                     EditorUtility.SetDirty(pImg);
                     mbc.GetType().GetField("monsterPortraitImage", flags)?.SetValue(mbc, pImg);
+                    EditorUtility.SetDirty(mbc);
                 }
             }
 

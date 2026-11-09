@@ -140,8 +140,15 @@ namespace TopDownGame
             if (monsterPortraitContainer == null)
             {
                 var t = transform.Find("MonsterPortraitContainer");
+                if (t == null)
+                {
+                    var canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
+                    if (canvas != null) t = canvas.transform.Find("MonsterPortraitContainer");
+                }
                 if (t != null) monsterPortraitContainer = t.gameObject;
             }
+
+            EnsureMonsterPortrait();
         }
 
         private void Start()
@@ -349,8 +356,71 @@ namespace TopDownGame
             {
                 if (monsterPortraitContainer != null) return monsterPortraitContainer;
                 var t = transform.Find("MonsterPortraitContainer");
+                if (t == null)
+                {
+                    var canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
+                    if (canvas != null) t = canvas.transform.Find("MonsterPortraitContainer");
+                }
+                if (t == null)
+                {
+                    var allGo = Resources.FindObjectsOfTypeAll<GameObject>();
+                    for (int i = 0; i < allGo.Length; i++)
+                    {
+                        if (allGo[i].name == "MonsterPortraitContainer")
+                        {
+                            t = allGo[i].transform;
+                            break;
+                        }
+                    }
+                }
                 if (t != null) monsterPortraitContainer = t.gameObject;
                 return monsterPortraitContainer;
+            }
+        }
+
+        public void EnsureMonsterPortrait()
+        {
+            var go = MonsterPortraitContainerGO;
+            if (go != null)
+            {
+                go.SetActive(true);
+
+                // Ensure Frame and Avatar are active and have a valid sprite
+                var avatarTr = go.transform.Find("Frame/Avatar") ?? go.transform.Find("Avatar");
+                if (avatarTr != null)
+                {
+                    avatarTr.gameObject.SetActive(true);
+                    var avatarImg = avatarTr.GetComponent<Image>();
+                    if (avatarImg != null)
+                    {
+                        avatarImg.enabled = true;
+                        if (avatarImg.color.a < 0.1f) avatarImg.color = Color.white;
+
+                        if (avatarImg.sprite == null && monsterController != null)
+                        {
+                            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public;
+                            var mSpr = monsterController.GetType().GetField("monsterSprite", flags)?.GetValue(monsterController) as Sprite;
+                            if (mSpr != null) avatarImg.sprite = mSpr;
+                        }
+
+                        if (avatarImg.sprite == null)
+                        {
+                            string spriteName = roomNumber <= 1 ? "Avatar_Monster_0" : $"Avatar_Enemy_Room{roomNumber}";
+                            var spr = Resources.Load<Sprite>(spriteName);
+#if UNITY_EDITOR
+                            if (spr == null) spr = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Sprites/{spriteName}.png");
+                            if (spr == null) spr = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(roomNumber <= 1 ? "Assets/Sprites/Enemy_Room1.png" : $"Assets/Sprites/Enemy_Room{roomNumber}.png");
+#endif
+                            if (spr != null) avatarImg.sprite = spr;
+                        }
+                    }
+                }
+
+                var frameTr = go.transform.Find("Frame");
+                if (frameTr != null) frameTr.gameObject.SetActive(true);
+
+                var heartsTr = go.transform.Find("MonsterHearts");
+                if (heartsTr != null) heartsTr.gameObject.SetActive(true);
             }
         }
 
@@ -359,15 +429,12 @@ namespace TopDownGame
             _selectedSlotIndex = -1;
             string pName = GetPlayerCharacterName();
 
-            // Hide question, enemy dialogue, enemy portrait, and choices when entering or choosing
+            // Hide question dialogue and choices when choosing an artifact, but ALWAYS keep enemy portrait active!
             if (TopDialogueBoxGO != null)
             {
                 TopDialogueBoxGO.SetActive(false);
             }
-            if (MonsterPortraitContainerGO != null)
-            {
-                MonsterPortraitContainerGO.SetActive(false);
-            }
+            EnsureMonsterPortrait();
             if (choicesContainer != null)
             {
                 choicesContainer.SetActive(false);
@@ -729,7 +796,6 @@ namespace TopDownGame
         {
             _isBusy = true;
             if (TopDialogueBoxGO != null) TopDialogueBoxGO.SetActive(false);
-            if (MonsterPortraitContainerGO != null) MonsterPortraitContainerGO.SetActive(false);
             if (choicesContainer != null) choicesContainer.SetActive(false);
 
             if (_retrievedCount > 0)
@@ -783,7 +849,6 @@ namespace TopDownGame
         {
             _isBusy = true;
             if (TopDialogueBoxGO != null) TopDialogueBoxGO.SetActive(false);
-            if (MonsterPortraitContainerGO != null) MonsterPortraitContainerGO.SetActive(false);
             if (choicesContainer != null) choicesContainer.SetActive(false);
 
             if (_retrievedCount > 0)
