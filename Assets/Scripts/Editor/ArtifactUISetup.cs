@@ -1009,8 +1009,8 @@ namespace TopDownGame.Editor
             avPortRt.anchorMin = new Vector2(0.5f, 0.5f);
             avPortRt.anchorMax = new Vector2(0.5f, 0.5f);
             avPortRt.pivot = new Vector2(0.5f, 0.5f);
-            avPortRt.anchoredPosition = new Vector2(5f, 5f);
-            avPortRt.sizeDelta = new Vector2(210f, 210f);
+            avPortRt.anchoredPosition = new Vector2(5f, 8f);
+            avPortRt.sizeDelta = new Vector2(190f, 190f);
             var avPortImg = avPortObj.GetComponent<Image>();
             avPortImg.preserveAspect = true;
             avPortImg.sprite = boyAvatar;
