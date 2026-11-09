@@ -1,0 +1,63 @@
+================================================================================
+PAMANA RELEASE NOTES - Version 0.1.0
+================================================================================
+
+Project: PAMANA
+Version: v0.1.0
+Release Date: November 9, 2026
+Release Type: Development / Testing / Stable Milestone
+Source Version / Branch / Changeset: main (Commit: 86c5f686abc06ab3ae8e81dda7c550c6609a6adb)
+
+--------------------------------------------------------------------------------
+INCLUDED IN THIS VERSION
+--------------------------------------------------------------------------------
+* Dual Character Selection: Choose between Darrel and Darla with custom 4-directional locomotion animations and tailored dialogue portraits.
+* Museum Hub & Room Navigation: Exploration across the Main Lobby, Left and Right museum wings, and 12 historical artifact exhibition rooms.
+* Alterworld Portal & Corrupted Realm: Unlocking the lobby portal runes to traverse into the gloomy Alterworld (AltLobby, AltLeftHallway, AltRightHallway).
+* Turn-Based Educational Quiz Combat: Full combat arenas across all 12 rooms featuring historical trivia to weaken corrupted monsters and recover stolen national relics.
+* Artifact Bag & Restoration System: Dedicated bag inventory modal and pedestal mounting interface allowing players to return recovered relics to their pedestals.
+* Plaque Inspection & Clue Tracking: Complete historical plaque reading system with real-time HUD progression counter (e.g. 0/5 to 5/5 studied).
+* Hanging Rustic Notification Banner: Animated wooden sign with suspension chains displaying room events, combat alerts, and milestone announcements.
+* Cloud Authentication & Persistence: Firebase authentication with real-time cloud data storage alongside clean local PlayerPrefs fallback.
+
+--------------------------------------------------------------------------------
+FIXED / REFINED
+--------------------------------------------------------------------------------
+* Prevented character from clipping into locked portal area in the Lobby before Room 1 plaque inspection is complete.
+* Corrected battle sequence so enemy portrait and health bar only appear after the player actively selects an artifact to challenge.
+* Resolved battle notification issues in Battle 2, ensuring that every correct answer and artifact recovery properly displays an on-screen alert.
+* Refined bag inventory and restore picker modal layout, removing redundant descriptions and adding high-contrast pixel-art "Place" buttons.
+* Standardized button labels and capitalizations ("Place from bag").
+
+--------------------------------------------------------------------------------
+KNOWN ISSUES
+--------------------------------------------------------------------------------
+* Audio assets (BGM tracks and sound effects) are temporarily omitted in v0.1.0 to minimize initial WebGL package download size.
+* Museum visual restoration stage (lighting and mural decay recovery) is still using static base textures.
+* Battle retry flow requires re-entering through the lobby portal rather than an instant rematch prompt.
+
+--------------------------------------------------------------------------------
+NOT YET INCLUDED (PLANNED FOR v0.2.0 - v1.0.0)
+--------------------------------------------------------------------------------
+* Complete narrative cutscenes (inheritance backstory and grandmother's ancestral powers).
+* Dynamic room restoration animations (decayed museum walls visually healing upon relic restoration).
+* Comprehensive audio system (ambient museum music, battle BGM, and UI feedback SFX).
+* In-game settings modal (sound volume sliders, fullscreen toggle, keybind customization).
+* In-game pre-test, post-test, and ISO/IEC 25010 engagement evaluation questionnaires.
+
+--------------------------------------------------------------------------------
+INSTALLATION / RUNNING INSTRUCTIONS
+--------------------------------------------------------------------------------
+1. To play via browser: Visit the published WebGL page at https://nouzen214.github.io/PAMANA/
+2. To run locally: Extract "Pamana-v0.1.0.zip", execute "run_webgl.bat", and open "http://localhost:8000/index.html" in Google Chrome, Microsoft Edge, or Mozilla Firefox.
+3. Minimum Requirements: Modern desktop web browser supporting WebGL 2.0 and WebAssembly, 4GB RAM, and a stable internet connection for cloud authentication.
+
+--------------------------------------------------------------------------------
+SOURCE TRACEABILITY
+--------------------------------------------------------------------------------
+Version Control System: Git / GitHub
+Repository URL: https://github.com/nouzen214/PAMANA.git
+Branch: main
+Commit Hash: 86c5f686abc06ab3ae8e81dda7c550c6609a6adb
+Release Tag: v0.1.0
+
