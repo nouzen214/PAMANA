@@ -60,6 +60,8 @@ namespace TopDownGame
         public string ArtifactDialogue => artifactDialogue;
 
         public bool IsRestored => GameProgression.IsPedestalRestored(RoomNumber, artifactName);
+        public string DisplayName => IsRestored ? artifactName : "???";
+        public string DisplayPlaqueTitle => IsRestored ? plaqueTitle : "???";
 
         private SpriteRenderer _cachedVisualRenderer;
 

@@ -320,11 +320,11 @@ namespace TopDownGame
                 }
                 else if (hasMatchingInBag)
                 {
-                    dialogueText.text = $"I have the {artifact.ArtifactName} in my bag! I should place it on this pedestal.";
+                    dialogueText.text = "I have a matching artifact in my bag! I should place it on this pedestal.";
                 }
                 else if (battleDone)
                 {
-                    dialogueText.text = $"This pedestal is empty. The artifact was lost in the Alterworld battle and was not recovered.";
+                    dialogueText.text = "This pedestal is empty. The artifact was lost in the Alterworld battle and was not recovered.";
                 }
                 else if (allRead)
                 {
@@ -787,7 +787,7 @@ namespace TopDownGame
             {
                 plaquePopup.SetActive(true);
                 if (plaqueTitleText != null && _currentArtifact != null)
-                    plaqueTitleText.text = _currentArtifact.PlaqueTitle;
+                    plaqueTitleText.text = _currentArtifact.IsRestored ? _currentArtifact.PlaqueTitle : "???";
                 if (plaqueBodyText != null && _currentArtifact != null)
                     plaqueBodyText.text = _currentArtifact.PlaqueDescription;
             }
@@ -875,24 +875,33 @@ namespace TopDownGame
                     }
                 }
                 if (artifactDetailTitleText != null)
-                    artifactDetailTitleText.gameObject.SetActive(false);
+                {
+                    artifactDetailTitleText.gameObject.SetActive(true);
+                    artifactDetailTitleText.text = isPedestalRestored ? _currentArtifact.ArtifactName : "???";
+                }
                 if (artifactDetailBodyText != null)
-                    artifactDetailBodyText.gameObject.SetActive(false);
+                {
+                    artifactDetailBodyText.gameObject.SetActive(isPedestalRestored);
+                    if (isPedestalRestored && _currentArtifact != null)
+                    {
+                        artifactDetailBodyText.text = _currentArtifact.ArtifactInspectionDescription;
+                    }
+                }
             }
 
             if (dialogueText != null)
             {
                 if (isPedestalRestored)
                 {
-                    dialogueText.text = $"The sacred relic rests peacefully on its pedestal in Room {rNum}.";
+                    dialogueText.text = $"The {_currentArtifact.ArtifactName} rests peacefully on its pedestal in Room {rNum}.";
                 }
                 else if (DoesPlayerHaveArtifactForPedestal(_currentArtifact))
                 {
-                    dialogueText.text = $"This pedestal is missing the {_currentArtifact.ArtifactName}. I have it in my bag! I can restore it now.";
+                    dialogueText.text = "This pedestal is missing its artifact. I have a matching artifact in my bag! I can place it here.";
                 }
                 else if (GameProgression.HasRetrievedRoomArtifact(rNum))
                 {
-                    dialogueText.text = $"The {_currentArtifact.ArtifactName} was lost in the Alterworld battle and was not recovered. It cannot be restored.";
+                    dialogueText.text = "This pedestal's artifact was lost in the Alterworld battle and was not recovered. It cannot be restored.";
                 }
                 else
                 {
