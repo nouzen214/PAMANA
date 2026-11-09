@@ -975,15 +975,15 @@ namespace TopDownGame.Editor
             bgImg.color = new Color(0f, 0f, 0f, 0.65f);
             bgImg.raycastTarget = false;
 
-            // 2. Dialogue Box (Bottom)
+            // 2. Dialogue Box (Bottom) - Standard Clean Dialogue Box by default
             var dboxObj = new GameObject("DialogueBox", typeof(RectTransform), typeof(Image));
             dboxObj.transform.SetParent(rootPanel.transform, false);
             var dboxRt = dboxObj.GetComponent<RectTransform>();
             dboxRt.anchorMin = new Vector2(0.5f, 0f);
             dboxRt.anchorMax = new Vector2(0.5f, 0f);
             dboxRt.pivot = new Vector2(0.5f, 0f);
-            dboxRt.anchoredPosition = new Vector2(145f, 35f);
-            dboxRt.sizeDelta = new Vector2(1380f, 151f);
+            dboxRt.anchoredPosition = new Vector2(110f, 35f);
+            dboxRt.sizeDelta = new Vector2(1050f, 287f);
             var dboxImg = dboxObj.GetComponent<Image>();
             dboxImg.sprite = dboxSprite;
             dboxImg.preserveAspect = true;
@@ -1022,11 +1022,11 @@ namespace TopDownGame.Editor
             nameRt.anchorMin = new Vector2(0f, 1f);
             nameRt.anchorMax = new Vector2(0f, 1f);
             nameRt.pivot = new Vector2(0f, 1f);
-            nameRt.anchoredPosition = new Vector2(82f, -8f);
-            nameRt.sizeDelta = new Vector2(160f, 26f);
+            nameRt.anchoredPosition = new Vector2(120f, -30f);
+            nameRt.sizeDelta = new Vector2(230f, 45f);
             var nameTmp = nameObj.GetComponent<TextMeshProUGUI>();
             nameTmp.text = "Darrel";
-            nameTmp.fontSize = 21f;
+            nameTmp.fontSize = 28f;
             nameTmp.fontStyle = FontStyles.Bold;
             nameTmp.color = new Color(1f, 0.95f, 0.85f, 1f);
 
@@ -1036,8 +1036,8 @@ namespace TopDownGame.Editor
             var diagRt = diagObj.GetComponent<RectTransform>();
             diagRt.anchorMin = new Vector2(0f, 0f);
             diagRt.anchorMax = new Vector2(1f, 1f);
-            diagRt.offsetMin = new Vector2(40f, 18f);
-            diagRt.offsetMax = new Vector2(-75f, -38f);
+            diagRt.offsetMin = new Vector2(55f, 30f);
+            diagRt.offsetMax = new Vector2(-110f, -100f);
             var diagTmp = diagObj.GetComponent<TextMeshProUGUI>();
             diagTmp.text = "what should i do";
             diagTmp.fontSize = 28f;
@@ -1053,8 +1053,8 @@ namespace TopDownGame.Editor
             arrowRt.anchorMin = new Vector2(1f, 0f);
             arrowRt.anchorMax = new Vector2(1f, 0f);
             arrowRt.pivot = new Vector2(0.5f, 0.5f);
-            arrowRt.anchoredPosition = new Vector2(-45f, 20f);
-            arrowRt.sizeDelta = new Vector2(50f, 35f);
+            arrowRt.anchoredPosition = new Vector2(-67f, 41.5f);
+            arrowRt.sizeDelta = new Vector2(85f, 75f);
             var arrowImg = arrowBtnObj.GetComponent<Image>();
             arrowImg.color = new Color(1f, 1f, 1f, 0.001f);
             arrowImg.raycastTarget = true;
@@ -1067,14 +1067,14 @@ namespace TopDownGame.Editor
             aColors.selectedColor = new Color(1f, 0.85f, 0.3f, 0.35f);
             arrowBtn.colors = aColors;
 
-            // 3. Choice Buttons Container
+            // 3. Choice Buttons Container - Aligned right above DialogueBox
             var choiceBox = new GameObject("ChoiceButtons", typeof(RectTransform));
             choiceBox.transform.SetParent(rootPanel.transform, false);
             var choiceRt = choiceBox.GetComponent<RectTransform>();
             choiceRt.anchorMin = new Vector2(1f, 0f);
             choiceRt.anchorMax = new Vector2(1f, 0f);
             choiceRt.pivot = new Vector2(1f, 0f);
-            choiceRt.anchoredPosition = new Vector2(-65f, 345f);
+            choiceRt.anchoredPosition = new Vector2(-65f, 335f);
             choiceRt.sizeDelta = new Vector2(360f, 220f);
 
             var vlg = choiceBox.AddComponent<VerticalLayoutGroup>();
@@ -1217,6 +1217,8 @@ namespace TopDownGame.Editor
             SetField(uiCtrl, "closeArtifactDetailButton", closeArtBtn);
             SetField(uiCtrl, "backgroundTapButton", null);
             SetField(uiCtrl, "dialogueArrowButton", arrowBtn);
+            SetField(uiCtrl, "standardDialogueBoxSprite", dboxSprite);
+            SetField(uiCtrl, "longDialogueBoxSprite", AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/DialogueBox_Long.png"));
 
             EditorUtility.SetDirty(uiCtrl);
 

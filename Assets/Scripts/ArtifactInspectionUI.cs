@@ -49,6 +49,17 @@ namespace TopDownGame
         [SerializeField] private Button backgroundTapButton;
         [SerializeField] private Button dialogueArrowButton;
 
+        [Header("Dialogue Box Sprites")]
+        [SerializeField] private Sprite standardDialogueBoxSprite;
+        [SerializeField] private Sprite longDialogueBoxSprite;
+
+        private Image _dialogueBoxImage;
+        private RectTransform _dialogueBoxRt;
+        private RectTransform _characterNameRt;
+        private RectTransform _dialogueTextRt;
+        private RectTransform _dialogueArrowRt;
+        private bool _isLongDialogueMode = false;
+
         private ArtifactInteractable _currentArtifact;
         private PlayerMovement _playerMovement;
         private bool _isOpen = false;
@@ -92,6 +103,8 @@ namespace TopDownGame
                 backgroundTapButton.onClick.AddListener(Close);
 
             EnsureDialogueArrowButton();
+            EnsureDialogueBoxReferences();
+            ApplyDialogueBoxMode(false);
 
             if (rootPanel != null)
                 rootPanel.SetActive(false);
@@ -100,6 +113,165 @@ namespace TopDownGame
                 _playerMovement = FindFirstObjectByType<PlayerMovement>();
             if (_playerMovement != null)
                 _playerMovement.enabled = true;
+        }
+
+        private void EnsureDialogueBoxReferences()
+        {
+            if (_dialogueBoxRt == null)
+            {
+                Transform dbox = null;
+                if (dialogueText != null)
+                {
+                    dbox = dialogueText.transform.parent;
+                }
+                if (dbox == null && rootPanel != null)
+                {
+                    dbox = rootPanel.transform.Find("DialogueBox");
+                }
+                if (dbox != null)
+                {
+                    _dialogueBoxRt = dbox.GetComponent<RectTransform>();
+                    _dialogueBoxImage = dbox.GetComponent<Image>();
+
+                    var nameTr = dbox.Find("CharacterName");
+                    if (nameTr != null) _characterNameRt = nameTr.GetComponent<RectTransform>();
+
+                    var arrowTr = dbox.Find("DialogueArrowButton");
+                    if (arrowTr != null) _dialogueArrowRt = arrowTr.GetComponent<RectTransform>();
+                }
+            }
+            if (_dialogueTextRt == null && dialogueText != null)
+            {
+                _dialogueTextRt = dialogueText.GetComponent<RectTransform>();
+            }
+            if (_characterNameRt == null && characterNameText != null)
+            {
+                _characterNameRt = characterNameText.GetComponent<RectTransform>();
+            }
+            if (_dialogueArrowRt == null && dialogueArrowButton != null)
+            {
+                _dialogueArrowRt = dialogueArrowButton.GetComponent<RectTransform>();
+            }
+
+            if (standardDialogueBoxSprite == null)
+            {
+#if UNITY_EDITOR
+                standardDialogueBoxSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/DialogueBox_Clean.png");
+                if (standardDialogueBoxSprite == null)
+                    standardDialogueBoxSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/DialogueBox.png");
+#endif
+            }
+
+            if (longDialogueBoxSprite == null)
+            {
+#if UNITY_EDITOR
+                longDialogueBoxSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/DialogueBox_Long.png");
+#endif
+            }
+        }
+
+        public void ApplyDialogueBoxMode(bool isLongMode)
+        {
+            EnsureDialogueBoxReferences();
+            if (_dialogueBoxRt == null) return;
+
+            _isLongDialogueMode = isLongMode;
+
+            if (isLongMode)
+            {
+                if (longDialogueBoxSprite != null && _dialogueBoxImage != null)
+                    _dialogueBoxImage.sprite = longDialogueBoxSprite;
+
+                _dialogueBoxRt.anchoredPosition = new Vector2(145f, 35f);
+                _dialogueBoxRt.sizeDelta = new Vector2(1380f, 151f);
+
+                if (_characterNameRt != null)
+                {
+                    _characterNameRt.anchoredPosition = new Vector2(82f, -8f);
+                    _characterNameRt.sizeDelta = new Vector2(160f, 26f);
+                }
+                if (characterNameText != null)
+                {
+                    characterNameText.fontSize = 21f;
+                }
+
+                if (_dialogueTextRt != null)
+                {
+                    _dialogueTextRt.anchorMin = new Vector2(0f, 0f);
+                    _dialogueTextRt.anchorMax = new Vector2(1f, 1f);
+                    _dialogueTextRt.offsetMin = new Vector2(40f, 18f);
+                    _dialogueTextRt.offsetMax = new Vector2(-75f, -38f);
+                }
+
+                if (dialogueText != null)
+                {
+                    dialogueText.fontSize = 28f;
+                    dialogueText.enableAutoSizing = true;
+                    dialogueText.fontSizeMin = 22f;
+                    dialogueText.fontSizeMax = 28f;
+                }
+
+                if (_dialogueArrowRt != null)
+                {
+                    _dialogueArrowRt.anchoredPosition = new Vector2(-45f, 20f);
+                    _dialogueArrowRt.sizeDelta = new Vector2(50f, 35f);
+                }
+            }
+            else
+            {
+                if (standardDialogueBoxSprite != null && _dialogueBoxImage != null)
+                    _dialogueBoxImage.sprite = standardDialogueBoxSprite;
+
+                _dialogueBoxRt.anchoredPosition = new Vector2(110f, 35f);
+                _dialogueBoxRt.sizeDelta = new Vector2(1050f, 287f);
+
+                if (_characterNameRt != null)
+                {
+                    _characterNameRt.anchoredPosition = new Vector2(120f, -30f);
+                    _characterNameRt.sizeDelta = new Vector2(230f, 45f);
+                }
+                if (characterNameText != null)
+                {
+                    characterNameText.fontSize = 28f;
+                }
+
+                if (_dialogueTextRt != null)
+                {
+                    _dialogueTextRt.anchorMin = new Vector2(0f, 0f);
+                    _dialogueTextRt.anchorMax = new Vector2(1f, 1f);
+                    _dialogueTextRt.offsetMin = new Vector2(55f, 30f);
+                    _dialogueTextRt.offsetMax = new Vector2(-110f, -100f);
+                }
+
+                if (dialogueText != null)
+                {
+                    dialogueText.fontSize = 28f;
+                    dialogueText.enableAutoSizing = true;
+                    dialogueText.fontSizeMin = 22f;
+                    dialogueText.fontSizeMax = 28f;
+                }
+
+                if (_dialogueArrowRt != null)
+                {
+                    _dialogueArrowRt.anchoredPosition = new Vector2(-67f, 41.5f);
+                    _dialogueArrowRt.sizeDelta = new Vector2(85f, 75f);
+                }
+            }
+        }
+
+        public void SetDialogueMessage(string message)
+        {
+            EnsureDialogueBoxReferences();
+            if (dialogueText != null)
+            {
+                dialogueText.text = message;
+                dialogueText.color = new Color(0.18f, 0.12f, 0.08f, 1f);
+            }
+
+            bool choicesActive = (choiceContainer != null && choiceContainer.activeSelf);
+            bool shouldBeLong = !choicesActive && !string.IsNullOrEmpty(message) && message.Length >= 120;
+
+            ApplyDialogueBoxMode(shouldBeLong);
         }
 
         private void CleanAllChoiceButtons()
@@ -135,6 +307,8 @@ namespace TopDownGame
                     if (tmp != null)
                     {
                         tmp.alignment = TextAlignmentOptions.Center;
+                        tmp.fontSize = 26f;
+                        tmp.fontStyle = FontStyles.Bold;
                     }
                 }
             }
@@ -302,35 +476,34 @@ namespace TopDownGame
             bool hasMatchingInBag = DoesPlayerHaveArtifactForPedestal(artifact);
             bool battleDone = GameProgression.HasRetrievedRoomArtifact(rNum);
 
-            if (dialogueText != null)
-            {
-                if (isPedestalRestored)
-                {
-                    dialogueText.text = $"The {artifact.ArtifactName} has been safely restored to this pedestal!";
-                }
-                else if (hasMatchingInBag)
-                {
-                    dialogueText.text = "I have a matching artifact in my bag! I should place it on this pedestal.";
-                }
-                else if (battleDone)
-                {
-                    dialogueText.text = "This pedestal is empty. The artifact was lost in the Alterworld battle and was not recovered.";
-                }
-                else if (allRead)
-                {
-                    if (rNum == 1)
-                        dialogueText.text = "I have studied all 5 plaques in Room 1! The mysterious portal in the museum lobby is now awakened!";
-                    else
-                        dialogueText.text = $"I have studied all 5 plaques in Room {rNum}! The Alterworld trial for Room {rNum} is now unlocked!";
-                }
-                else
-                {
-                    dialogueText.text = $"I need to study all 5 historical plaques in this room ({readCount}/5 studied). What should I do?";
-                }
-                dialogueText.color = new Color(0.18f, 0.18f, 0.18f, 1f);
-            }
-
             UpdateChoiceButtons();
+
+            string initMsg = "";
+            if (isPedestalRestored)
+            {
+                initMsg = $"The {artifact.ArtifactName} has been safely restored to this pedestal!";
+            }
+            else if (hasMatchingInBag)
+            {
+                initMsg = "I have a matching artifact in my bag! I should place it on this pedestal.";
+            }
+            else if (battleDone)
+            {
+                initMsg = "This pedestal is empty. The artifact was lost in the Alterworld battle and was not recovered.";
+            }
+            else if (allRead)
+            {
+                if (rNum == 1)
+                    initMsg = "I have studied all 5 plaques in Room 1! The mysterious portal in the museum lobby is now awakened!";
+                else
+                    initMsg = $"I have studied all 5 plaques in Room {rNum}! The Alterworld trial for Room {rNum} is now unlocked!";
+            }
+            else
+            {
+                initMsg = $"I need to study all 5 historical plaques in this room ({readCount}/5 studied). What should I do?";
+            }
+            SetDialogueMessage(initMsg);
+
             EnsureDialogueArrowButton();
 
             if (rootPanel != null)
@@ -339,7 +512,19 @@ namespace TopDownGame
 
         private void UpdateChoiceButtons()
         {
-            if (choiceContainer != null) choiceContainer.SetActive(true);
+            if (choiceContainer != null)
+            {
+                var choiceRt = choiceContainer.GetComponent<RectTransform>();
+                if (choiceRt != null)
+                {
+                    choiceRt.anchorMin = new Vector2(1f, 0f);
+                    choiceRt.anchorMax = new Vector2(1f, 0f);
+                    choiceRt.pivot = new Vector2(1f, 0f);
+                    choiceRt.anchoredPosition = new Vector2(-65f, 335f);
+                    choiceRt.sizeDelta = new Vector2(360f, 220f);
+                }
+                choiceContainer.SetActive(true);
+            }
             if (plaquePopup != null) plaquePopup.SetActive(false);
             if (artifactPopup != null) artifactPopup.SetActive(false);
             if (_restorePickerModal != null) _restorePickerModal.SetActive(false);
@@ -355,6 +540,7 @@ namespace TopDownGame
 
             EnsureDialogueArrowButton();
             CleanAllChoiceButtons();
+            ApplyDialogueBoxMode(false);
         }
 
         public void OnDialogueArrowClicked()
@@ -382,7 +568,7 @@ namespace TopDownGame
 
             UpdateChoiceButtons();
 
-            if (dialogueText != null && _currentArtifact != null)
+            if (_currentArtifact != null)
             {
                 int rNum = _currentArtifact.RoomNumber;
                 bool isPedestalRestored = _currentArtifact.IsRestored;
@@ -391,30 +577,31 @@ namespace TopDownGame
                 bool hasMatchingInBag = DoesPlayerHaveArtifactForPedestal(_currentArtifact);
                 bool battleDone = GameProgression.HasRetrievedRoomArtifact(rNum);
 
+                string menuMsg = "";
                 if (isPedestalRestored)
                 {
-                    dialogueText.text = $"The {_currentArtifact.ArtifactName} has been safely restored to this pedestal!";
+                    menuMsg = $"The {_currentArtifact.ArtifactName} has been safely restored to this pedestal!";
                 }
                 else if (hasMatchingInBag)
                 {
-                    dialogueText.text = "I have a matching artifact in my bag! I should place it on this pedestal.";
+                    menuMsg = "I have a matching artifact in my bag! I should place it on this pedestal.";
                 }
                 else if (battleDone)
                 {
-                    dialogueText.text = "This pedestal is empty. The artifact was lost in the Alterworld battle and was not recovered.";
+                    menuMsg = "This pedestal is empty. The artifact was lost in the Alterworld battle and was not recovered.";
                 }
                 else if (allRead)
                 {
                     if (rNum == 1)
-                        dialogueText.text = "I have studied all 5 plaques in Room 1! The mysterious portal in the museum lobby is now awakened!";
+                        menuMsg = "I have studied all 5 plaques in Room 1! The mysterious portal in the museum lobby is now awakened!";
                     else
-                        dialogueText.text = $"I have studied all 5 plaques in Room {rNum}! The Alterworld trial for Room {rNum} is now unlocked!";
+                        menuMsg = $"I have studied all 5 plaques in Room {rNum}! The Alterworld trial for Room {rNum} is now unlocked!";
                 }
                 else
                 {
-                    dialogueText.text = $"I need to study all 5 historical plaques in this room ({readCount}/5 studied). What should I do?";
+                    menuMsg = $"I need to study all 5 historical plaques in this room ({readCount}/5 studied). What should I do?";
                 }
-                dialogueText.color = new Color(0.18f, 0.18f, 0.18f, 1f);
+                SetDialogueMessage(menuMsg);
             }
         }
 
@@ -538,10 +725,7 @@ namespace TopDownGame
                     new Color(0.2f, 0.95f, 0.4f, 1f),
                     "★"
                 );
-                if (dialogueText != null)
-                {
-                    dialogueText.text = $"The {_currentArtifact.ArtifactName} has already been safely restored to this pedestal!";
-                }
+                SetDialogueMessage($"The {_currentArtifact.ArtifactName} has already been safely restored to this pedestal!");
                 if (choiceContainer != null) choiceContainer.SetActive(true);
                 return;
             }
@@ -842,10 +1026,7 @@ namespace TopDownGame
                     new Color(0.95f, 0.45f, 0.25f, 1f),
                     "!"
                 );
-                if (dialogueText != null)
-                {
-                    dialogueText.text = $"Hmm, '{item.name}' doesn't seem to belong on this pedestal. Let me check the other pedestals in this room.";
-                }
+                SetDialogueMessage($"Hmm, '{item.name}' doesn't seem to belong on this pedestal. Let me check the other pedestals in this room.");
                 return;
             }
 
@@ -863,10 +1044,7 @@ namespace TopDownGame
                 "★"
             );
 
-            if (dialogueText != null)
-            {
-                dialogueText.text = $"I placed the {item.name} back on its pedestal where it belongs!";
-            }
+            SetDialogueMessage($"I placed the {item.name} back on its pedestal where it belongs!");
 
             // Check room door unlock status
             int retrieved = GameProgression.GetRoomRetrievedCount(rNum);
@@ -912,9 +1090,9 @@ namespace TopDownGame
                     plaqueBodyText.text = _currentArtifact.PlaqueDescription;
             }
 
-            if (dialogueText != null && _currentArtifact != null)
+            if (_currentArtifact != null)
             {
-                dialogueText.text = _currentArtifact.PlaqueDialogue;
+                SetDialogueMessage(_currentArtifact.PlaqueDialogue);
             }
 
             // Record plaque read and check completion
@@ -1010,33 +1188,31 @@ namespace TopDownGame
                 }
             }
 
-            if (dialogueText != null)
+            if (isPedestalRestored)
             {
-                if (isPedestalRestored)
-                {
-                    dialogueText.text = $"The {_currentArtifact.ArtifactName} rests peacefully on its pedestal in Room {rNum}.";
-                }
-                else if (DoesPlayerHaveArtifactForPedestal(_currentArtifact))
-                {
-                    dialogueText.text = "This pedestal is missing its artifact. I have a matching artifact in my bag! I can place it here.";
-                }
-                else if (GameProgression.HasRetrievedRoomArtifact(rNum))
-                {
-                    dialogueText.text = "This pedestal's artifact was lost in the Alterworld battle and was not recovered. It cannot be restored.";
-                }
-                else
-                {
-                    string diag = (_currentArtifact != null && !string.IsNullOrEmpty(_currentArtifact.ArtifactDialogue) && _currentArtifact.ArtifactDialogue != "what could this artifact be")
-                        ? _currentArtifact.ArtifactDialogue
-                        : "i wonder what this artifact looks like";
-                    dialogueText.text = diag;
-                }
+                SetDialogueMessage($"The {_currentArtifact.ArtifactName} rests peacefully on its pedestal in Room {rNum}.");
+            }
+            else if (DoesPlayerHaveArtifactForPedestal(_currentArtifact))
+            {
+                SetDialogueMessage("This pedestal is missing its artifact. I have a matching artifact in my bag! I can place it here.");
+            }
+            else if (GameProgression.HasRetrievedRoomArtifact(rNum))
+            {
+                SetDialogueMessage("This pedestal's artifact was lost in the Alterworld battle and was not recovered. It cannot be restored.");
+            }
+            else
+            {
+                string diag = (_currentArtifact != null && !string.IsNullOrEmpty(_currentArtifact.ArtifactDialogue) && _currentArtifact.ArtifactDialogue != "what could this artifact be")
+                    ? _currentArtifact.ArtifactDialogue
+                    : "i wonder what this artifact looks like";
+                SetDialogueMessage(diag);
             }
         }
 
         public void Close()
         {
             _isOpen = false;
+            ApplyDialogueBoxMode(false);
             if (rootPanel != null)
                 rootPanel.SetActive(false);
 
