@@ -114,6 +114,13 @@ namespace TopDownGame
             UpdateHeartUI();
         }
 
+        public void SetMaxAndCurrentHealth(int health)
+        {
+            maxHealth = Mathf.Max(1, health);
+            currentHealth = maxHealth;
+            UpdateHeartUI();
+        }
+
         public void TakeDamage(int amount, Action onFinished = null)
         {
             currentHealth = Mathf.Max(0, currentHealth - amount);

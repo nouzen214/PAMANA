@@ -184,11 +184,9 @@ namespace TopDownGame
 
         public void OnConfirmAndPlay()
         {
-            string chosenName = nameInputField != null ? nameInputField.text.Trim() : "";
-            if (string.IsNullOrEmpty(chosenName))
-            {
-                chosenName = selectedCharacter == "Girl" ? "Darla" : "Darrel";
-            }
+            string fallback = selectedCharacter == "Girl" ? "Darla" : "Darrel";
+            string rawInput = nameInputField != null ? nameInputField.text : "";
+            string chosenName = SanitizeAndValidateName(rawInput, fallback);
 
             PlayerPrefs.SetString("SelectedCharacter", selectedCharacter);
             PlayerPrefs.SetString("CustomCharacterName", chosenName);
@@ -197,7 +195,7 @@ namespace TopDownGame
             PlayerPrefs.Save();
             GameProgression.ResetProgression();
             PlayerInventory.Clear();
-            Debug.Log($"Character chosen for the first time: {selectedCharacter}, Name: '{chosenName}'. Starting game...");
+            Debug.Log($"Character chosen: {selectedCharacter}, Name: '{chosenName}'. Starting game...");
 
             // Persist to Firebase so returning logins remember the choice
             if (FirebaseDatabaseManager.Instance != null)
@@ -212,6 +210,32 @@ namespace TopDownGame
             }
 
             SceneManager.LoadScene(nextSceneName);
+        }
+
+        public static string SanitizeAndValidateName(string input, string defaultFallback)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return defaultFallback;
+
+            string trimmed = input.Trim();
+
+            // 1. Length constraint: 1 to 15 characters
+            if (trimmed.Length > 15)
+            {
+                trimmed = trimmed.Substring(0, 15).Trim();
+            }
+
+            // 2. Character whitelist: letters, digits, spaces, hyphens, and underscores only
+            var sb = new System.Text.StringBuilder();
+            foreach (char c in trimmed)
+            {
+                if (char.IsLetterOrDigit(c) || c == ' ' || c == '-' || c == '_')
+                {
+                    sb.Append(c);
+                }
+            }
+
+            string sanitized = sb.ToString().Trim();
+            return string.IsNullOrEmpty(sanitized) ? defaultFallback : sanitized;
         }
 
         public void OnBackClicked()

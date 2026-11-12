@@ -116,6 +116,36 @@ namespace TopDownGame
             return data;
         }
 
+        /// <summary>
+        /// Validates and sanitizes PlayerData fields before serialization and cloud dispatch
+        /// to prevent out-of-bounds progress injection, negative values, or corrupted states.
+        /// </summary>
+        public static void ValidatePlayerData(PlayerData data)
+        {
+            if (data == null) return;
+
+            // 1. Coins and economy boundaries
+            data.coins = Mathf.Max(0, data.coins);
+
+            // 2. Character name sanity
+            if (!string.IsNullOrEmpty(data.characterName) && data.characterName.Length > 20)
+            {
+                data.characterName = data.characterName.Substring(0, 20).Trim();
+            }
+
+            // 3. Room progress data clamping and structure validation
+            if (data.roomProgress != null)
+            {
+                foreach (var rp in data.roomProgress)
+                {
+                    if (rp == null) continue;
+                    rp.roomNumber = Mathf.Clamp(rp.roomNumber, 1, 12);
+                    rp.retrievedCount = Mathf.Clamp(rp.retrievedCount, 0, 5);
+                    rp.restoredPedestalsCount = Mathf.Clamp(rp.restoredPedestalsCount, 0, 5);
+                }
+            }
+        }
+
         public void SavePlayerData(PlayerData data, Action<bool, string> onComplete = null)
         {
             string userId = FirebaseAuthManager.Instance.UserId;
@@ -124,6 +154,9 @@ namespace TopDownGame
                 onComplete?.Invoke(false, "User is not signed in.");
                 return;
             }
+
+            // Perform defensive validation on outgoing payload to prevent invalid scores or corrupted progression
+            ValidatePlayerData(data);
 
             if (FirebaseAuthManager.Instance.IsGuest)
             {

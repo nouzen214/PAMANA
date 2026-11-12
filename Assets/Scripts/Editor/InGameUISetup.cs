@@ -41,6 +41,11 @@ namespace TopDownGame.Editor
         private const string SprLoginBtnGuestHoverPath = "Assets/UI/Login/Login_Btn_Guest_Hover.png";
         private const string SprLoginBtnTransparentPath = "Assets/UI/Login/Login_Btn_Transparent.png";
 
+        // Book UI Assets
+        private const string SprBookFramePath = "Assets/UI/Book/Book_Open_Frame.png";
+        private const string SprBookArrowLeftPath = "Assets/UI/Book/Book_Arrow_Left.png";
+        private const string SprBookArrowRightPath = "Assets/UI/Book/Book_Arrow_Right.png";
+
         [MenuItem("Tools/Setup In-Game HUD (Settings, Bag, Book)")]
         public static void SetupAll()
         {
@@ -99,6 +104,7 @@ namespace TopDownGame.Editor
                 var settingsPanel = BuildSettingsModal(prefabRoot.transform, menuCtrl, isGameplay: true);
                 var bagModalObj = BuildBagModal(prefabRoot.transform, sprParchment, sprBtnFrame);
                 var bagModalComp = bagModalObj.GetComponent<BagModalUI>();
+                var bookModalObj = BuildBookModal(prefabRoot.transform);
 
                 WireInGameMenuController(menuCtrl, settingsPanel, bagModalComp);
 
@@ -181,14 +187,14 @@ namespace TopDownGame.Editor
                 UnityEditor.Events.UnityEventTools.AddPersistentListener(dimmerBtn.onClick, menuCtrl.OnCloseSettingsClicked);
             }
 
-            // Modal Dialog Scroll Frame (940 x 642)
+            // Modal Dialog Scroll Frame (1024 x 738)
             var dialogObj = GetOrCreateChild(panelObj.transform, "DialogBox");
             var dialogRt = dialogObj.GetComponent<RectTransform>();
             dialogRt.anchorMin = new Vector2(0.5f, 0.5f);
             dialogRt.anchorMax = new Vector2(0.5f, 0.5f);
             dialogRt.pivot = new Vector2(0.5f, 0.5f);
             dialogRt.anchoredPosition = Vector2.zero;
-            dialogRt.sizeDelta = new Vector2(940f, 642f);
+            dialogRt.sizeDelta = new Vector2(1024f, 738f);
 
             for (int i = dialogObj.transform.childCount - 1; i >= 0; i--)
             {
@@ -203,14 +209,14 @@ namespace TopDownGame.Editor
             dialogImg.preserveAspect = true;
             dialogImg.color = Color.white;
 
-            // Close Button [X]
+            // Close Button [X] (top-right red box)
             var closeObj = GetOrCreateChild(dialogObj.transform, "CloseButton");
             var closeRt = closeObj.GetComponent<RectTransform>();
             closeRt.anchorMin = new Vector2(0.5f, 1f);
             closeRt.anchorMax = new Vector2(0.5f, 1f);
-            closeRt.pivot = new Vector2(0.5f, 1f);
-            closeRt.anchoredPosition = new Vector2(358f, -96f);
-            closeRt.sizeDelta = new Vector2(44f, 45f);
+            closeRt.pivot = new Vector2(0.5f, 0.5f);
+            closeRt.anchoredPosition = new Vector2(364f, -154f);
+            closeRt.sizeDelta = new Vector2(44f, 44f);
 
             var closeImg = closeObj.GetComponent<Image>();
             if (closeImg == null) closeImg = closeObj.AddComponent<Image>();
@@ -231,49 +237,40 @@ namespace TopDownGame.Editor
                 UnityEditor.Events.UnityEventTools.AddPersistentListener(closeBtn.onClick, menuCtrl.OnCloseSettingsClicked);
             }
 
-            // Sliders
+            // Sliders with pixel-art knob
             var sprKnob = AssetDatabase.LoadAssetAtPath<Sprite>(SprKnobPath);
 
-            float row1Y = -238f;
-            var masterSlider = CreateInteractiveSlider("Slider_MasterVolume", new Vector2(148f, row1Y), dialogObj.transform, sprKnob);
+            var masterSlider = CreateInteractiveSlider("Slider_MasterVolume", new Vector2(149f, -243.5f), dialogObj.transform, sprKnob);
             if (menuCtrl != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(masterSlider.onValueChanged, menuCtrl.OnMasterVolumeChanged);
 
-            float row2Y = -328f;
-            var sfxSlider = CreateInteractiveSlider("Slider_SoundEffects", new Vector2(148f, row2Y), dialogObj.transform, sprKnob);
+            var sfxSlider = CreateInteractiveSlider("Slider_SoundEffects", new Vector2(149f, -327.5f), dialogObj.transform, sprKnob);
             if (menuCtrl != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(sfxSlider.onValueChanged, menuCtrl.OnSFXVolumeChanged);
 
-            float row3Y = -418f;
-            var bgmSlider = CreateInteractiveSlider("Slider_BackgroundMusic", new Vector2(148f, row3Y), dialogObj.transform, sprKnob);
+            var bgmSlider = CreateInteractiveSlider("Slider_BackgroundMusic", new Vector2(149f, -410.5f), dialogObj.transform, sprKnob);
             if (menuCtrl != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(bgmSlider.onValueChanged, menuCtrl.OnBGMVolumeChanged);
 
             // Overlay Buttons for SAVE and DEFAULT
-            var btnSaveObj = CreateOverlayButton("Button_Save", new Vector2(-135f, -504f), new Vector2(180f, 70f), dialogObj.transform);
+            var btnSaveObj = CreateOverlayButton("Button_Save", new Vector2(-123.5f, -493f), new Vector2(152f, 57f), dialogObj.transform);
             var btnSave = btnSaveObj.GetComponent<Button>();
             if (menuCtrl != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(btnSave.onClick, menuCtrl.OnSaveSettingsClicked);
 
-            var btnDefaultObj = CreateOverlayButton("Button_Default", new Vector2(148f, -504f), new Vector2(184f, 70f), dialogObj.transform);
+            var btnDefaultObj = CreateOverlayButton("Button_Default", new Vector2(120.5f, -493f), new Vector2(156f, 57f), dialogObj.transform);
             var btnDefault = btnDefaultObj.GetComponent<Button>();
             if (menuCtrl != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(btnDefault.onClick, menuCtrl.OnDefaultSettingsClicked);
 
-            var sprBtnFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SprButtonFramePath);
-
+            // Bottom Buttons: RETURN TO MAIN MENU and CONNECT TO GOOGLE
+            var btnMenuObj = CreateOverlayButton("Button_ExitToMenu", new Vector2(-177f, -574.5f), new Vector2(309f, 54f), dialogObj.transform);
+            var btnMenu = btnMenuObj.GetComponent<Button>();
             if (isGameplay && menuCtrl != null)
             {
-                var btnMenuObj = CreateModalButton("Button_ExitToMenu", "RETURN TO MAIN MENU", new Vector2(-140f, -572f), dialogObj.transform, sprBtnFrame);
-                var btnMenuRt = btnMenuObj.GetComponent<RectTransform>();
-                btnMenuRt.sizeDelta = new Vector2(250f, 38f);
-                var btnMenu = btnMenuObj.GetComponent<Button>();
                 UnityEditor.Events.UnityEventTools.AddPersistentListener(btnMenu.onClick, menuCtrl.GoToMainMenu);
             }
+            else if (menuCtrl != null)
+            {
+                UnityEditor.Events.UnityEventTools.AddPersistentListener(btnMenu.onClick, menuCtrl.OnCloseSettingsClicked);
+            }
 
-            EnsureSpriteImport(SprSettingsIconGoogleNormalPath);
-            EnsureSpriteImport(SprSettingsIconGoogleHoverPath);
-            var sprGoogleNormal = AssetDatabase.LoadAssetAtPath<Sprite>(SprSettingsIconGoogleNormalPath);
-            var sprGoogleHover = AssetDatabase.LoadAssetAtPath<Sprite>(SprSettingsIconGoogleHoverPath);
-
-            Vector2 googlePos = isGameplay ? new Vector2(140f, -572f) : new Vector2(0f, -572f);
-            Vector2 googleSize = isGameplay ? new Vector2(250f, 38f) : new Vector2(280f, 38f);
-            var btnGoogleObj = CreateGoogleConnectButton("Button_ConnectToGoogle", googlePos, googleSize, dialogObj.transform, sprGoogleNormal, sprGoogleHover, sprBtnFrame);
+            var btnGoogleObj = CreateGoogleConnectOverlayButton("Button_ConnectToGoogle", new Vector2(176f, -574.5f), new Vector2(309f, 54f), dialogObj.transform);
             var btnGoogle = btnGoogleObj.GetComponent<Button>();
             if (menuCtrl != null)
             {
@@ -291,7 +288,7 @@ namespace TopDownGame.Editor
             sliderRt.anchorMax = new Vector2(0.5f, 1f);
             sliderRt.pivot = new Vector2(0.5f, 0.5f);
             sliderRt.anchoredPosition = pos;
-            sliderRt.sizeDelta = new Vector2(402f, 66f);
+            sliderRt.sizeDelta = new Vector2(371f, 60f);
 
             var slider = sliderObj.GetComponent<Slider>();
             if (slider == null) slider = sliderObj.AddComponent<Slider>();
@@ -315,15 +312,15 @@ namespace TopDownGame.Editor
             var slideAreaRt = slideArea.GetComponent<RectTransform>();
             slideAreaRt.anchorMin = Vector2.zero;
             slideAreaRt.anchorMax = Vector2.one;
-            slideAreaRt.offsetMin = new Vector2(24f, 0f);
-            slideAreaRt.offsetMax = new Vector2(-24f, 0f);
+            slideAreaRt.offsetMin = new Vector2(23f, 0f);
+            slideAreaRt.offsetMax = new Vector2(-23f, 0f);
 
             var handleObj = GetOrCreateChild(slideArea.transform, "Handle");
             var handleRt = handleObj.GetComponent<RectTransform>();
             handleRt.anchorMin = new Vector2(0.5f, 0.5f);
             handleRt.anchorMax = new Vector2(0.5f, 0.5f);
             handleRt.pivot = new Vector2(0.5f, 0.5f);
-            handleRt.sizeDelta = new Vector2(46f, 46f);
+            handleRt.sizeDelta = new Vector2(42f, 48f);
             var handleImg = handleObj.GetComponent<Image>();
             if (handleImg == null) handleImg = handleObj.AddComponent<Image>();
             handleImg.sprite = sprKnob;
@@ -364,6 +361,32 @@ namespace TopDownGame.Editor
             btn.onClick = new Button.ButtonClickedEvent();
 
             return obj;
+        }
+
+        private static GameObject CreateGoogleConnectOverlayButton(string name, Vector2 pos, Vector2 size, Transform parent)
+        {
+            var btnObj = CreateOverlayButton(name, pos, size, parent);
+
+            var txtObj = GetOrCreateChild(btnObj.transform, "Text");
+            var txtRt = txtObj.GetComponent<RectTransform>();
+            txtRt.anchorMin = Vector2.zero;
+            txtRt.anchorMax = Vector2.one;
+            txtRt.offsetMin = Vector2.zero;
+            txtRt.offsetMax = Vector2.zero;
+
+            var txtTmp = txtObj.GetComponent<TextMeshProUGUI>();
+            if (txtTmp == null) txtTmp = txtObj.AddComponent<TextMeshProUGUI>();
+            txtTmp.text = ""; // Empty by default so baked pixel art "CONNECT TO GOOGLE" is visible
+            txtTmp.fontSize = 15f;
+            txtTmp.enableAutoSizing = true;
+            txtTmp.fontSizeMin = 10f;
+            txtTmp.fontSizeMax = 15f;
+            txtTmp.fontStyle = FontStyles.Bold;
+            txtTmp.alignment = TextAlignmentOptions.Center;
+            txtTmp.color = new Color(0.95f, 0.92f, 0.85f, 1f);
+            txtTmp.raycastTarget = false;
+
+            return btnObj;
         }
 
         [MenuItem("Tools/Setup/Generate Login Base Image")]
@@ -1188,6 +1211,175 @@ namespace TopDownGame.Editor
             return btnObj;
         }
 
+        private static GameObject BuildBookModal(Transform parent)
+        {
+            var modalObj = GetOrCreateChild(parent, "BookModal");
+            modalObj.SetActive(false);
+
+            var modalRt = modalObj.GetComponent<RectTransform>();
+            modalRt.anchorMin = Vector2.zero;
+            modalRt.anchorMax = Vector2.one;
+            modalRt.offsetMin = Vector2.zero;
+            modalRt.offsetMax = Vector2.zero;
+
+            var modalComp = modalObj.GetComponent<BookModalUI>();
+            if (modalComp == null) modalComp = modalObj.AddComponent<BookModalUI>();
+
+            // Dimmer
+            var dimmerObj = GetOrCreateChild(modalObj.transform, "Dimmer");
+            var dimmerRt = dimmerObj.GetComponent<RectTransform>();
+            dimmerRt.anchorMin = Vector2.zero;
+            dimmerRt.anchorMax = Vector2.one;
+            dimmerRt.offsetMin = Vector2.zero;
+            dimmerRt.offsetMax = Vector2.zero;
+
+            var dimmerImg = dimmerObj.GetComponent<Image>();
+            if (dimmerImg == null) dimmerImg = dimmerObj.AddComponent<Image>();
+            dimmerImg.color = new Color(0f, 0f, 0f, 0.75f);
+            dimmerImg.raycastTarget = true;
+
+            var dimmerBtn = dimmerObj.GetComponent<Button>();
+            if (dimmerBtn == null) dimmerBtn = dimmerObj.AddComponent<Button>();
+            dimmerBtn.transition = Selectable.Transition.None;
+            dimmerBtn.onClick = new Button.ButtonClickedEvent();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(dimmerBtn.onClick, modalComp.CloseBook);
+
+            // Book Container (size 840 x 702 maintaining 670:560 ratio)
+            var bookContObj = GetOrCreateChild(modalObj.transform, "BookContainer");
+            var bookContRt = bookContObj.GetComponent<RectTransform>();
+            bookContRt.anchorMin = new Vector2(0.5f, 0.5f);
+            bookContRt.anchorMax = new Vector2(0.5f, 0.5f);
+            bookContRt.pivot = new Vector2(0.5f, 0.5f);
+            bookContRt.anchoredPosition = Vector2.zero;
+            bookContRt.sizeDelta = new Vector2(840f, 702f);
+
+            // Open Book Frame
+            var bookFrameObj = GetOrCreateChild(bookContObj.transform, "BookFrame");
+            var bookFrameRt = bookFrameObj.GetComponent<RectTransform>();
+            bookFrameRt.anchorMin = Vector2.zero;
+            bookFrameRt.anchorMax = Vector2.one;
+            bookFrameRt.offsetMin = Vector2.zero;
+            bookFrameRt.offsetMax = Vector2.zero;
+
+            var bookFrameImg = bookFrameObj.GetComponent<Image>();
+            if (bookFrameImg == null) bookFrameImg = bookFrameObj.AddComponent<Image>();
+            var sprFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SprBookFramePath);
+            if (sprFrame != null) bookFrameImg.sprite = sprFrame;
+            bookFrameImg.type = Image.Type.Simple;
+            bookFrameImg.preserveAspect = true;
+            bookFrameImg.raycastTarget = true;
+
+            // Close Button [X] (top right corner of book)
+            var closeObj = GetOrCreateChild(bookContObj.transform, "CloseButton");
+            var closeRt = closeObj.GetComponent<RectTransform>();
+            closeRt.anchorMin = new Vector2(1f, 1f);
+            closeRt.anchorMax = new Vector2(1f, 1f);
+            closeRt.pivot = new Vector2(1f, 1f);
+            closeRt.anchoredPosition = new Vector2(-12f, -12f);
+            closeRt.sizeDelta = new Vector2(40f, 40f);
+
+            var closeImg = closeObj.GetComponent<Image>();
+            if (closeImg == null) closeImg = closeObj.AddComponent<Image>();
+            var sprClose = AssetDatabase.LoadAssetAtPath<Sprite>(SprCloseCleanPath);
+            if (sprClose != null) closeImg.sprite = sprClose;
+            closeImg.preserveAspect = true;
+            closeImg.raycastTarget = true;
+
+            var closeBtn = closeObj.GetComponent<Button>();
+            if (closeBtn == null) closeBtn = closeObj.AddComponent<Button>();
+            closeBtn.onClick = new Button.ButtonClickedEvent();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(closeBtn.onClick, modalComp.CloseBook);
+
+            // Left Arrow Button (Prev Page)
+            var prevObj = GetOrCreateChild(bookContObj.transform, "Button_PrevPage");
+            var prevRt = prevObj.GetComponent<RectTransform>();
+            prevRt.anchorMin = new Vector2(0.5f, 0.5f);
+            prevRt.anchorMax = new Vector2(0.5f, 0.5f);
+            prevRt.pivot = new Vector2(0.5f, 0.5f);
+            prevRt.anchoredPosition = new Vector2(-485f, -10f);
+            prevRt.sizeDelta = new Vector2(96f, 120f);
+
+            var prevImg = prevObj.GetComponent<Image>();
+            if (prevImg == null) prevImg = prevObj.AddComponent<Image>();
+            var sprLeft = AssetDatabase.LoadAssetAtPath<Sprite>(SprBookArrowLeftPath);
+            if (sprLeft != null) prevImg.sprite = sprLeft;
+            prevImg.preserveAspect = true;
+            prevImg.raycastTarget = true;
+
+            var prevBtn = prevObj.GetComponent<Button>();
+            if (prevBtn == null) prevBtn = prevObj.AddComponent<Button>();
+            var pColors = prevBtn.colors;
+            pColors.normalColor = Color.white;
+            pColors.highlightedColor = new Color(1f, 0.95f, 0.8f, 1f);
+            pColors.pressedColor = new Color(0.85f, 0.75f, 0.6f, 1f);
+            prevBtn.colors = pColors;
+            prevBtn.onClick = new Button.ButtonClickedEvent();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(prevBtn.onClick, modalComp.OnPrevPageClicked);
+
+            // Right Arrow Button (Next Page)
+            var nextObj = GetOrCreateChild(bookContObj.transform, "Button_NextPage");
+            var nextRt = nextObj.GetComponent<RectTransform>();
+            nextRt.anchorMin = new Vector2(0.5f, 0.5f);
+            nextRt.anchorMax = new Vector2(0.5f, 0.5f);
+            nextRt.pivot = new Vector2(0.5f, 0.5f);
+            nextRt.anchoredPosition = new Vector2(485f, -10f);
+            nextRt.sizeDelta = new Vector2(96f, 120f);
+
+            var nextImg = nextObj.GetComponent<Image>();
+            if (nextImg == null) nextImg = nextObj.AddComponent<Image>();
+            var sprRight = AssetDatabase.LoadAssetAtPath<Sprite>(SprBookArrowRightPath);
+            if (sprRight != null) nextImg.sprite = sprRight;
+            nextImg.preserveAspect = true;
+            nextImg.raycastTarget = true;
+
+            var nextBtn = nextObj.GetComponent<Button>();
+            if (nextBtn == null) nextBtn = nextObj.AddComponent<Button>();
+            nextBtn.colors = pColors;
+            nextBtn.onClick = new Button.ButtonClickedEvent();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(nextBtn.onClick, modalComp.OnNextPageClicked);
+
+            // Left Page Container
+            var leftContObj = GetOrCreateChild(bookContObj.transform, "LeftPageContainer");
+            var leftContRt = leftContObj.GetComponent<RectTransform>();
+            leftContRt.anchorMin = new Vector2(0.06f, 0.10f);
+            leftContRt.anchorMax = new Vector2(0.48f, 0.88f);
+            leftContRt.offsetMin = Vector2.zero;
+            leftContRt.offsetMax = Vector2.zero;
+
+            // Right Page Container
+            var rightContObj = GetOrCreateChild(bookContObj.transform, "RightPageContainer");
+            var rightContRt = rightContObj.GetComponent<RectTransform>();
+            rightContRt.anchorMin = new Vector2(0.52f, 0.10f);
+            rightContRt.anchorMax = new Vector2(0.94f, 0.88f);
+            rightContRt.offsetMin = Vector2.zero;
+            rightContRt.offsetMax = Vector2.zero;
+
+            // Wire SerializedObject
+            var so = new SerializedObject(modalComp);
+            so.Update();
+            var spModalRoot = so.FindProperty("modalRoot");
+            if (spModalRoot != null) spModalRoot.objectReferenceValue = modalObj;
+            var spBookCont = so.FindProperty("bookContainer");
+            if (spBookCont != null) spBookCont.objectReferenceValue = bookContRt;
+            var spBookFrame = so.FindProperty("bookFrameImage");
+            if (spBookFrame != null) spBookFrame.objectReferenceValue = bookFrameImg;
+            var spPrevBtn = so.FindProperty("prevPageButton");
+            if (spPrevBtn != null) spPrevBtn.objectReferenceValue = prevBtn;
+            var spNextBtn = so.FindProperty("nextPageButton");
+            if (spNextBtn != null) spNextBtn.objectReferenceValue = nextBtn;
+            var spCloseBtn = so.FindProperty("closeButton");
+            if (spCloseBtn != null) spCloseBtn.objectReferenceValue = closeBtn;
+            var spDimmerBtn = so.FindProperty("dimmerButton");
+            if (spDimmerBtn != null) spDimmerBtn.objectReferenceValue = dimmerBtn;
+            var spLeftCont = so.FindProperty("leftPageContainer");
+            if (spLeftCont != null) spLeftCont.objectReferenceValue = leftContRt;
+            var spRightCont = so.FindProperty("rightPageContainer");
+            if (spRightCont != null) spRightCont.objectReferenceValue = rightContRt;
+            so.ApplyModifiedProperties();
+
+            return modalObj;
+        }
+
         private static void WireInGameMenuController(InGameMenuController menuCtrl, GameObject settingsPanel, BagModalUI bagModalComp)
         {
             var so = new SerializedObject(menuCtrl);
@@ -1198,6 +1390,13 @@ namespace TopDownGame.Editor
 
             var spBagModal = so.FindProperty("bagModal");
             if (spBagModal != null) spBagModal.objectReferenceValue = bagModalComp;
+
+            var spBookBtn = so.FindProperty("bookButton");
+            if (spBookBtn != null)
+            {
+                var btnBook = menuCtrl.transform.Find("BookButton")?.GetComponent<Button>();
+                if (btnBook != null) spBookBtn.objectReferenceValue = btnBook;
+            }
 
             var dialog = settingsPanel.transform.Find("DialogBox");
             if (dialog != null)
@@ -1275,6 +1474,7 @@ namespace TopDownGame.Editor
 
                     var btnBook = GetOrCreateChild(existingCanvas.transform, "BookButton");
                     ConfigureIconButton(btnBook, sprBook, new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), new Vector2(-120f, 120f), new Vector2(150f, 150f));
+                    btnBook.SetActive(false);
                     var btnBookComp = btnBook.GetComponent<Button>();
                     btnBookComp.onClick = new Button.ButtonClickedEvent();
                     UnityEditor.Events.UnityEventTools.AddPersistentListener(btnBookComp.onClick, menuCtrl.OnBookClicked);
@@ -1282,6 +1482,7 @@ namespace TopDownGame.Editor
                     var settingsPanel = BuildSettingsModal(existingCanvas.transform, menuCtrl, isGameplay: true);
                     var bagModalObj = BuildBagModal(existingCanvas.transform, sprParchment, sprBtnFrame);
                     var bagModalComp = bagModalObj.GetComponent<BagModalUI>();
+                    var bookModalObj = BuildBookModal(existingCanvas.transform);
 
                     WireInGameMenuController(menuCtrl, settingsPanel, bagModalComp);
 
@@ -1337,7 +1538,7 @@ namespace TopDownGame.Editor
             dialogRt.anchorMax = new Vector2(0.5f, 0.5f);
             dialogRt.pivot = new Vector2(0.5f, 0.5f);
             dialogRt.anchoredPosition = Vector2.zero;
-            dialogRt.sizeDelta = new Vector2(940f, 642f);
+            dialogRt.sizeDelta = new Vector2(1024f, 738f);
 
             for (int i = dialogObj.transform.childCount - 1; i >= 0; i--)
             {
@@ -1356,9 +1557,9 @@ namespace TopDownGame.Editor
             var closeRt = closeObj.GetComponent<RectTransform>();
             closeRt.anchorMin = new Vector2(0.5f, 1f);
             closeRt.anchorMax = new Vector2(0.5f, 1f);
-            closeRt.pivot = new Vector2(0.5f, 1f);
-            closeRt.anchoredPosition = new Vector2(358f, -96f);
-            closeRt.sizeDelta = new Vector2(44f, 45f);
+            closeRt.pivot = new Vector2(0.5f, 0.5f);
+            closeRt.anchoredPosition = new Vector2(364f, -154f);
+            closeRt.sizeDelta = new Vector2(44f, 44f);
 
             var closeImg = closeObj.GetComponent<Image>();
             if (closeImg == null) closeImg = closeObj.AddComponent<Image>();
@@ -1378,33 +1579,28 @@ namespace TopDownGame.Editor
 
             var sprKnob = AssetDatabase.LoadAssetAtPath<Sprite>(SprKnobPath);
 
-            float row1Y = -238f;
-            var masterSlider = CreateInteractiveSlider("Slider_MasterVolume", new Vector2(148f, row1Y), dialogObj.transform, sprKnob);
+            var masterSlider = CreateInteractiveSlider("Slider_MasterVolume", new Vector2(149f, -243.5f), dialogObj.transform, sprKnob);
             UnityEditor.Events.UnityEventTools.AddPersistentListener(masterSlider.onValueChanged, menuCtrl.OnMasterVolumeChanged);
 
-            float row2Y = -328f;
-            var sfxSlider = CreateInteractiveSlider("Slider_SoundEffects", new Vector2(148f, row2Y), dialogObj.transform, sprKnob);
+            var sfxSlider = CreateInteractiveSlider("Slider_SoundEffects", new Vector2(149f, -327.5f), dialogObj.transform, sprKnob);
             UnityEditor.Events.UnityEventTools.AddPersistentListener(sfxSlider.onValueChanged, menuCtrl.OnSFXVolumeChanged);
 
-            float row3Y = -418f;
-            var bgmSlider = CreateInteractiveSlider("Slider_BackgroundMusic", new Vector2(148f, row3Y), dialogObj.transform, sprKnob);
+            var bgmSlider = CreateInteractiveSlider("Slider_BackgroundMusic", new Vector2(149f, -410.5f), dialogObj.transform, sprKnob);
             UnityEditor.Events.UnityEventTools.AddPersistentListener(bgmSlider.onValueChanged, menuCtrl.OnBGMVolumeChanged);
 
-            var btnSaveObj = CreateOverlayButton("Button_Save", new Vector2(-135f, -504f), new Vector2(180f, 70f), dialogObj.transform);
+            var btnSaveObj = CreateOverlayButton("Button_Save", new Vector2(-123.5f, -493f), new Vector2(152f, 57f), dialogObj.transform);
             var btnSave = btnSaveObj.GetComponent<Button>();
             UnityEditor.Events.UnityEventTools.AddPersistentListener(btnSave.onClick, menuCtrl.OnSaveSettingsClicked);
 
-            var btnDefaultObj = CreateOverlayButton("Button_Default", new Vector2(148f, -504f), new Vector2(184f, 70f), dialogObj.transform);
+            var btnDefaultObj = CreateOverlayButton("Button_Default", new Vector2(120.5f, -493f), new Vector2(156f, 57f), dialogObj.transform);
             var btnDefault = btnDefaultObj.GetComponent<Button>();
             UnityEditor.Events.UnityEventTools.AddPersistentListener(btnDefault.onClick, menuCtrl.OnDefaultSettingsClicked);
 
-            EnsureSpriteImport(SprSettingsIconGoogleNormalPath);
-            EnsureSpriteImport(SprSettingsIconGoogleHoverPath);
-            var sprGoogleNormal = AssetDatabase.LoadAssetAtPath<Sprite>(SprSettingsIconGoogleNormalPath);
-            var sprGoogleHover = AssetDatabase.LoadAssetAtPath<Sprite>(SprSettingsIconGoogleHoverPath);
-            var sprBtnFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SprButtonFramePath);
+            var btnMenuObj = CreateOverlayButton("Button_ExitToMenu", new Vector2(-177f, -574.5f), new Vector2(309f, 54f), dialogObj.transform);
+            var btnMenu = btnMenuObj.GetComponent<Button>();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(btnMenu.onClick, menuCtrl.OnCloseSettingsClicked);
 
-            var btnGoogleObj = CreateGoogleConnectButton("Button_ConnectToGoogle", new Vector2(0f, -572f), new Vector2(280f, 38f), dialogObj.transform, sprGoogleNormal, sprGoogleHover, sprBtnFrame);
+            var btnGoogleObj = CreateGoogleConnectOverlayButton("Button_ConnectToGoogle", new Vector2(176f, -574.5f), new Vector2(309f, 54f), dialogObj.transform);
             var btnGoogle = btnGoogleObj.GetComponent<Button>();
             UnityEditor.Events.UnityEventTools.AddPersistentListener(btnGoogle.onClick, menuCtrl.OnConnectToGoogleClicked);
             var txtGoogle = btnGoogleObj.transform.Find("Text")?.GetComponent<TextMeshProUGUI>();

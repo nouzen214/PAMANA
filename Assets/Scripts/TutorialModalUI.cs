@@ -61,26 +61,13 @@ namespace TopDownGame
 
         private void Start()
         {
-            // Auto show tutorial on new game in Lobby
-            string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-            if (sceneName == "Lobby" && !GameProgression.HasCompletedTutorial)
-            {
-                Show(0);
-            }
+            // Do NOT auto show tutorial on new game in Lobby.
+            // Player must interact with the Book Pedestal in the Main Lobby to unlock and read the Field Guide.
         }
 
         private void Update()
         {
-            // Allow toggling tutorial anytime with H or F1 key
-            if (Keyboard.current != null)
-            {
-                if (Keyboard.current.hKey.wasPressedThisFrame || Keyboard.current.f1Key.wasPressedThisFrame)
-                {
-                    Toggle();
-                    return;
-                }
-            }
-
+            // Tutorial instructions disabled by user request. Replaced with BookModalUI.
             if (_modalRoot == null || !_modalRoot.activeSelf) return;
 
             // Keyboard navigation while modal is open
@@ -90,41 +77,13 @@ namespace TopDownGame
                 {
                     Close();
                 }
-                else if (Keyboard.current.rightArrowKey.wasPressedThisFrame || Keyboard.current.dKey.wasPressedThisFrame)
-                {
-                    NextPage();
-                }
-                else if (Keyboard.current.leftArrowKey.wasPressedThisFrame || Keyboard.current.aKey.wasPressedThisFrame)
-                {
-                    PreviousPage();
-                }
-                else if (Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.spaceKey.wasPressedThisFrame)
-                {
-                    if (_currentPage < TOTAL_PAGES - 1)
-                        NextPage();
-                    else
-                        Close();
-                }
             }
         }
 
         public static void Show(int startPage = 0)
         {
-            var ui = Instance;
-            if (ui == null)
-            {
-                ui = FindFirstObjectByType<TutorialModalUI>(FindObjectsInactive.Include);
-            }
-
-            if (ui == null)
-            {
-                ui = CreateInstance();
-            }
-
-            if (ui != null)
-            {
-                ui.OpenPage(startPage);
-            }
+            // Tutorial instructions removed by user request. Forward to BookModalUI.
+            BookModalUI.Show();
         }
 
         public static void CloseModal()

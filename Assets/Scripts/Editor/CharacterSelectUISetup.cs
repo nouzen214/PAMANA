@@ -38,6 +38,33 @@ namespace TopDownGame.Editor
             var manager = canvasObj.GetComponent<CharacterSelectManager>();
             if (manager == null) manager = canvasObj.AddComponent<CharacterSelectManager>();
 
+            // Setup Wall Background
+            var bgObj = canvasObj.transform.Find("Background");
+            if (bgObj != null)
+            {
+                var bgImg = bgObj.GetComponent<Image>();
+                if (bgImg != null)
+                {
+                    var sprWall = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Wall_Background.png");
+                    if (sprWall != null)
+                    {
+                        bgImg.sprite = sprWall;
+                        bgImg.color = Color.white;
+                    }
+                }
+            }
+
+            // Setup DarkOverlay for balanced contrast with the wall torches
+            var overlayObj = canvasObj.transform.Find("DarkOverlay");
+            if (overlayObj != null)
+            {
+                var overlayImg = overlayObj.GetComponent<Image>();
+                if (overlayImg != null)
+                {
+                    overlayImg.color = new Color(0.05f, 0.05f, 0.08f, 0.20f);
+                }
+            }
+
             // Setup NameInputContainer
             var containerObj = GetOrCreateChild(canvasObj.transform, "NameInputContainer");
             var containerRt = containerObj.GetComponent<RectTransform>();
@@ -45,7 +72,7 @@ namespace TopDownGame.Editor
             containerRt.anchorMax = new Vector2(0.5f, 0.5f);
             containerRt.pivot = new Vector2(0.5f, 0.5f);
             containerRt.anchoredPosition = new Vector2(0f, -345f);
-            containerRt.sizeDelta = new Vector2(460f, 90f);
+            containerRt.sizeDelta = new Vector2(460f, 96f);
 
             // Label: "NAME YOUR CHARACTER:"
             var labelObj = GetOrCreateChild(containerObj.transform, "Label");
@@ -72,7 +99,7 @@ namespace TopDownGame.Editor
             inputRt.anchorMax = new Vector2(0.5f, 0f);
             inputRt.pivot = new Vector2(0.5f, 0f);
             inputRt.anchoredPosition = new Vector2(0f, 0f);
-            inputRt.sizeDelta = new Vector2(380f, 54f);
+            inputRt.sizeDelta = new Vector2(380f, 60f);
 
             var inputImg = inputObj.GetComponent<Image>();
             if (inputImg == null) inputImg = inputObj.AddComponent<Image>();

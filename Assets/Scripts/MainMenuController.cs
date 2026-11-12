@@ -328,7 +328,7 @@ namespace TopDownGame
                 }
                 else
                 {
-                    connectGoogleText.text = "CONNECT TO GOOGLE";
+                    connectGoogleText.text = "";
                 }
             }
         }

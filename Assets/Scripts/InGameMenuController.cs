@@ -23,6 +23,49 @@ namespace TopDownGame
         [SerializeField] private Button connectGoogleButton;
         [SerializeField] private TextMeshProUGUI connectGoogleText;
 
+        [Header("HUD Buttons")]
+        [SerializeField] private Button bookButton;
+        public Button BookButton => bookButton;
+
+        private void Awake()
+        {
+            FindBookButton();
+        }
+
+        private void OnEnable()
+        {
+            GameProgression.OnBookUnlocked += UpdateBookButtonState;
+            UpdateBookButtonState();
+        }
+
+        private void OnDisable()
+        {
+            GameProgression.OnBookUnlocked -= UpdateBookButtonState;
+        }
+
+        public void FindBookButton()
+        {
+            if (bookButton == null)
+            {
+                var t = transform.Find("BookButton") ?? transform.Find("Canvas/BookButton");
+                if (t == null)
+                {
+                    var canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
+                    if (canvas != null) t = canvas.transform.Find("BookButton");
+                }
+                if (t != null) bookButton = t.GetComponent<Button>();
+            }
+        }
+
+        public void UpdateBookButtonState()
+        {
+            FindBookButton();
+            if (bookButton != null)
+            {
+                bookButton.gameObject.SetActive(GameProgression.IsBookUnlocked);
+            }
+        }
+
         private void Start()
         {
             if (settingsPanel != null)
@@ -69,6 +112,11 @@ namespace TopDownGame
             if (bagModal != null && bagModal.IsOpen)
             {
                 bagModal.CloseBag();
+            }
+
+            if (BookModalUI.Instance != null && BookModalUI.Instance.IsOpen)
+            {
+                BookModalUI.Instance.CloseBook();
             }
 
             if (settingsPanel != null)
@@ -151,7 +199,7 @@ namespace TopDownGame
                 }
                 else
                 {
-                    connectGoogleText.text = "CONNECT TO GOOGLE";
+                    connectGoogleText.text = "";
                 }
             }
         }
@@ -207,6 +255,11 @@ namespace TopDownGame
                 Time.timeScale = 1f;
             }
 
+            if (BookModalUI.Instance != null && BookModalUI.Instance.IsOpen)
+            {
+                BookModalUI.Instance.CloseBook();
+            }
+
             if (bagModal == null)
             {
                 bagModal = FindFirstObjectByType<BagModalUI>(FindObjectsInactive.Include);
@@ -232,12 +285,36 @@ namespace TopDownGame
 
         public void OnBookClicked()
         {
+            if (!GameProgression.IsBookUnlocked)
+            {
+                NotificationBannerUI.Show(
+                    "FIELD GUIDE LOCKED",
+                    "Inspect the book pedestal in the Main Lobby to unlock the Field Guide!",
+                    3.5f,
+                    new Color(0.95f, 0.35f, 0.35f, 1f),
+                    "!"
+                );
+                return;
+            }
+
+            if (settingsPanel != null && settingsPanel.activeSelf)
+            {
+                settingsPanel.SetActive(false);
+            }
+
             if (bagModal != null && bagModal.IsOpen)
             {
                 bagModal.CloseBag();
             }
 
-            TutorialModalUI.Show();
+            if (BookModalUI.Instance != null && BookModalUI.Instance.IsOpen)
+            {
+                BookModalUI.Instance.CloseBook();
+            }
+            else
+            {
+                BookModalUI.Show();
+            }
         }
 
         public void OnTutorialClicked()
@@ -250,7 +327,7 @@ namespace TopDownGame
             {
                 bagModal.CloseBag();
             }
-            TutorialModalUI.Show();
+            BookModalUI.Show();
         }
 
         public void GoToMainMenu()

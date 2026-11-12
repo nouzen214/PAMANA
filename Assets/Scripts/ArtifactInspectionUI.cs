@@ -413,6 +413,40 @@ namespace TopDownGame
             }
         }
 
+        private bool CheckAndUnlockRetryForUnobtainedArtifact(ArtifactInteractable artifact)
+        {
+            if (artifact == null) return false;
+            int rNum = artifact.RoomNumber;
+
+            // An item is unobtained if not restored on pedestal and not in bag
+            bool isRestored = artifact.IsRestored;
+            bool inBag = DoesPlayerHaveArtifactForPedestal(artifact);
+            if (isRestored || inBag) return false;
+
+            // Check if room battle was previously attempted or completed
+            bool hasAttemptedOrCompleted = GameProgression.HasRetrievedRoomArtifact(rNum) || 
+                                           GameProgression.IsRoomBattleCompleted(rNum) ||
+                                           GameProgression.GetRoomRetrievedCount(rNum) > 0;
+
+            if (hasAttemptedOrCompleted && GameProgression.CanRoomBeRetried(rNum))
+            {
+                bool wasLocked = GameProgression.UnlockRoomBattleForRetry(rNum);
+                if (wasLocked)
+                {
+                    NotificationBannerUI.Show(
+                        "TRIAL UNLOCKED FOR RETRY",
+                        $"Alterworld Battle {rNum} is now unlocked! Challenge it again to retrieve '{artifact.ArtifactName}'.",
+                        5.5f,
+                        new Color(0.18f, 0.40f, 0.16f, 1f),
+                        "★"
+                    );
+                }
+                return true;
+            }
+
+            return false;
+        }
+
         public void Open(ArtifactInteractable artifact)
         {
             if (Instance == null) Instance = this;
@@ -477,7 +511,7 @@ namespace TopDownGame
             bool allRead = GameProgression.AreAllPlaquesRead(rNum);
             int readCount = GameProgression.GetPlaquesReadCount(rNum);
             bool hasMatchingInBag = DoesPlayerHaveArtifactForPedestal(artifact);
-            bool battleDone = GameProgression.HasRetrievedRoomArtifact(rNum);
+            bool retryUnlocked = CheckAndUnlockRetryForUnobtainedArtifact(artifact);
 
             UpdateChoiceButtons();
 
@@ -490,9 +524,9 @@ namespace TopDownGame
             {
                 initMsg = "I have a matching artifact in my bag! I should place it on this pedestal.";
             }
-            else if (battleDone)
+            else if (retryUnlocked)
             {
-                initMsg = "This pedestal is empty. The artifact was lost in the Alterworld battle and was not recovered.";
+                initMsg = $"The {artifact.ArtifactName} hasn't been recovered yet! By inspecting this pedestal, Alterworld Battle {rNum} is now unlocked for retry. I can enter the portal to retrieve it!";
             }
             else if (allRead)
             {
@@ -1100,9 +1134,18 @@ namespace TopDownGame
                     plaqueBodyText.text = _currentArtifact.PlaqueDescription;
             }
 
+            bool retryUnlocked = CheckAndUnlockRetryForUnobtainedArtifact(_currentArtifact);
+
             if (_currentArtifact != null)
             {
-                SetDialogueMessage(_currentArtifact.PlaqueDialogue);
+                if (retryUnlocked)
+                {
+                    SetDialogueMessage($"Studying this plaque revealed clues about the missing {_currentArtifact.ArtifactName}! Alterworld Battle {_currentArtifact.RoomNumber} is unlocked for retry.");
+                }
+                else
+                {
+                    SetDialogueMessage(_currentArtifact.PlaqueDialogue);
+                }
             }
 
             // Record plaque read and check completion
@@ -1195,6 +1238,8 @@ namespace TopDownGame
                 }
             }
 
+            bool retryUnlocked = CheckAndUnlockRetryForUnobtainedArtifact(_currentArtifact);
+
             if (isPedestalRestored)
             {
                 SetDialogueMessage($"The {_currentArtifact.ArtifactName} rests peacefully on its pedestal in Room {rNum}.");
@@ -1203,9 +1248,9 @@ namespace TopDownGame
             {
                 SetDialogueMessage("This pedestal is missing its artifact. I have a matching artifact in my bag! I can place it here.");
             }
-            else if (GameProgression.HasRetrievedRoomArtifact(rNum))
+            else if (retryUnlocked)
             {
-                SetDialogueMessage("This pedestal's artifact was lost in the Alterworld battle and was not recovered. It cannot be restored.");
+                SetDialogueMessage($"The {_currentArtifact.ArtifactName} has not been obtained yet. Alterworld Battle {rNum} is unlocked for retry! Enter the portal in the Lobby to challenge it again.");
             }
             else
             {

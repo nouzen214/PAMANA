@@ -31,6 +31,7 @@ namespace TopDownGame
 
         public void UpdateSort()
         {
+            if (_sr == null) _sr = GetComponent<SpriteRenderer>();
             if (_sr != null)
             {
                 _sr.sortingOrder = baseOrder - Mathf.RoundToInt((transform.position.y + sortingOffset) * 100f);

@@ -68,6 +68,8 @@ namespace TopDownGame
         [SerializeField] private string monsterSpeakerName = "Manang";
 
         [Header("Dialogue UI (Bottom - Player Thought)")]
+        [SerializeField] private GameObject bottomDialogueBox;
+        [SerializeField] private GameObject playerPortraitContainer;
         [SerializeField] private TMP_Text playerSpeakerText;
         [SerializeField] private TMP_Text playerDialogueText;
 
@@ -146,6 +148,26 @@ namespace TopDownGame
                     if (canvas != null) t = canvas.transform.Find("MonsterPortraitContainer");
                 }
                 if (t != null) monsterPortraitContainer = t.gameObject;
+            }
+
+            if (bottomDialogueBox == null)
+            {
+                var canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
+                if (canvas != null)
+                {
+                    var t = canvas.transform.Find("BottomDialogueBox");
+                    if (t != null) bottomDialogueBox = t.gameObject;
+                }
+            }
+
+            if (playerPortraitContainer == null)
+            {
+                var canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
+                if (canvas != null)
+                {
+                    var t = canvas.transform.Find("PlayerPortraitContainer");
+                    if (t != null) playerPortraitContainer = t.gameObject;
+                }
             }
 
             EnsureMonsterPortrait(false);
@@ -285,8 +307,8 @@ namespace TopDownGame
 
                 slot.isFailed = false;
 
-                // Check if already in inventory
-                if (PlayerInventory.HasArtifact(slot.artifactId))
+                // Check if already obtained (in bag or restored on pedestal in real world)
+                if (GameProgression.IsArtifactObtained(roomNumber, slot.artifactId, slot.artifactName))
                 {
                     slot.isRetrieved = true;
                     _retrievedCount++;
@@ -326,6 +348,13 @@ namespace TopDownGame
                 {
                     artifactSlotButtons[i].interactable = !slot.isRetrieved && !slot.isFailed;
                 }
+            }
+
+            // Scale monster health to remaining unobtained artifacts so retry battles are winnable and feel great
+            int remainingUnobtained = artifactSlots.Count - _retrievedCount;
+            if (monsterController != null && remainingUnobtained > 0)
+            {
+                monsterController.SetMaxAndCurrentHealth(remainingUnobtained);
             }
 
             UpdateCounterUI();
@@ -852,6 +881,7 @@ namespace TopDownGame
                             : $"Take the portal back, enter Room {roomNumber} in the Real World, and place your recovered artifact(s) on the pedestals!";
                         bodyText.text = $"You completed the battle and retrieved {_retrievedCount} of {artifactSlots.Count} artifact(s)!\n{nextUnlock}";
                     }
+                    victoryModal.transform.SetAsLastSibling();
                     victoryModal.SetActive(true);
                 }
             }
@@ -871,6 +901,7 @@ namespace TopDownGame
                     }
                     var retryBtnText = defeatRetryButton != null ? defeatRetryButton.GetComponentInChildren<TMP_Text>() : null;
                     if (retryBtnText != null) retryBtnText.text = "RETAKE BATTLE";
+                    defeatModal.transform.SetAsLastSibling();
                     defeatModal.SetActive(true);
                 }
             }
@@ -912,6 +943,7 @@ namespace TopDownGame
                     {
                         bodyText.text = $"You fell in battle, but kept {_retrievedCount} recovered artifact(s)!\nBring them back inside Room {roomNumber} in the Real World to open Room {roomNumber + 1}.";
                     }
+                    defeatModal.transform.SetAsLastSibling();
                     defeatModal.SetActive(true);
                 }
             }
@@ -939,6 +971,7 @@ namespace TopDownGame
                     }
                     var retryBtnText = defeatRetryButton != null ? defeatRetryButton.GetComponentInChildren<TMP_Text>() : null;
                     if (retryBtnText != null) retryBtnText.text = "RETAKE BATTLE";
+                    defeatModal.transform.SetAsLastSibling();
                     defeatModal.SetActive(true);
                 }
             }
@@ -961,24 +994,71 @@ namespace TopDownGame
             }
         }
 
+        private bool _wasChoicesActiveBeforePause = false;
+        private bool _wasTopDialogueActiveBeforePause = false;
+        private bool _wasBottomDialogueActiveBeforePause = false;
+        private bool _wasPlayerPortraitActiveBeforePause = false;
+        private bool _wasMonsterPortraitActiveBeforePause = false;
+
         public void OnSettingsClicked()
         {
-            if (settingsModal != null) settingsModal.SetActive(true);
+            if (settingsModal != null)
+            {
+                if (bottomDialogueBox == null)
+                {
+                    var canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
+                    if (canvas != null) bottomDialogueBox = canvas.transform.Find("BottomDialogueBox")?.gameObject;
+                }
+                if (playerPortraitContainer == null)
+                {
+                    var canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
+                    if (canvas != null) playerPortraitContainer = canvas.transform.Find("PlayerPortraitContainer")?.gameObject;
+                }
+
+                _wasChoicesActiveBeforePause = choicesContainer != null && choicesContainer.activeSelf;
+                _wasTopDialogueActiveBeforePause = TopDialogueBoxGO != null && TopDialogueBoxGO.activeSelf;
+                _wasMonsterPortraitActiveBeforePause = monsterPortraitContainer != null && monsterPortraitContainer.activeSelf;
+                _wasBottomDialogueActiveBeforePause = bottomDialogueBox != null && bottomDialogueBox.activeSelf;
+                _wasPlayerPortraitActiveBeforePause = playerPortraitContainer != null && playerPortraitContainer.activeSelf;
+
+                if (choicesContainer != null) choicesContainer.SetActive(false);
+                if (TopDialogueBoxGO != null) TopDialogueBoxGO.SetActive(false);
+                if (monsterPortraitContainer != null) monsterPortraitContainer.SetActive(false);
+                if (bottomDialogueBox != null) bottomDialogueBox.SetActive(false);
+                if (playerPortraitContainer != null) playerPortraitContainer.SetActive(false);
+
+                settingsModal.transform.SetAsLastSibling();
+                settingsModal.SetActive(true);
+                Time.timeScale = 0f;
+            }
         }
 
         public void OnCloseSettingsClicked()
         {
-            if (settingsModal != null) settingsModal.SetActive(false);
+            if (settingsModal != null)
+            {
+                settingsModal.SetActive(false);
+
+                if (choicesContainer != null && _wasChoicesActiveBeforePause) choicesContainer.SetActive(true);
+                if (TopDialogueBoxGO != null && _wasTopDialogueActiveBeforePause) TopDialogueBoxGO.SetActive(true);
+                if (monsterPortraitContainer != null && _wasMonsterPortraitActiveBeforePause) monsterPortraitContainer.SetActive(true);
+                if (bottomDialogueBox != null && _wasBottomDialogueActiveBeforePause) bottomDialogueBox.SetActive(true);
+                if (playerPortraitContainer != null && _wasPlayerPortraitActiveBeforePause) playerPortraitContainer.SetActive(true);
+
+                Time.timeScale = 1f;
+            }
         }
 
         public void OnRetryClicked()
         {
+            Time.timeScale = 1f;
             // Retake the battle fresh
             UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
         }
 
         public void OnReturnToHallwayClicked()
         {
+            Time.timeScale = 1f;
             if (_retrievedCount > 0)
             {
                 GameProgression.CompleteRoomBattle(roomNumber);
@@ -987,6 +1067,11 @@ namespace TopDownGame
             }
             // If _retrievedCount == 0, room battle is NOT completed, so player can re-enter to retake it!
             RoomTransitionManager.ExitToLobby();
+        }
+
+        private void OnDestroy()
+        {
+            Time.timeScale = 1f;
         }
     }
 }

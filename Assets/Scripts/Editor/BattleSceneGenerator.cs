@@ -1144,7 +1144,37 @@ namespace TopDownGame.Editor
             // 4. Artifact Slots Data
             qbm.GetType().GetField("artifactSlots", flags).SetValue(qbm, slotData);
 
-            // 5. Artifact Slot Visuals
+            // 5. Artifact Slot Visuals & Alignment
+            var containerObj = GameObject.Find("ArtifactSlotsContainer");
+            if (containerObj != null)
+            {
+                var crt = containerObj.GetComponent<RectTransform>();
+                if (crt != null) crt.anchoredPosition = new Vector2(0f, -185f);
+            }
+
+            for (int s = 0; s < 5; s++)
+            {
+                var slotObj = GameObject.Find($"ArtifactSlot_{s}");
+                if (slotObj != null)
+                {
+                    var srt = slotObj.GetComponent<RectTransform>();
+                    if (srt != null)
+                    {
+                        srt.anchoredPosition = new Vector2(-460f + s * 230f, 0f);
+                    }
+                    var iconTr = slotObj.transform.Find("ArtifactIcon");
+                    if (iconTr != null)
+                    {
+                        var irt = iconTr.GetComponent<RectTransform>();
+                        if (irt != null)
+                        {
+                            irt.anchoredPosition = Vector2.zero;
+                            irt.sizeDelta = new Vector2(195f, 195f);
+                        }
+                    }
+                }
+            }
+
             for (int s = 0; s < slotData.Count && s < 5; s++)
             {
                 var iconObj = GameObject.Find($"ArtifactSlot_{s}/ArtifactIcon");
@@ -1491,6 +1521,23 @@ namespace TopDownGame.Editor
                 if (resumeBtn != null) qbm.GetType().GetField("settingsCloseButton", flags)?.SetValue(qbm, resumeBtn);
                 if (exitBtn != null) qbm.GetType().GetField("settingsExitHallwayButton", flags)?.SetValue(qbm, exitBtn);
                 EditorUtility.SetDirty(qbm);
+            }
+
+            // Ensure proper modal ordering in BattleCanvas
+            var canvasTr = sm.transform.parent;
+            if (canvasTr != null)
+            {
+                string[] modalOrder = new string[] {
+                    "Background", "VignetteOverlay", "TopHUD", "MonsterContainer",
+                    "ArtifactSlotsContainer", "PlayerPortraitContainer", "BottomDialogueBox",
+                    "MonsterPortraitContainer", "TopDialogueBox", "ChoicesContainer",
+                    "VictoryModal", "DefeatModal", "SettingsModal"
+                };
+                for (int i = 0; i < modalOrder.Length; i++)
+                {
+                    var tr = canvasTr.Find(modalOrder[i]);
+                    if (tr != null) tr.SetSiblingIndex(i);
+                }
             }
 
             sm.SetActive(false);

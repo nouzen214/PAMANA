@@ -51,6 +51,7 @@ namespace TopDownGame
             GameProgression.OnRoomArtifactsReturned += HandleRoomArtifactsReturned;
             GameProgression.OnPedestalRestored += HandlePedestalRestored;
             GameProgression.OnPortalUnlocked += UpdateLockState;
+            GameProgression.OnRoomBattleUnlockedForRetry += HandleRoomBattleUnlockedForRetry;
         }
 
         private void OnDisable()
@@ -63,8 +64,10 @@ namespace TopDownGame
             GameProgression.OnRoomArtifactsReturned -= HandleRoomArtifactsReturned;
             GameProgression.OnPedestalRestored -= HandlePedestalRestored;
             GameProgression.OnPortalUnlocked -= UpdateLockState;
+            GameProgression.OnRoomBattleUnlockedForRetry -= HandleRoomBattleUnlockedForRetry;
         }
 
+        private void HandleRoomBattleUnlockedForRetry(int roomNum) => UpdateLockState();
         private void HandlePlaqueRead(int roomNum, int count) => UpdateLockState();
         private void HandleAllPlaquesRead(int roomNum) => UpdateLockState();
         private void HandleRoomArtifactsReturned(int roomNum) => UpdateLockState();
@@ -79,8 +82,13 @@ namespace TopDownGame
             if (isAltScene)
             {
                 // In Alter World:
-                // Completed room battle: LOCKED (player cannot re-enter once they won and retrieved >= 1 artifact).
-                if (GameProgression.IsRoomBattleCompleted(roomNum) && GameProgression.GetRoomRetrievedCount(roomNum) > 0)
+                // If all 5 artifacts in this room are restored, the trial is fully completed!
+                if (GameProgression.GetPedestalsRestoredCount(roomNum) >= 5)
+                {
+                    isLocked = true;
+                }
+                // Completed room battle: LOCKED (player cannot re-enter once they won, until they inspect an unobtained item to retry)
+                else if (GameProgression.IsRoomBattleCompleted(roomNum) && GameProgression.GetRoomRetrievedCount(roomNum) > 0)
                 {
                     isLocked = true;
                 }
@@ -146,9 +154,13 @@ namespace TopDownGame
                 string lockMessage;
                 if (isAltScene)
                 {
-                    if (GameProgression.IsRoomBattleCompleted(roomNum) && GameProgression.GetRoomRetrievedCount(roomNum) > 0)
+                    if (GameProgression.GetPedestalsRestoredCount(roomNum) >= 5)
                     {
-                        lockMessage = $"{roomDisplayName} trial is already finished!\nYou cannot re-enter.";
+                        lockMessage = $"{roomDisplayName} trial is fully completed!\nAll 5 artifacts have been recovered and restored.";
+                    }
+                    else if (GameProgression.IsRoomBattleCompleted(roomNum) && GameProgression.GetRoomRetrievedCount(roomNum) > 0)
+                    {
+                        lockMessage = $"{roomDisplayName} trial is locked!\nVisit Real World Room {roomNum} and inspect any unobtained artifact pedestal to unlock this battle for retry!";
                     }
                     else if (roomNum == 1)
                     {

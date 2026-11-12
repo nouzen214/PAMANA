@@ -9,6 +9,7 @@ namespace TopDownGame
     public static class GameProgression
     {
         private const string KEY_PORTAL_UNLOCKED = "GameProgression_PortalUnlocked";
+        private const string KEY_BOOK_UNLOCKED = "GameProgression_BookUnlocked";
         private const string KEY_ROOM1_ARTIFACT_INTERACTED = "GameProgression_Room1ArtifactInteracted";
         private const string KEY_TUTORIAL_COMPLETED = "GameProgression_TutorialCompleted";
         private const string KEY_ROOM1_ARTIFACT_RETRIEVED = "GameProgression_Room1ArtifactRetrieved";
@@ -16,6 +17,7 @@ namespace TopDownGame
         private const string KEY_ROOM1_ARTIFACT_RETURNED = "GameProgression_Room1ArtifactReturnedToRealWorld";
 
         public static event Action OnPortalUnlocked;
+        public static event Action OnBookUnlocked;
         public static event Action OnRoom1ArtifactRetrieved;
         public static event Action OnRoom1BattleCompleted;
         public static event Action OnRoom1ArtifactReturned;
@@ -24,6 +26,30 @@ namespace TopDownGame
         public static event Action<int> OnRoomArtifactsReturned; // (roomNumber)
         public static event Action<int, string> OnPedestalRestored; // (roomNumber, artifactName)
         public static event Action<int, int> OnRoomRestorationStageChanged; // (roomNumber, newStage)
+        public static event Action<int> OnRoomBattleUnlockedForRetry; // (roomNumber)
+
+        public static bool IsBookUnlocked
+        {
+            get => PlayerPrefs.GetInt(KEY_BOOK_UNLOCKED, 0) == 1;
+            set
+            {
+                PlayerPrefs.SetInt(KEY_BOOK_UNLOCKED, value ? 1 : 0);
+                PlayerPrefs.Save();
+            }
+        }
+
+        public static bool UnlockBook()
+        {
+            bool wasUnlocked = IsBookUnlocked;
+            IsBookUnlocked = true;
+            if (!wasUnlocked)
+            {
+                Debug.Log("[GameProgression] Museum Field Guide (Book) unlocked!");
+                OnBookUnlocked?.Invoke();
+                return true;
+            }
+            return false;
+        }
 
         public static bool IsRoom1BattleCompleted
         {
@@ -68,6 +94,93 @@ namespace TopDownGame
                 Debug.Log($"[GameProgression] Room {roomNum} Battle completed! Room {roomNum} locked, cannot re-enter.");
                 OnRoom1BattleCompleted?.Invoke();
             }
+        }
+
+        public static void SetRoomBattleCompleted(int roomNum, bool completed)
+        {
+            if (roomNum == 1)
+            {
+                IsRoom1BattleCompleted = completed;
+                return;
+            }
+            string key = $"GameProgression_Room{roomNum}BattleCompleted";
+            PlayerPrefs.SetInt(key, completed ? 1 : 0);
+            PlayerPrefs.Save();
+        }
+
+        public static bool CanRoomBeRetried(int roomNumber)
+        {
+            if (roomNumber <= 0) return false;
+            // A room can be retried if fewer than 5 artifacts are restored in the real world room
+            return GetPedestalsRestoredCount(roomNumber) < 5;
+        }
+
+        public static bool UnlockRoomBattleForRetry(int roomNumber)
+        {
+            if (roomNumber <= 0) return false;
+            if (!CanRoomBeRetried(roomNumber)) return false;
+
+            bool wasCompleted = IsRoomBattleCompleted(roomNumber);
+            SetRoomBattleCompleted(roomNumber, false);
+
+            Debug.Log($"[GameProgression] Room {roomNumber} Alterworld Battle unlocked for retry because an unobtained artifact was inspected!");
+            OnRoomBattleUnlockedForRetry?.Invoke(roomNumber);
+            return wasCompleted;
+        }
+
+        public static bool IsArtifactObtained(int roomNumber, string artifactId, string artifactName)
+        {
+            if (!string.IsNullOrEmpty(artifactId) && PlayerInventory.HasArtifact(artifactId))
+                return true;
+
+            if (!string.IsNullOrEmpty(artifactName) && PlayerInventory.HasArtifact(artifactName))
+                return true;
+
+            if (!string.IsNullOrEmpty(artifactName) && IsPedestalRestored(roomNumber, artifactName))
+                return true;
+
+            if (!string.IsNullOrEmpty(artifactId) && IsPedestalRestored(roomNumber, artifactId))
+                return true;
+
+            if (!string.IsNullOrEmpty(artifactId) && artifactId.StartsWith($"Room{roomNumber}_"))
+            {
+                string stripped = artifactId.Substring($"Room{roomNumber}_".Length);
+                if (IsPedestalRestored(roomNumber, stripped))
+                    return true;
+            }
+
+            // Check against the restored artifacts list with robust name / keyword matching
+            string listKey = $"GameProgression_Room{roomNumber}_RestoredArtifactsList";
+            string currentList = PlayerPrefs.GetString(listKey, "");
+            if (!string.IsNullOrEmpty(currentList))
+            {
+                string[] restoredItems = currentList.Split(';');
+                string n1 = (artifactName ?? "").ToLowerInvariant().Replace(" ", "").Replace("_", "").Replace("-", "");
+                string n2 = (artifactId ?? "").ToLowerInvariant().Replace(" ", "").Replace("_", "").Replace("-", "");
+
+                foreach (var r in restoredItems)
+                {
+                    if (string.IsNullOrEmpty(r)) continue;
+                    string rClean = r.ToLowerInvariant().Replace(" ", "").Replace("_", "").Replace("-", "");
+                    if (string.Equals(n1, rClean, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(n2, rClean, StringComparison.OrdinalIgnoreCase))
+                        return true;
+
+                    if (n1.Length >= 5 && rClean.Contains(n1)) return true;
+                    if (rClean.Length >= 5 && n1.Contains(rClean)) return true;
+                    if (n2.Length >= 5 && rClean.Contains(n2)) return true;
+                    if (rClean.Length >= 5 && n2.Contains(rClean)) return true;
+
+                    // Common distinct keywords
+                    if (rClean.Contains("seal") && (n1.Contains("seal") || n2.Contains("seal"))) return true;
+                    if ((rClean.Contains("nib") || rClean.Contains("quill")) && (n1.Contains("nib") || n1.Contains("quill") || n2.Contains("nib") || n2.Contains("quill"))) return true;
+                    if (rClean.Contains("notebook") && (n1.Contains("notebook") || n2.Contains("notebook"))) return true;
+                    if ((rClean.Contains("spectacles") || rClean.Contains("glasses")) && (n1.Contains("spectacles") || n1.Contains("glasses") || n2.Contains("spectacles") || n2.Contains("glasses"))) return true;
+                    if (rClean.Contains("locket") && (n1.Contains("locket") || n2.Contains("locket"))) return true;
+                }
+            }
+
+            return false;
         }
 
         public static bool HasCompletedTutorial
@@ -378,6 +491,7 @@ namespace TopDownGame
         public static void ResetProgression()
         {
             PlayerPrefs.DeleteKey(KEY_PORTAL_UNLOCKED);
+            PlayerPrefs.DeleteKey(KEY_BOOK_UNLOCKED);
             PlayerPrefs.DeleteKey(KEY_ROOM1_ARTIFACT_INTERACTED);
             PlayerPrefs.DeleteKey("HasAcknowledgedPortalInDialogue");
             PlayerPrefs.DeleteKey(KEY_TUTORIAL_COMPLETED);
