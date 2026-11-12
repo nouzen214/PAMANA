@@ -209,8 +209,8 @@ A new build must be produced whenever an approved change alters the code, assets
 | **Previous Version** | `0.4.0` |
 | **New Version, if applicable** | `0.4.1` |
 | **Change Type** | **Performance / Bug Fix** |
-| **Source Reference** | Commit `b7e9a2f` (Git Tag: `v0.4.1-patch`) |
-| **Reason for Version Change** | Incremented PATCH version from `0.4.0` to `0.4.1` to incorporate CPU performance optimizations in `YSort.cs`, pre-instantiate UI modal hierarchies in `InGameCanvas.prefab`, and resolve sprite depth sorting layering on static pedestals. |
+| **Source Reference** | Commit `66c8ab0` (Git Tag: `v0.4.1-patch`) |
+| **Reason for Version Change** | Incremented PATCH version from `0.4.0` to `0.4.1` to incorporate key performance optimizations and educational content enhancements: (1) integrated all 12 Philippine History topics (24 pages across 12 spreads) into the interactive Field Guide Book with green keyword highlighting for quiz/exam review; (2) enlarged the Book Modal container (+35.7% scale to 1140×953 px) with 15.5 pt responsive auto-sizing typography for optimal legibility; (3) resolved sprite depth sorting clipping around the Lobby book pedestal; (4) eliminated UI garbage collection churn via pre-instantiated modal hierarchies; and (5) compiled and deployed the verified production WebGL release package to GitHub Pages. |
 
 ---
 
@@ -241,7 +241,7 @@ The smoke test was executed directly on the **actual compiled WebGL build packag
 | **Network Requests** | REST API calls occur only during deliberate save events; no redundant polling loops. | **Verified (Clean REST calls)** |
 | **Security Functions** | Input validation and character name boundary clamping operate reliably. | **Verified (Active in v0.4.1)** |
 | **Version Number** | Semantic versioning updated in `PlayerSettings` and UI labels (`v0.4.1`). | **Verified (`v0.4.1`)** |
-| **Source Reference** | Verified Git commit hash and release tag recorded in build metadata. | **Verified (`b7e9a2f`)** |
+| **Source Reference** | Verified Git commit hash and release tag recorded in build metadata. | **Verified (`66c8ab0`)** |
 | **Packaged Build** | Clean WebGL export generated in `docs/Build/` and smoke-tested on live browsers. | **Verified (5/5 Smoke Tests)** |
 | **Known Issues** | Minor non-blocking visual polish items documented in project backlog. | **Verified (Documented)** |
 
