@@ -84,19 +84,19 @@ namespace TopDownGame.Editor
                 var sprBtnFrame = AssetDatabase.LoadAssetAtPath<Sprite>(SprButtonFramePath);
 
                 var btnSettings = GetOrCreateChild(prefabRoot.transform, "SettingsButton");
-                ConfigureIconButton(btnSettings, sprSettings, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-95f, -95f), new Vector2(110f, 110f));
+                ConfigureIconButton(btnSettings, sprSettings, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-70f, -70f), new Vector2(85f, 85f));
                 var btnSettingsComp = btnSettings.GetComponent<Button>();
                 btnSettingsComp.onClick = new Button.ButtonClickedEvent();
                 UnityEditor.Events.UnityEventTools.AddPersistentListener(btnSettingsComp.onClick, menuCtrl.OnSettingsClicked);
 
                 var btnBag = GetOrCreateChild(prefabRoot.transform, "BagButton");
-                ConfigureIconButton(btnBag, sprBackpack, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-95f, -225f), new Vector2(120f, 120f));
+                ConfigureIconButton(btnBag, sprBackpack, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-170f, -70f), new Vector2(85f, 85f));
                 var btnBagComp = btnBag.GetComponent<Button>();
                 btnBagComp.onClick = new Button.ButtonClickedEvent();
                 UnityEditor.Events.UnityEventTools.AddPersistentListener(btnBagComp.onClick, menuCtrl.OnBagClicked);
 
                 var btnBook = GetOrCreateChild(prefabRoot.transform, "BookButton");
-                ConfigureIconButton(btnBook, sprBook, new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), new Vector2(-120f, 120f), new Vector2(150f, 150f));
+                ConfigureIconButton(btnBook, sprBook, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-270f, -70f), new Vector2(90f, 90f));
                 var btnBookComp = btnBook.GetComponent<Button>();
                 btnBookComp.onClick = new Button.ButtonClickedEvent();
                 UnityEditor.Events.UnityEventTools.AddPersistentListener(btnBookComp.onClick, menuCtrl.OnBookClicked);
@@ -106,7 +106,46 @@ namespace TopDownGame.Editor
                 var bagModalComp = bagModalObj.GetComponent<BagModalUI>();
                 var bookModalObj = BuildBookModal(prefabRoot.transform);
 
-                // Mobile Controls: Interact Button ('E') & MobileControlsManager
+                // Configure Virtual Joystick for comfortable thumb access (Bottom-Left)
+                var vjTr = prefabRoot.transform.Find("VirtualJoystick");
+                if (vjTr != null)
+                {
+                    var vjRt = vjTr.GetComponent<RectTransform>();
+                    vjRt.anchorMin = new Vector2(0f, 0f);
+                    vjRt.anchorMax = new Vector2(0f, 0f);
+                    vjRt.pivot = new Vector2(0.5f, 0.5f);
+                    vjRt.anchoredPosition = new Vector2(190f, 190f);
+                    vjRt.sizeDelta = new Vector2(240f, 240f);
+
+                    var vjImg = vjTr.GetComponent<Image>() ?? vjTr.gameObject.AddComponent<Image>();
+                    var sprVjBase = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Joystick_Base.png");
+                    if (sprVjBase != null) vjImg.sprite = sprVjBase;
+                    vjImg.color = Color.white;
+                    vjImg.raycastTarget = true;
+
+                    var handleTr = vjTr.Find("Handle");
+                    if (handleTr != null)
+                    {
+                        var handleRt = handleTr.GetComponent<RectTransform>();
+                        handleRt.sizeDelta = new Vector2(100f, 100f);
+                        var handleImg = handleTr.GetComponent<Image>() ?? handleTr.gameObject.AddComponent<Image>();
+                        var sprVjHandle = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Joystick_Handle.png");
+                        if (sprVjHandle != null) handleImg.sprite = sprVjHandle;
+                        handleImg.color = Color.white;
+                        handleImg.raycastTarget = false;
+                    }
+
+                    var vjComp = vjTr.GetComponent<VirtualJoystick>();
+                    if (vjComp != null)
+                    {
+                        var soVj = new SerializedObject(vjComp);
+                        var pRange = soVj.FindProperty("handleRange");
+                        if (pRange != null) pRange.floatValue = 75f;
+                        soVj.ApplyModifiedProperties();
+                    }
+                }
+
+                // Mobile Controls: Dedicated Interact Button ('E') & MobileControlsManager (Bottom-Right)
                 var sprNormal = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_Interact_Normal.png");
                 var sprPressed = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_Interact_Pressed.png");
                 if (sprNormal != null && sprPressed != null)
@@ -116,8 +155,8 @@ namespace TopDownGame.Editor
                     interactRt.anchorMin = new Vector2(1f, 0f);
                     interactRt.anchorMax = new Vector2(1f, 0f);
                     interactRt.pivot = new Vector2(0.5f, 0.5f);
-                    interactRt.anchoredPosition = new Vector2(-110f, 110f);
-                    interactRt.sizeDelta = new Vector2(110f, 110f);
+                    interactRt.anchoredPosition = new Vector2(-190f, 190f);
+                    interactRt.sizeDelta = new Vector2(140f, 140f);
 
                     var img = interactBtnGO.GetComponent<Image>() ?? interactBtnGO.AddComponent<Image>();
                     img.sprite = sprNormal;
@@ -147,6 +186,9 @@ namespace TopDownGame.Editor
                     if (pBook != null) pBook.objectReferenceValue = btnBook.GetComponent<RectTransform>();
                     soMcm.ApplyModifiedProperties();
                 }
+
+                // Build Artifact Inspection Dialogue UI onto InGameCanvas prefab
+                ArtifactUISetup.BuildArtifactInspectionCanvasUI(prefabRoot);
 
                 WireInGameMenuController(menuCtrl, settingsPanel, bagModalComp);
 
@@ -1503,23 +1545,104 @@ namespace TopDownGame.Editor
                     if (heartCont != null) heartCont.gameObject.SetActive(false);
 
                     var btnSettings = GetOrCreateChild(existingCanvas.transform, "SettingsButton");
-                    ConfigureIconButton(btnSettings, sprSettings, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-95f, -95f), new Vector2(110f, 110f));
+                    ConfigureIconButton(btnSettings, sprSettings, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-70f, -70f), new Vector2(85f, 85f));
                     var btnSettingsComp = btnSettings.GetComponent<Button>();
                     btnSettingsComp.onClick = new Button.ButtonClickedEvent();
                     UnityEditor.Events.UnityEventTools.AddPersistentListener(btnSettingsComp.onClick, menuCtrl.OnSettingsClicked);
 
                     var btnBag = GetOrCreateChild(existingCanvas.transform, "BagButton");
-                    ConfigureIconButton(btnBag, sprBackpack, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-95f, -225f), new Vector2(120f, 120f));
+                    ConfigureIconButton(btnBag, sprBackpack, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-170f, -70f), new Vector2(85f, 85f));
                     var btnBagComp = btnBag.GetComponent<Button>();
                     btnBagComp.onClick = new Button.ButtonClickedEvent();
                     UnityEditor.Events.UnityEventTools.AddPersistentListener(btnBagComp.onClick, menuCtrl.OnBagClicked);
 
                     var btnBook = GetOrCreateChild(existingCanvas.transform, "BookButton");
-                    ConfigureIconButton(btnBook, sprBook, new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), new Vector2(-120f, 120f), new Vector2(150f, 150f));
+                    ConfigureIconButton(btnBook, sprBook, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-270f, -70f), new Vector2(90f, 90f));
                     btnBook.SetActive(false);
                     var btnBookComp = btnBook.GetComponent<Button>();
                     btnBookComp.onClick = new Button.ButtonClickedEvent();
                     UnityEditor.Events.UnityEventTools.AddPersistentListener(btnBookComp.onClick, menuCtrl.OnBookClicked);
+
+                    // Configure Virtual Joystick for comfortable thumb access
+                    var vjTr = existingCanvas.transform.Find("VirtualJoystick");
+                    if (vjTr != null)
+                    {
+                        var vjRt = vjTr.GetComponent<RectTransform>();
+                        vjRt.anchorMin = new Vector2(0f, 0f);
+                        vjRt.anchorMax = new Vector2(0f, 0f);
+                        vjRt.pivot = new Vector2(0.5f, 0.5f);
+                        vjRt.anchoredPosition = new Vector2(190f, 190f);
+                        vjRt.sizeDelta = new Vector2(240f, 240f);
+
+                        var vjImg = vjTr.GetComponent<Image>() ?? vjTr.gameObject.AddComponent<Image>();
+                        var sprVjBase = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Joystick_Base.png");
+                        if (sprVjBase != null) vjImg.sprite = sprVjBase;
+                        vjImg.color = Color.white;
+                        vjImg.raycastTarget = true;
+
+                        var handleTr = vjTr.Find("Handle");
+                        if (handleTr != null)
+                        {
+                            var handleRt = handleTr.GetComponent<RectTransform>();
+                            handleRt.sizeDelta = new Vector2(100f, 100f);
+                            var handleImg = handleTr.GetComponent<Image>() ?? handleTr.gameObject.AddComponent<Image>();
+                            var sprVjHandle = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Joystick_Handle.png");
+                            if (sprVjHandle != null) handleImg.sprite = sprVjHandle;
+                            handleImg.color = Color.white;
+                            handleImg.raycastTarget = false;
+                        }
+
+                        var vjComp = vjTr.GetComponent<VirtualJoystick>();
+                        if (vjComp != null)
+                        {
+                            var soVj = new SerializedObject(vjComp);
+                            var pRange = soVj.FindProperty("handleRange");
+                            if (pRange != null) pRange.floatValue = 75f;
+                            soVj.ApplyModifiedProperties();
+                        }
+                    }
+
+                    // Mobile Controls: Dedicated Interact Button ('E') & MobileControlsManager
+                    var sprNormal = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_Interact_Normal.png");
+                    var sprPressed = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_Interact_Pressed.png");
+                    if (sprNormal != null && sprPressed != null)
+                    {
+                        var interactBtnGO = GetOrCreateChild(existingCanvas.transform, "InteractButton");
+                        var interactRt = interactBtnGO.GetComponent<RectTransform>();
+                        interactRt.anchorMin = new Vector2(1f, 0f);
+                        interactRt.anchorMax = new Vector2(1f, 0f);
+                        interactRt.pivot = new Vector2(0.5f, 0.5f);
+                        interactRt.anchoredPosition = new Vector2(-190f, 190f);
+                        interactRt.sizeDelta = new Vector2(140f, 140f);
+
+                        var img = interactBtnGO.GetComponent<Image>() ?? interactBtnGO.AddComponent<Image>();
+                        img.sprite = sprNormal;
+                        img.preserveAspect = true;
+                        img.raycastTarget = true;
+
+                        var btn = interactBtnGO.GetComponent<Button>() ?? interactBtnGO.AddComponent<Button>();
+                        btn.targetGraphic = img;
+                        btn.transition = Selectable.Transition.SpriteSwap;
+                        var state = btn.spriteState;
+                        state.highlightedSprite = sprNormal;
+                        state.pressedSprite = sprPressed;
+                        state.selectedSprite = sprNormal;
+                        btn.spriteState = state;
+
+                        if (interactBtnGO.GetComponent<MobileInteractButton>() == null)
+                            interactBtnGO.AddComponent<MobileInteractButton>();
+
+                        var mcm = existingCanvas.GetComponent<MobileControlsManager>() ?? existingCanvas.AddComponent<MobileControlsManager>();
+                        var soMcm = new SerializedObject(mcm);
+                        var pVJ = soMcm.FindProperty("virtualJoystickGO");
+                        var pBtn = soMcm.FindProperty("interactButtonGO");
+                        var pBook = soMcm.FindProperty("bookButtonRT");
+                        var vj = existingCanvas.transform.Find("VirtualJoystick");
+                        if (pVJ != null) pVJ.objectReferenceValue = vj != null ? vj.gameObject : null;
+                        if (pBtn != null) pBtn.objectReferenceValue = interactBtnGO;
+                        if (pBook != null) pBook.objectReferenceValue = btnBook.GetComponent<RectTransform>();
+                        soMcm.ApplyModifiedProperties();
+                    }
 
                     var settingsPanel = BuildSettingsModal(existingCanvas.transform, menuCtrl, isGameplay: true);
                     var bagModalObj = BuildBagModal(existingCanvas.transform, sprParchment, sprBtnFrame);

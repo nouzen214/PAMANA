@@ -107,6 +107,14 @@ namespace TopDownGame
             {
                 ui = FindFirstObjectByType<ArtifactInspectionUI>(FindObjectsInactive.Include);
             }
+            if (ui == null)
+            {
+                var canvas = GameObject.Find("InGameCanvas") ?? GameObject.Find("Canvas");
+                if (canvas != null)
+                {
+                    ui = canvas.GetComponent<ArtifactInspectionUI>() ?? canvas.GetComponentInChildren<ArtifactInspectionUI>(true);
+                }
+            }
 
             if (ui != null)
             {

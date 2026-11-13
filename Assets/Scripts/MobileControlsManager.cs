@@ -104,10 +104,8 @@ namespace TopDownGame
             {
                 interactButtonGO.SetActive(isVisible);
             }
-            if (bookButtonRT != null)
-            {
-                bookButtonRT.anchoredPosition = isVisible ? new Vector2(-240f, 110f) : new Vector2(-120f, 120f);
-            }
+            // Note: Menu buttons (Book, Bag, Settings) remain in the top-right toolbar row
+            // where they are comfortably accessible and do not clutter the thumb movement zone.
         }
 
         public bool CheckIfMobile()

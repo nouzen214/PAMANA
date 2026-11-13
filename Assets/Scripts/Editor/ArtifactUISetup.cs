@@ -926,11 +926,13 @@ namespace TopDownGame.Editor
             var canvasComp = canvas.GetComponent<Canvas>();
             if (canvasComp != null)
             {
-                canvasComp.renderMode = RenderMode.ScreenSpaceCamera;
-                var cam = Camera.main;
-                if (cam == null) cam = Object.FindFirstObjectByType<Camera>();
-                canvasComp.worldCamera = cam;
-                canvasComp.planeDistance = 10f;
+                if (canvasComp.renderMode == RenderMode.ScreenSpaceCamera)
+                {
+                    var cam = Camera.main;
+                    if (cam == null) cam = Object.FindFirstObjectByType<Camera>();
+                    canvasComp.worldCamera = cam;
+                    canvasComp.planeDistance = 10f;
+                }
                 canvasComp.sortingOrder = 30000;
                 EditorUtility.SetDirty(canvasComp);
             }
