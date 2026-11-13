@@ -1723,10 +1723,13 @@ namespace TopDownGame.Editor
             bcRt.anchoredPosition = Vector2.zero;
             bcRt.sizeDelta = new Vector2(1920f, 1080f);
 
-            var sprTransparent = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Login/Login_Btn_Transparent.png");
+            var sprContinueNormal = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_MainMenu_Continue_Normal.png");
             var sprContinueHover = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_MainMenu_Continue_Hover.png");
+            var sprNewGameNormal = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_MainMenu_NewGame_Normal.png");
             var sprNewGameHover = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_MainMenu_NewGame_Hover.png");
+            var sprSettingsNormal = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_MainMenu_Settings_Normal.png");
             var sprSettingsHover = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_MainMenu_Settings_Hover.png");
+            var sprExitNormal = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_MainMenu_Exit_Normal.png");
             var sprExitHover = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_MainMenu_Exit_Hover.png");
             var sprLogoutNormal = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_MainMenu_Logout_Normal.png");
             var sprLogoutHover = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_MainMenu_Logout_Hover.png");
@@ -1735,19 +1738,19 @@ namespace TopDownGame.Editor
             var oldStart = bcObj.transform.Find("StartGameButton");
             if (oldStart != null) Object.DestroyImmediate(oldStart.gameObject);
 
-            Button btnContinue = ConfigureMenuHoverButton(bcObj.transform, "ContinueButton", sprTransparent, sprContinueHover, new Vector2(0f, 6f), new Vector2(468f, 117f));
+            Button btnContinue = ConfigureMenuHoverButton(bcObj.transform, "ContinueButton", sprContinueNormal, sprContinueHover, new Vector2(0f, 6f), new Vector2(468f, 117f));
             btnContinue.onClick = new Button.ButtonClickedEvent();
             UnityEditor.Events.UnityEventTools.AddPersistentListener(btnContinue.onClick, menuCtrl.OnContinueClicked);
 
-            Button btnNewGame = ConfigureMenuHoverButton(bcObj.transform, "NewGameButton", sprTransparent, sprNewGameHover, new Vector2(0f, -126f), new Vector2(468f, 118f));
+            Button btnNewGame = ConfigureMenuHoverButton(bcObj.transform, "NewGameButton", sprNewGameNormal, sprNewGameHover, new Vector2(0f, -126f), new Vector2(468f, 118f));
             btnNewGame.onClick = new Button.ButtonClickedEvent();
             UnityEditor.Events.UnityEventTools.AddPersistentListener(btnNewGame.onClick, menuCtrl.OnNewGameClicked);
 
-            Button btnSettings = ConfigureMenuHoverButton(bcObj.transform, "SettingsButton", sprTransparent, sprSettingsHover, new Vector2(0f, -257f), new Vector2(468f, 117f));
+            Button btnSettings = ConfigureMenuHoverButton(bcObj.transform, "SettingsButton", sprSettingsNormal, sprSettingsHover, new Vector2(0f, -257f), new Vector2(468f, 117f));
             btnSettings.onClick = new Button.ButtonClickedEvent();
             UnityEditor.Events.UnityEventTools.AddPersistentListener(btnSettings.onClick, menuCtrl.OnSettingsClicked);
 
-            Button btnExit = ConfigureMenuHoverButton(bcObj.transform, "ExitButton", sprTransparent, sprExitHover, new Vector2(0f, -388f), new Vector2(468f, 116f));
+            Button btnExit = ConfigureMenuHoverButton(bcObj.transform, "ExitButton", sprExitNormal, sprExitHover, new Vector2(0f, -388f), new Vector2(468f, 116f));
             btnExit.onClick = new Button.ButtonClickedEvent();
             UnityEditor.Events.UnityEventTools.AddPersistentListener(btnExit.onClick, menuCtrl.OnExitClicked);
 
