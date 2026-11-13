@@ -74,13 +74,15 @@ namespace TopDownGame
 
         private void Awake()
         {
-            if (Instance == null)
+            if (Instance == null || Instance == this)
             {
                 Instance = this;
             }
-            else if (Instance != this)
+            else
             {
-                Destroy(gameObject);
+                // Never call Destroy(gameObject) here because that would destroy the entire InGameCanvas!
+                // Only destroy this redundant duplicate component.
+                Destroy(this);
                 return;
             }
 
@@ -114,6 +116,14 @@ namespace TopDownGame
                 _playerMovement = FindFirstObjectByType<PlayerMovement>();
             if (_playerMovement != null)
                 _playerMovement.enabled = true;
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
 
         private void EnsureDialogueBoxReferences()
