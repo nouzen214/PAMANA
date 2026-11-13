@@ -577,7 +577,7 @@ namespace TopDownGame
             }
             if (playerDialogueText != null)
             {
-                playerDialogueText.text = "Ano nga ba ulit sagot dito....";
+                playerDialogueText.text = "What was the answer to this again...?";
             }
 
             // Legacy fallbacks
