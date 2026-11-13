@@ -65,14 +65,38 @@ namespace TopDownGame.Editor
                 }
             }
 
-            // Setup NameInputContainer
+            // Setup StartButton (anchored to bottom)
+            var startBtnObj = canvasObj.transform.Find("StartButton");
+            if (startBtnObj != null)
+            {
+                var startBtnRt = startBtnObj.GetComponent<RectTransform>();
+                startBtnRt.anchorMin = new Vector2(0.5f, 0f);
+                startBtnRt.anchorMax = new Vector2(0.5f, 0f);
+                startBtnRt.pivot = new Vector2(0.5f, 0f);
+                startBtnRt.anchoredPosition = new Vector2(0f, 40f);
+                startBtnRt.sizeDelta = new Vector2(360f, 75f);
+            }
+
+            // Setup NameInputContainer (anchored to bottom, stacked above StartButton)
             var containerObj = GetOrCreateChild(canvasObj.transform, "NameInputContainer");
             var containerRt = containerObj.GetComponent<RectTransform>();
-            containerRt.anchorMin = new Vector2(0.5f, 0.5f);
-            containerRt.anchorMax = new Vector2(0.5f, 0.5f);
-            containerRt.pivot = new Vector2(0.5f, 0.5f);
-            containerRt.anchoredPosition = new Vector2(0f, -345f);
-            containerRt.sizeDelta = new Vector2(460f, 96f);
+            containerRt.anchorMin = new Vector2(0.5f, 0f);
+            containerRt.anchorMax = new Vector2(0.5f, 0f);
+            containerRt.pivot = new Vector2(0.5f, 0f);
+            containerRt.anchoredPosition = new Vector2(0f, 125f);
+            containerRt.sizeDelta = new Vector2(440f, 85f);
+
+            // Setup StatusText (anchored to bottom, stacked above NameInputContainer)
+            var statusTextObj = canvasObj.transform.Find("StatusText");
+            if (statusTextObj != null)
+            {
+                var statusRt = statusTextObj.GetComponent<RectTransform>();
+                statusRt.anchorMin = new Vector2(0.5f, 0f);
+                statusRt.anchorMax = new Vector2(0.5f, 0f);
+                statusRt.pivot = new Vector2(0.5f, 0f);
+                statusRt.anchoredPosition = new Vector2(0f, 215f);
+                statusRt.sizeDelta = new Vector2(600f, 35f);
+            }
 
             // Label: "NAME YOUR CHARACTER:"
             var labelObj = GetOrCreateChild(containerObj.transform, "Label");
@@ -81,7 +105,7 @@ namespace TopDownGame.Editor
             labelRt.anchorMax = new Vector2(1f, 1f);
             labelRt.pivot = new Vector2(0.5f, 1f);
             labelRt.anchoredPosition = new Vector2(0f, 0f);
-            labelRt.sizeDelta = new Vector2(0f, 28f);
+            labelRt.sizeDelta = new Vector2(0f, 26f);
 
             var labelTmp = labelObj.GetComponent<TextMeshProUGUI>();
             if (labelTmp == null) labelTmp = labelObj.AddComponent<TextMeshProUGUI>();
@@ -99,7 +123,7 @@ namespace TopDownGame.Editor
             inputRt.anchorMax = new Vector2(0.5f, 0f);
             inputRt.pivot = new Vector2(0.5f, 0f);
             inputRt.anchoredPosition = new Vector2(0f, 0f);
-            inputRt.sizeDelta = new Vector2(380f, 60f);
+            inputRt.sizeDelta = new Vector2(360f, 54f);
 
             var inputImg = inputObj.GetComponent<Image>();
             if (inputImg == null) inputImg = inputObj.AddComponent<Image>();

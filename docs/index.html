@@ -3,6 +3,12 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="screen-orientation" content="landscape">
+    <meta name="x5-orientation" content="landscape">
     <title>Unity Web Player | PAMANA</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
@@ -27,8 +33,33 @@
         <div id="unity-build-title">PAMANA</div>
       </div>
     </div>
+
+    <!-- Floating Fullscreen Button (Visible on Mobile) -->
+    <button id="mobile-fullscreen-btn" type="button" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
+      <svg viewBox="0 0 24 24">
+        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+      </svg>
+    </button>
+
+    <!-- Rotate Device Overlay for Mobile Portrait Mode -->
+    <div id="rotate-overlay">
+      <div class="rotate-icon-container">
+        <svg viewBox="0 0 24 24" fill="#f5eedc" width="100%" height="100%">
+          <path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/>
+        </svg>
+      </div>
+      <div class="rotate-title">Rotate Your Device</div>
+      <div class="rotate-desc">PAMANA is best experienced in Landscape mode. Please turn your device horizontally.</div>
+      <button class="fullscreen-now-btn" id="btn-request-fullscreen" type="button">ENTER FULLSCREEN</button>
+      <div id="inapp-browser-hint" class="inapp-browser-hint">
+        Tip: If opened in Messenger or Instagram, tap <strong>&vellip;</strong> and select <strong>"Open in Chrome/Safari"</strong> for true fullscreen.
+      </div>
+    </div>
+
     <script>
       var canvas = document.querySelector("#unity-canvas");
+      var container = document.querySelector("#unity-container");
+      var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
       function unityShowBanner(msg, type) {
         var warningBanner = document.querySelector("#unity-warning");
@@ -49,31 +80,87 @@
         updateBannerVisibility();
       }
 
+      function lockOrientationLandscape() {
+        try {
+          if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(function() {});
+          } else if (screen.lockOrientation) {
+            screen.lockOrientation('landscape');
+          } else if (screen.webkitLockOrientation) {
+            screen.webkitLockOrientation('landscape');
+          } else if (screen.mozLockOrientation) {
+            screen.mozLockOrientation('landscape');
+          }
+        } catch(e) {}
+      }
+
+      function triggerFullscreenFlow() {
+        lockOrientationLandscape();
+        if (window.unityInstance) {
+          try {
+            window.unityInstance.SetFullscreen(1);
+            return;
+          } catch(e) {}
+        }
+        var docEl = document.documentElement;
+        var rfs = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+        if (rfs) {
+          rfs.call(docEl).catch(function() {});
+        }
+      }
+
+      // Check for in-app browsers
+      var ua = navigator.userAgent || navigator.vendor || window.opera || '';
+      if (/FBAN|FBAV|Messenger|Instagram|Line|Twitter/i.test(ua)) {
+        var hint = document.getElementById('inapp-browser-hint');
+        if (hint) hint.style.display = 'block';
+      }
+
+      // Mobile touch trigger
+      var hasInteracted = false;
+      function handleFirstTouch() {
+        if (hasInteracted) return;
+        hasInteracted = true;
+        lockOrientationLandscape();
+        if (isMobile) {
+          triggerFullscreenFlow();
+        }
+        window.removeEventListener('touchend', handleFirstTouch);
+        window.removeEventListener('pointerup', handleFirstTouch);
+      }
+      window.addEventListener('touchend', handleFirstTouch, { passive: true });
+      window.addEventListener('pointerup', handleFirstTouch, { passive: true });
+
+      document.getElementById('mobile-fullscreen-btn').onclick = function(e) {
+        e.stopPropagation();
+        triggerFullscreenFlow();
+      };
+      document.getElementById('btn-request-fullscreen').onclick = function(e) {
+        e.stopPropagation();
+        triggerFullscreenFlow();
+      };
+
+      if (isMobile) {
+        container.className = "unity-mobile";
+        canvas.className = "unity-mobile";
+      } else {
+        canvas.style.width = "1280px";
+        canvas.style.height = "720px";
+      }
+
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/WebGL.loader.js";
+      var loaderUrl = buildUrl + "/docs.loader.js";
       var config = {
         arguments: [],
-        dataUrl: buildUrl + "/WebGL.data.unityweb",
-        frameworkUrl: buildUrl + "/WebGL.framework.js.unityweb",
-        codeUrl: buildUrl + "/WebGL.wasm.unityweb",
+        dataUrl: buildUrl + "/docs.data.unityweb",
+        frameworkUrl: buildUrl + "/docs.framework.js.unityweb",
+        codeUrl: buildUrl + "/docs.wasm.unityweb",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "UPHSL CCS",
         productName: "PAMANA",
         productVersion: "0.1.0",
         showBanner: unityShowBanner,
       };
-
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-        document.querySelector("#unity-container").className = "unity-mobile";
-        canvas.className = "unity-mobile";
-      } else {
-        canvas.style.width = "1280px";
-        canvas.style.height = "720px";
-      }
 
       document.querySelector("#unity-loading-bar").style.display = "block";
 
@@ -97,4 +184,3 @@
     </script>
   </body>
 </html>
-
