@@ -32,12 +32,13 @@ namespace TopDownGame
         [SerializeField] private TMP_Text messageText;
 
         [Header("Animation Settings")]
-        [SerializeField] private float animDuration = 0.32f;
+        [SerializeField] private float animDuration = 0.15f;
 
         private readonly Queue<BannerRequest> _requestQueue = new Queue<BannerRequest>();
         private Coroutine _queueCoroutine;
         private BannerRequest _lastRequest;
         private float _lastRequestTime = -99f;
+        private bool _skipCurrentHold = false;
 
         private readonly Vector2 _targetPos = new Vector2(0f, 0f);
         private readonly Vector2 _hiddenPos = new Vector2(0f, 190f);
@@ -72,7 +73,7 @@ namespace TopDownGame
             }
         }
 
-        public static void Show(string title, string message, float duration = 4.5f, Color? accentColor = null, string icon = "!")
+        public static void Show(string title, string message, float duration = 2.0f, Color? accentColor = null, string icon = "!")
         {
             var banner = Instance;
             if (banner == null)
@@ -97,19 +98,44 @@ namespace TopDownGame
 
         public void EnqueueNotification(string title, string message, float duration, Color accentColor, string icon = "!")
         {
-            // Debounce identical notifications within 1 second
+            // Debounce identical notifications within 1.2 seconds to prevent rapid double-click stutter
             if (string.Equals(_lastRequest.title, title, System.StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(_lastRequest.message, message, System.StringComparison.OrdinalIgnoreCase) &&
-                (Time.unscaledTime - _lastRequestTime) < 1.0f)
+                (Time.unscaledTime - _lastRequestTime) < 1.2f)
             {
                 return;
             }
+
+            // If the incoming notification is a counter/progression update (like "PLAQUE STUDIED"),
+            // remove any pending older counter notifications in queue so we jump straight to the latest count!
+            if (title.StartsWith("PLAQUE", System.StringComparison.OrdinalIgnoreCase))
+            {
+                var filtered = new List<BannerRequest>();
+                while (_requestQueue.Count > 0)
+                {
+                    var item = _requestQueue.Dequeue();
+                    if (!item.title.StartsWith("PLAQUE", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        filtered.Add(item);
+                    }
+                }
+                foreach (var f in filtered) _requestQueue.Enqueue(f);
+            }
+
+            // Cap queue size to maximum 2 items so backlogs never build up
+            while (_requestQueue.Count >= 2)
+            {
+                _requestQueue.Dequeue(); // drop oldest stale notification
+            }
+
+            // Responsive duration: scale down long durations so interactions feel fast and snappy
+            float effectiveDuration = Mathf.Clamp(duration * 0.50f, 1.4f, 2.6f);
 
             var req = new BannerRequest
             {
                 title = title,
                 message = message,
-                duration = Mathf.Max(2.5f, duration),
+                duration = effectiveDuration,
                 accentColor = NormalizeTextColor(accentColor),
                 icon = icon
             };
@@ -118,6 +144,9 @@ namespace TopDownGame
             _lastRequestTime = Time.unscaledTime;
 
             _requestQueue.Enqueue(req);
+
+            // Signal the currently running hold to immediately fast-forward so the new notification displays without lag
+            _skipCurrentHold = true;
 
             if (_queueCoroutine == null)
             {
@@ -142,58 +171,102 @@ namespace TopDownGame
             gameObject.SetActive(true);
             if (bannerGroup != null) bannerGroup.blocksRaycasts = false;
 
+            bool isFirst = true;
+
             while (_requestQueue.Count > 0)
             {
                 var current = _requestQueue.Dequeue();
 
-                if (titleText != null)
+                if (isFirst)
                 {
-                    titleText.text = current.title.ToUpper();
-                    titleText.color = current.accentColor;
+                    // Set content before initial slide down
+                    if (titleText != null)
+                    {
+                        titleText.text = current.title.ToUpper();
+                        titleText.color = current.accentColor;
+                    }
+
+                    if (messageText != null)
+                    {
+                        messageText.text = current.message;
+                        messageText.color = DefaultBodyBrown;
+                    }
+
+                    // Fast Slide Down (0.15s EaseOutCubic)
+                    float elapsed = 0f;
+                    Vector2 startPos = bannerRect != null ? bannerRect.anchoredPosition : _hiddenPos;
+                    while (elapsed < animDuration)
+                    {
+                        elapsed += Time.unscaledDeltaTime;
+                        float t = Mathf.Clamp01(elapsed / animDuration);
+                        float easeOut = 1f - Mathf.Pow(1f - t, 3);
+
+                        if (bannerGroup != null) bannerGroup.alpha = t;
+                        if (bannerRect != null) bannerRect.anchoredPosition = Vector2.Lerp(startPos, _targetPos, easeOut);
+
+                        yield return null;
+                    }
+                    isFirst = false;
                 }
-
-                if (messageText != null)
+                else
                 {
-                    messageText.text = current.message;
-                    messageText.color = DefaultBodyBrown;
-                }
+                    // IN-PLACE FAST CROSS-FADE PUNCH (Only 0.12s total for rapid succession)
+                    // Quick fade out text (0.06s)
+                    float fadeOutElapsed = 0f;
+                    while (fadeOutElapsed < 0.06f)
+                    {
+                        fadeOutElapsed += Time.unscaledDeltaTime;
+                        float t = Mathf.Clamp01(fadeOutElapsed / 0.06f);
+                        if (bannerGroup != null) bannerGroup.alpha = Mathf.Lerp(1f, 0.25f, t);
+                        yield return null;
+                    }
 
-                // Slide Down (EaseOutCubic)
-                float elapsed = 0f;
-                Vector2 startPos = bannerRect != null ? bannerRect.anchoredPosition : _hiddenPos;
-                while (elapsed < animDuration)
-                {
-                    elapsed += Time.unscaledDeltaTime;
-                    float t = Mathf.Clamp01(elapsed / animDuration);
-                    float easeOut = 1f - Mathf.Pow(1f - t, 3);
+                    // Update content immediately
+                    if (titleText != null)
+                    {
+                        titleText.text = current.title.ToUpper();
+                        titleText.color = current.accentColor;
+                    }
 
-                    if (bannerGroup != null) bannerGroup.alpha = t;
-                    if (bannerRect != null) bannerRect.anchoredPosition = Vector2.Lerp(startPos, _targetPos, easeOut);
+                    if (messageText != null)
+                    {
+                        messageText.text = current.message;
+                        messageText.color = DefaultBodyBrown;
+                    }
 
-                    yield return null;
+                    // Quick fade in text (0.06s)
+                    float fadeInElapsed = 0f;
+                    while (fadeInElapsed < 0.06f)
+                    {
+                        fadeInElapsed += Time.unscaledDeltaTime;
+                        float t = Mathf.Clamp01(fadeInElapsed / 0.06f);
+                        if (bannerGroup != null) bannerGroup.alpha = Mathf.Lerp(0.25f, 1f, t);
+                        yield return null;
+                    }
                 }
 
                 if (bannerGroup != null) bannerGroup.alpha = 1f;
                 if (bannerRect != null) bannerRect.anchoredPosition = _targetPos;
 
-                // Hold visible on screen
-                yield return new WaitForSecondsRealtime(current.duration);
+                // Dynamic hold duration: if notifications are queued behind this, compress hold to 0.85s
+                float holdTime = _requestQueue.Count > 0 ? 0.85f : current.duration;
 
-                // If another notification is waiting, slide up briefly and continue
-                if (_requestQueue.Count > 0)
+                _skipCurrentHold = false;
+                float holdElapsed = 0f;
+                while (holdElapsed < holdTime)
                 {
-                    elapsed = 0f;
-                    while (elapsed < 0.20f)
+                    holdElapsed += Time.unscaledDeltaTime;
+                    // If player triggered another interaction while this is showing,
+                    // allow a brief moment (0.35s) so the user registers the current notification, then switch instantly!
+                    if (_skipCurrentHold && holdElapsed >= 0.35f)
                     {
-                        elapsed += Time.unscaledDeltaTime;
-                        float t = Mathf.Clamp01(elapsed / 0.20f);
-                        if (bannerGroup != null) bannerGroup.alpha = 1f - (t * 0.7f);
-                        yield return null;
+                        break;
                     }
+                    yield return null;
                 }
             }
 
-            // Slide Up & Hide (EaseInCubic)
+            // Fast Slide Up & Hide (0.15s EaseInCubic)
             float outElapsed = 0f;
             Vector2 curPos = bannerRect != null ? bannerRect.anchoredPosition : _targetPos;
             while (outElapsed < animDuration)
@@ -333,7 +406,7 @@ namespace TopDownGame
             mTmp.fontSize = 17.5f;
             mTmp.fontStyle = FontStyles.Bold;
             mTmp.alignment = TextAlignmentOptions.Center;
-            mTmp.enableWordWrapping = true;
+            mTmp.textWrappingMode = TextWrappingModes.Normal;
             mTmp.color = DefaultBodyBrown;
             mTmp.raycastTarget = false;
 
