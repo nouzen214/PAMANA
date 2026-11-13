@@ -32,6 +32,14 @@ mergeInto(LibraryManager.library, {
                 return;
             }
 
+            // Google OAuth strictly forbids HTTP on remote origins (only localhost/127.0.0.1 may use HTTP)
+            if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                var httpsMsg = "Google Sign-In requires HTTPS on remote devices (" + window.location.hostname + "). Please host via HTTPS (e.g. GitHub Pages).";
+                console.error("[FirebaseWebGL] " + httpsMsg);
+                sendToUnity("OnGoogleSignInFailure", httpsMsg);
+                return;
+            }
+
             var provider = new firebase.auth.GoogleAuthProvider();
             provider.addScope('email');
             provider.addScope('profile');
@@ -61,7 +69,20 @@ mergeInto(LibraryManager.library, {
                 })
                 .catch(function (error) {
                     console.error("[FirebaseWebGL] Google sign-in failed:", error);
-                    sendToUnity("OnGoogleSignInFailure", error.message || "Google sign-in was cancelled or failed.");
+                    var code = error.code || "";
+                    var msg = error.message || "Google sign-in was cancelled or failed.";
+
+                    if (code === 'auth/unauthorized-domain') {
+                        msg = "Domain '" + window.location.hostname + "' is not authorized. Add it to Firebase Console -> Authentication -> Settings -> Authorized domains.";
+                    } else if (code === 'auth/popup-blocked') {
+                        msg = "Pop-up was blocked by your browser. Please allow pop-ups for this site in your phone/browser settings.";
+                    } else if (code === 'auth/popup-closed-by-user') {
+                        msg = "Google sign-in window was closed before completing.";
+                    } else if (code === 'auth/network-request-failed') {
+                        msg = "Network connection failed. Please check your internet connection.";
+                    }
+
+                    sendToUnity("OnGoogleSignInFailure", msg);
                 });
         } catch (e) {
             console.error("[FirebaseWebGL] Exception during Google sign-in:", e);
