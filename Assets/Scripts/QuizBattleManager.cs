@@ -898,6 +898,7 @@ namespace TopDownGame
 
                 if (defeatModal != null)
                 {
+                    ApplyDefeatModalTheme(false);
                     var titleText = defeatModal.transform.Find("Window/Title")?.GetComponent<TMP_Text>();
                     if (titleText != null) titleText.text = "TRIAL FAILED - 0 ARTIFACTS";
                     var bodyText = defeatModal.transform.Find("Window/Body")?.GetComponent<TMP_Text>();
@@ -942,6 +943,7 @@ namespace TopDownGame
 
                 if (defeatModal != null)
                 {
+                    ApplyDefeatModalTheme(true);
                     var titleText = defeatModal.transform.Find("Window/Title")?.GetComponent<TMP_Text>();
                     if (titleText != null) titleText.text = "TRIAL ENDED";
                     var bodyText = defeatModal.transform.Find("Window/Body")?.GetComponent<TMP_Text>();
@@ -968,6 +970,7 @@ namespace TopDownGame
 
                 if (defeatModal != null)
                 {
+                    ApplyDefeatModalTheme(false);
                     var titleText = defeatModal.transform.Find("Window/Title")?.GetComponent<TMP_Text>();
                     if (titleText != null) titleText.text = "TRIAL FAILED - 0 ARTIFACTS";
                     var bodyText = defeatModal.transform.Find("Window/Body")?.GetComponent<TMP_Text>();
@@ -982,6 +985,33 @@ namespace TopDownGame
                 }
             }
             Debug.Log("[QuizBattleManager] Battle LOST! Player health depleted!");
+        }
+
+        private void ApplyDefeatModalTheme(bool isTrialEnded)
+        {
+            if (defeatModal == null) return;
+            var windowImg = defeatModal.transform.Find("Window")?.GetComponent<UnityEngine.UI.Image>();
+            string framePath = isTrialEnded ? "UI/TrialEndedModal_Frame" : "UI/DefeatModal_Frame";
+            string normPath = isTrialEnded ? "UI/Btn_TrialEnded_Return_Normal" : "UI/Btn_ReturnToHallway_Normal";
+            string pressPath = isTrialEnded ? "UI/Btn_TrialEnded_Return_Pressed" : "UI/Btn_ReturnToHallway_Pressed";
+
+            var frameSprite = Resources.Load<Sprite>(framePath);
+            if (windowImg != null && frameSprite != null) windowImg.sprite = frameSprite;
+
+            if (defeatExitButton != null)
+            {
+                var btnImg = defeatExitButton.GetComponent<UnityEngine.UI.Image>();
+                var normSprite = Resources.Load<Sprite>(normPath);
+                var pressSprite = Resources.Load<Sprite>(pressPath);
+                if (btnImg != null && normSprite != null) btnImg.sprite = normSprite;
+
+                defeatExitButton.transition = UnityEngine.UI.Selectable.Transition.SpriteSwap;
+                var ss = new UnityEngine.UI.SpriteState();
+                ss.highlightedSprite = normSprite;
+                ss.pressedSprite = pressSprite;
+                ss.selectedSprite = normSprite;
+                defeatExitButton.spriteState = ss;
+            }
         }
 
         private void Update()
