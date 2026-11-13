@@ -1286,14 +1286,14 @@ namespace TopDownGame.Editor
             dimmerBtn.onClick = new Button.ButtonClickedEvent();
             UnityEditor.Events.UnityEventTools.AddPersistentListener(dimmerBtn.onClick, modalComp.CloseBook);
 
-            // Book Container (size 840 x 702 maintaining 670:560 ratio)
+            // Book Container (size 1232 x 1030 maintaining 670:560 ratio)
             var bookContObj = GetOrCreateChild(modalObj.transform, "BookContainer");
             var bookContRt = bookContObj.GetComponent<RectTransform>();
             bookContRt.anchorMin = new Vector2(0.5f, 0.5f);
             bookContRt.anchorMax = new Vector2(0.5f, 0.5f);
             bookContRt.pivot = new Vector2(0.5f, 0.5f);
             bookContRt.anchoredPosition = Vector2.zero;
-            bookContRt.sizeDelta = new Vector2(840f, 702f);
+            bookContRt.sizeDelta = new Vector2(1232f, 1030f);
 
             // Open Book Frame
             var bookFrameObj = GetOrCreateChild(bookContObj.transform, "BookFrame");
@@ -1317,8 +1317,8 @@ namespace TopDownGame.Editor
             closeRt.anchorMin = new Vector2(1f, 1f);
             closeRt.anchorMax = new Vector2(1f, 1f);
             closeRt.pivot = new Vector2(1f, 1f);
-            closeRt.anchoredPosition = new Vector2(-12f, -12f);
-            closeRt.sizeDelta = new Vector2(40f, 40f);
+            closeRt.anchoredPosition = new Vector2(-18f, -18f);
+            closeRt.sizeDelta = new Vector2(54f, 54f);
 
             var closeImg = closeObj.GetComponent<Image>();
             if (closeImg == null) closeImg = closeObj.AddComponent<Image>();
@@ -1338,8 +1338,8 @@ namespace TopDownGame.Editor
             prevRt.anchorMin = new Vector2(0.5f, 0.5f);
             prevRt.anchorMax = new Vector2(0.5f, 0.5f);
             prevRt.pivot = new Vector2(0.5f, 0.5f);
-            prevRt.anchoredPosition = new Vector2(-485f, -10f);
-            prevRt.sizeDelta = new Vector2(96f, 120f);
+            prevRt.anchoredPosition = new Vector2(-660f, -10f);
+            prevRt.sizeDelta = new Vector2(104f, 130f);
 
             var prevImg = prevObj.GetComponent<Image>();
             if (prevImg == null) prevImg = prevObj.AddComponent<Image>();
@@ -1364,8 +1364,8 @@ namespace TopDownGame.Editor
             nextRt.anchorMin = new Vector2(0.5f, 0.5f);
             nextRt.anchorMax = new Vector2(0.5f, 0.5f);
             nextRt.pivot = new Vector2(0.5f, 0.5f);
-            nextRt.anchoredPosition = new Vector2(485f, -10f);
-            nextRt.sizeDelta = new Vector2(96f, 120f);
+            nextRt.anchoredPosition = new Vector2(660f, -10f);
+            nextRt.sizeDelta = new Vector2(104f, 130f);
 
             var nextImg = nextObj.GetComponent<Image>();
             if (nextImg == null) nextImg = nextObj.AddComponent<Image>();
@@ -1383,16 +1383,16 @@ namespace TopDownGame.Editor
             // Left Page Container
             var leftContObj = GetOrCreateChild(bookContObj.transform, "LeftPageContainer");
             var leftContRt = leftContObj.GetComponent<RectTransform>();
-            leftContRt.anchorMin = new Vector2(0.06f, 0.10f);
-            leftContRt.anchorMax = new Vector2(0.48f, 0.88f);
+            leftContRt.anchorMin = new Vector2(0.08f, 0.18f);
+            leftContRt.anchorMax = new Vector2(0.475f, 0.85f);
             leftContRt.offsetMin = Vector2.zero;
             leftContRt.offsetMax = Vector2.zero;
 
             // Right Page Container
             var rightContObj = GetOrCreateChild(bookContObj.transform, "RightPageContainer");
             var rightContRt = rightContObj.GetComponent<RectTransform>();
-            rightContRt.anchorMin = new Vector2(0.52f, 0.10f);
-            rightContRt.anchorMax = new Vector2(0.94f, 0.88f);
+            rightContRt.anchorMin = new Vector2(0.525f, 0.18f);
+            rightContRt.anchorMax = new Vector2(0.92f, 0.85f);
             rightContRt.offsetMin = Vector2.zero;
             rightContRt.offsetMax = Vector2.zero;
 

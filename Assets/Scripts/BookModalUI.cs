@@ -311,9 +311,9 @@ namespace TopDownGame
                 // Left Page
                 if (leftHeaderText != null)
                 {
-                    leftHeaderText.text = $"<align=center><color=#8B4513><size=13><b>— {curTopic.topicTag} —</b></size></color>\n" +
-                                          $"<size=18.5><b><color=#3B1E08>{curTopic.topicTitle}</color></b></size>\n" +
-                                          $"<size=14><color=#7D4E24><i>{curTopic.leftSubtitle}</i></color></size></align>";
+                    leftHeaderText.text = $"<align=center><color=#8B4513><size=17><b>— {curTopic.topicTag} —</b></size></color>\n" +
+                                          $"<size=23><b><color=#2A1405>{curTopic.topicTitle}</color></b></size>\n" +
+                                          $"<size=18><color=#663A18><i>{curTopic.leftSubtitle}</i></color></size></align>";
                 }
                 if (leftBodyText != null)
                 {
@@ -321,14 +321,14 @@ namespace TopDownGame
                 }
                 if (leftFooterText != null)
                 {
-                    leftFooterText.text = $"<align=center><size=14><b><color=#4A2810>— Page {leftPageNum} —</color></b></size></align>";
+                    leftFooterText.text = $"<align=center><size=17><b><color=#4A2810>— Page {leftPageNum} —</color></b></size></align>";
                 }
 
                 // Right Page
                 if (rightHeaderText != null)
                 {
-                    rightHeaderText.text = $"<align=center><color=#8B4513><size=13><b>— {curTopic.topicTag} CONTINUED —</b></size></color>\n" +
-                                           $"<size=17.5><b><color=#3B1E08>{curTopic.rightSubtitle}</color></b></size></align>";
+                    rightHeaderText.text = $"<align=center><color=#8B4513><size=17><b>— {curTopic.topicTag} CONTINUED —</b></size></color>\n" +
+                                           $"<size=22><b><color=#2A1405>{curTopic.rightSubtitle}</color></b></size></align>";
                 }
                 if (rightBodyText != null)
                 {
@@ -336,14 +336,14 @@ namespace TopDownGame
                 }
                 if (rightFooterText != null)
                 {
-                    rightFooterText.text = $"<align=center><size=14><b><color=#4A2810>— Page {rightPageNum} —</color></b></size></align>";
+                    rightFooterText.text = $"<align=center><size=17><b><color=#4A2810>— Page {rightPageNum} —</color></b></size></align>";
                 }
             }
 
             // Top Badge
             if (topTopicBadgeText != null)
             {
-                topTopicBadgeText.text = $"<size=15.5><b><color=#FFD700>TOPIC </color><color=#FFF4D0>{currentPage} / {maxPages}</color></b></size>";
+                topTopicBadgeText.text = $"<size=18><b><color=#FFD700>TOPIC </color><color=#FFF4D0>{currentPage} / {maxPages}</color></b></size>";
             }
 
             // Record topic review for progression & battle unlock
@@ -423,24 +423,73 @@ namespace TopDownGame
         {
             if (leftPageContainer == null || rightPageContainer == null) return;
 
+            // Enforce enlarged BookContainer dimensions
+            if (bookContainer != null)
+            {
+                bookContainer.sizeDelta = new Vector2(1232f, 1030f);
+            }
+
+            // Enforce expanded Left and Right page parchment areas
+            leftPageContainer.anchorMin = new Vector2(0.08f, 0.18f);
+            leftPageContainer.anchorMax = new Vector2(0.475f, 0.85f);
+            leftPageContainer.offsetMin = Vector2.zero;
+            leftPageContainer.offsetMax = Vector2.zero;
+
+            rightPageContainer.anchorMin = new Vector2(0.525f, 0.18f);
+            rightPageContainer.anchorMax = new Vector2(0.92f, 0.85f);
+            rightPageContainer.offsetMin = Vector2.zero;
+            rightPageContainer.offsetMax = Vector2.zero;
+
             // Ensure Left Page Text Elements
             if (leftHeaderText == null)
             {
                 var tr = leftPageContainer.Find("Header");
                 if (tr != null) leftHeaderText = tr.GetComponent<TMP_Text>();
-                else leftHeaderText = CreateTMP("Header", leftPageContainer, new Vector2(0f, 0.76f), new Vector2(1f, 1f), 17f);
+                else leftHeaderText = CreateTMP("Header", leftPageContainer, new Vector2(0f, 0.80f), new Vector2(1f, 1f), 22f);
             }
+            if (leftHeaderText != null)
+            {
+                var rt = leftHeaderText.rectTransform;
+                rt.anchorMin = new Vector2(0f, 0.80f);
+                rt.anchorMax = new Vector2(1f, 1f);
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+            }
+
             if (leftBodyText == null)
             {
                 var tr = leftPageContainer.Find("Body");
                 if (tr != null) leftBodyText = tr.GetComponent<TMP_Text>();
-                else leftBodyText = CreateTMP("Body", leftPageContainer, new Vector2(0f, 0.08f), new Vector2(1f, 0.76f), 15.5f, TextAlignmentOptions.TopLeft, true);
+                else leftBodyText = CreateTMP("Body", leftPageContainer, new Vector2(0f, 0.07f), new Vector2(1f, 0.80f), 24.5f, TextAlignmentOptions.TopLeft, true);
             }
+            if (leftBodyText != null)
+            {
+                var rt = leftBodyText.rectTransform;
+                rt.anchorMin = new Vector2(0f, 0.07f);
+                rt.anchorMax = new Vector2(1f, 0.80f);
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+                leftBodyText.enableAutoSizing = true;
+                leftBodyText.fontSizeMin = 18f;
+                leftBodyText.fontSizeMax = 24.5f;
+                leftBodyText.lineSpacing = 6f;
+                leftBodyText.paragraphSpacing = 10f;
+                leftBodyText.color = new Color(0.12f, 0.07f, 0.03f, 1f);
+            }
+
             if (leftFooterText == null)
             {
                 var tr = leftPageContainer.Find("Footer");
                 if (tr != null) leftFooterText = tr.GetComponent<TMP_Text>();
-                else leftFooterText = CreateTMP("Footer", leftPageContainer, new Vector2(0f, 0f), new Vector2(1f, 0.08f), 14f, TextAlignmentOptions.Center);
+                else leftFooterText = CreateTMP("Footer", leftPageContainer, new Vector2(0f, 0f), new Vector2(1f, 0.07f), 17f, TextAlignmentOptions.Center);
+            }
+            if (leftFooterText != null)
+            {
+                var rt = leftFooterText.rectTransform;
+                rt.anchorMin = new Vector2(0f, 0f);
+                rt.anchorMax = new Vector2(1f, 0.07f);
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
             }
 
             // Ensure Right Page Text Elements
@@ -448,26 +497,87 @@ namespace TopDownGame
             {
                 var tr = rightPageContainer.Find("Header");
                 if (tr != null) rightHeaderText = tr.GetComponent<TMP_Text>();
-                else rightHeaderText = CreateTMP("Header", rightPageContainer, new Vector2(0f, 0.79f), new Vector2(1f, 1f), 17f);
+                else rightHeaderText = CreateTMP("Header", rightPageContainer, new Vector2(0f, 0.84f), new Vector2(1f, 1f), 22f);
             }
+            if (rightHeaderText != null)
+            {
+                var rt = rightHeaderText.rectTransform;
+                rt.anchorMin = new Vector2(0f, 0.84f);
+                rt.anchorMax = new Vector2(1f, 1f);
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+            }
+
             if (rightBodyText == null)
             {
                 var tr = rightPageContainer.Find("Body");
                 if (tr != null) rightBodyText = tr.GetComponent<TMP_Text>();
-                else rightBodyText = CreateTMP("Body", rightPageContainer, new Vector2(0f, 0.08f), new Vector2(1f, 0.79f), 15.5f, TextAlignmentOptions.TopLeft, true);
+                else rightBodyText = CreateTMP("Body", rightPageContainer, new Vector2(0f, 0.07f), new Vector2(1f, 0.84f), 24.5f, TextAlignmentOptions.TopLeft, true);
             }
+            if (rightBodyText != null)
+            {
+                var rt = rightBodyText.rectTransform;
+                rt.anchorMin = new Vector2(0f, 0.07f);
+                rt.anchorMax = new Vector2(1f, 0.84f);
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+                rightBodyText.enableAutoSizing = true;
+                rightBodyText.fontSizeMin = 18f;
+                rightBodyText.fontSizeMax = 24.5f;
+                rightBodyText.lineSpacing = 6f;
+                rightBodyText.paragraphSpacing = 10f;
+                rightBodyText.color = new Color(0.12f, 0.07f, 0.03f, 1f);
+            }
+
             if (rightFooterText == null)
             {
                 var tr = rightPageContainer.Find("Footer");
                 if (tr != null) rightFooterText = tr.GetComponent<TMP_Text>();
-                else rightFooterText = CreateTMP("Footer", rightPageContainer, new Vector2(0f, 0f), new Vector2(1f, 0.08f), 14f, TextAlignmentOptions.Center);
+                else rightFooterText = CreateTMP("Footer", rightPageContainer, new Vector2(0f, 0f), new Vector2(1f, 0.07f), 17f, TextAlignmentOptions.Center);
+            }
+            if (rightFooterText != null)
+            {
+                var rt = rightFooterText.rectTransform;
+                rt.anchorMin = new Vector2(0f, 0f);
+                rt.anchorMax = new Vector2(1f, 0.07f);
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+            }
+
+            // Position and size buttons
+            if (prevPageButton != null)
+            {
+                var rt = prevPageButton.GetComponent<RectTransform>();
+                rt.anchoredPosition = new Vector2(-660f, -10f);
+                rt.sizeDelta = new Vector2(104f, 130f);
+            }
+            if (nextPageButton != null)
+            {
+                var rt = nextPageButton.GetComponent<RectTransform>();
+                rt.anchoredPosition = new Vector2(660f, -10f);
+                rt.sizeDelta = new Vector2(104f, 130f);
+            }
+            if (closeButton != null)
+            {
+                var rt = closeButton.GetComponent<RectTransform>();
+                rt.anchoredPosition = new Vector2(-18f, -18f);
+                rt.sizeDelta = new Vector2(54f, 54f);
             }
 
             // Ensure Top Badge with decorative background
-            if (topTopicBadgeText == null && bookContainer != null)
+            if (bookContainer != null)
             {
                 var tr = bookContainer.Find("TopicBadge");
-                if (tr != null) topTopicBadgeText = tr.GetComponentInChildren<TMP_Text>();
+                if (tr != null)
+                {
+                    topTopicBadgeText = tr.GetComponentInChildren<TMP_Text>();
+                    var bRt = tr.GetComponent<RectTransform>();
+                    if (bRt != null)
+                    {
+                        bRt.anchoredPosition = new Vector2(0f, 16f);
+                        bRt.sizeDelta = new Vector2(320f, 44f);
+                    }
+                }
                 else
                 {
                     var badgeObj = new GameObject("TopicBadge", typeof(RectTransform), typeof(Image));
@@ -476,13 +586,13 @@ namespace TopDownGame
                     bRt.anchorMin = new Vector2(0.5f, 1f);
                     bRt.anchorMax = new Vector2(0.5f, 1f);
                     bRt.pivot = new Vector2(0.5f, 0f);
-                    bRt.anchoredPosition = new Vector2(0f, 14f);
-                    bRt.sizeDelta = new Vector2(280f, 38f);
+                    bRt.anchoredPosition = new Vector2(0f, 16f);
+                    bRt.sizeDelta = new Vector2(320f, 44f);
 
                     var bImg = badgeObj.GetComponent<Image>();
                     bImg.color = new Color(0.16f, 0.09f, 0.05f, 0.94f); // Deep wood-brown pill banner
 
-                    topTopicBadgeText = CreateTMP("Text", badgeObj.transform, Vector2.zero, Vector2.one, 15f, TextAlignmentOptions.Center);
+                    topTopicBadgeText = CreateTMP("Text", badgeObj.transform, Vector2.zero, Vector2.one, 18f, TextAlignmentOptions.Center);
                 }
             }
         }
@@ -543,7 +653,7 @@ namespace TopDownGame
             var dimmerBtn = dimmerObj.GetComponent<Button>();
             dimmerBtn.transition = Selectable.Transition.None;
 
-            // Book Container (size 1140 x 953 maintaining 670:560 ratio)
+            // Book Container (size 1232 x 1030 maintaining 670:560 ratio)
             var bookContObj = new GameObject("BookContainer", typeof(RectTransform));
             bookContObj.transform.SetParent(modalObj.transform, false);
             var bookContRt = bookContObj.GetComponent<RectTransform>();
@@ -551,7 +661,7 @@ namespace TopDownGame
             bookContRt.anchorMax = new Vector2(0.5f, 0.5f);
             bookContRt.pivot = new Vector2(0.5f, 0.5f);
             bookContRt.anchoredPosition = Vector2.zero;
-            bookContRt.sizeDelta = new Vector2(1140f, 953f);
+            bookContRt.sizeDelta = new Vector2(1232f, 1030f);
 
             // Open Book Frame
             var bookFrameObj = new GameObject("BookFrame", typeof(RectTransform), typeof(Image));
@@ -577,8 +687,8 @@ namespace TopDownGame
             closeRt.anchorMin = new Vector2(1f, 1f);
             closeRt.anchorMax = new Vector2(1f, 1f);
             closeRt.pivot = new Vector2(1f, 1f);
-            closeRt.anchoredPosition = new Vector2(-16f, -16f);
-            closeRt.sizeDelta = new Vector2(46f, 46f);
+            closeRt.anchoredPosition = new Vector2(-18f, -18f);
+            closeRt.sizeDelta = new Vector2(54f, 54f);
 
             var closeImg = closeObj.GetComponent<Image>();
 #if UNITY_EDITOR
@@ -597,7 +707,7 @@ namespace TopDownGame
             prevRt.anchorMin = new Vector2(0.5f, 0.5f);
             prevRt.anchorMax = new Vector2(0.5f, 0.5f);
             prevRt.pivot = new Vector2(0.5f, 0.5f);
-            prevRt.anchoredPosition = new Vector2(-650f, -10f);
+            prevRt.anchoredPosition = new Vector2(-660f, -10f);
             prevRt.sizeDelta = new Vector2(104f, 130f);
 
             var prevImg = prevObj.GetComponent<Image>();
@@ -623,7 +733,7 @@ namespace TopDownGame
             nextRt.anchorMin = new Vector2(0.5f, 0.5f);
             nextRt.anchorMax = new Vector2(0.5f, 0.5f);
             nextRt.pivot = new Vector2(0.5f, 0.5f);
-            nextRt.anchoredPosition = new Vector2(650f, -10f);
+            nextRt.anchoredPosition = new Vector2(660f, -10f);
             nextRt.sizeDelta = new Vector2(104f, 130f);
 
             var nextImg = nextObj.GetComponent<Image>();
@@ -641,8 +751,8 @@ namespace TopDownGame
             var leftContObj = new GameObject("LeftPageContainer", typeof(RectTransform));
             leftContObj.transform.SetParent(bookContObj.transform, false);
             var leftContRt = leftContObj.GetComponent<RectTransform>();
-            leftContRt.anchorMin = new Vector2(0.10f, 0.24f);
-            leftContRt.anchorMax = new Vector2(0.46f, 0.79f);
+            leftContRt.anchorMin = new Vector2(0.08f, 0.18f);
+            leftContRt.anchorMax = new Vector2(0.475f, 0.85f);
             leftContRt.offsetMin = Vector2.zero;
             leftContRt.offsetMax = Vector2.zero;
 
@@ -650,8 +760,8 @@ namespace TopDownGame
             var rightContObj = new GameObject("RightPageContainer", typeof(RectTransform));
             rightContObj.transform.SetParent(bookContObj.transform, false);
             var rightContRt = rightContObj.GetComponent<RectTransform>();
-            rightContRt.anchorMin = new Vector2(0.54f, 0.24f);
-            rightContRt.anchorMax = new Vector2(0.90f, 0.79f);
+            rightContRt.anchorMin = new Vector2(0.525f, 0.18f);
+            rightContRt.anchorMax = new Vector2(0.92f, 0.85f);
             rightContRt.offsetMin = Vector2.zero;
             rightContRt.offsetMax = Vector2.zero;
 
