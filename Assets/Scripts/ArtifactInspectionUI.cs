@@ -102,6 +102,7 @@ namespace TopDownGame
             if (closeArtifactDetailButton != null)
                 closeArtifactDetailButton.onClick.AddListener(OnDialogueArrowClicked);
 
+            EnsureBackgroundDismissButton();
             if (backgroundTapButton != null)
                 backgroundTapButton.onClick.AddListener(Close);
 
@@ -385,13 +386,125 @@ namespace TopDownGame
             }
         }
 
+        private Button _mobileLeaveButton;
+        private void EnsureMobileLeaveButton()
+        {
+            if (choiceContainer == null) return;
+
+            if (_mobileLeaveButton == null)
+            {
+                var existing = choiceContainer.transform.Find("MobileLeaveButton");
+                if (existing != null)
+                {
+                    _mobileLeaveButton = existing.GetComponent<Button>();
+                }
+                else if (inspectArtifactButton != null)
+                {
+                    var btnObj = Instantiate(inspectArtifactButton.gameObject, choiceContainer.transform);
+                    btnObj.name = "MobileLeaveButton";
+                    var txt = btnObj.GetComponentInChildren<TMP_Text>();
+                    if (txt != null)
+                    {
+                        txt.text = "Leave";
+                        txt.alignment = TextAlignmentOptions.Center;
+                    }
+                    _mobileLeaveButton = btnObj.GetComponent<Button>();
+                    _mobileLeaveButton.onClick.RemoveAllListeners();
+                    _mobileLeaveButton.onClick.AddListener(Close);
+                    btnObj.transform.SetAsLastSibling();
+                }
+            }
+
+            if (_mobileLeaveButton != null)
+            {
+                // Only show on Mobile platforms; PC remains untouched
+                _mobileLeaveButton.gameObject.SetActive(MobileControlsManager.IsMobileActive);
+            }
+        }
+
+        private Button _mobileDialogueCloseButton;
+        private void EnsureMobileDialogueCloseButton()
+        {
+            if (_dialogueBoxRt == null) EnsureDialogueBoxReferences();
+            if (_dialogueBoxRt == null) return;
+
+            if (_mobileDialogueCloseButton == null)
+            {
+                var existing = _dialogueBoxRt.Find("MobileDialogueCloseButton");
+                if (existing != null)
+                {
+                    _mobileDialogueCloseButton = existing.GetComponent<Button>();
+                }
+                else
+                {
+                    var btnObj = new GameObject("MobileDialogueCloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
+                    btnObj.transform.SetParent(_dialogueBoxRt, false);
+                    var rt = btnObj.GetComponent<RectTransform>();
+                    rt.anchorMin = new Vector2(1f, 1f);
+                    rt.anchorMax = new Vector2(1f, 1f);
+                    rt.pivot = new Vector2(1f, 1f);
+                    rt.anchoredPosition = new Vector2(-12f, -12f);
+                    rt.sizeDelta = new Vector2(36f, 36f);
+
+                    var img = btnObj.GetComponent<Image>();
+                    img.color = new Color(0.72f, 0.20f, 0.18f, 0.95f);
+                    var outline = btnObj.AddComponent<Outline>();
+                    outline.effectColor = new Color(0.35f, 0.08f, 0.06f, 0.9f);
+                    outline.effectDistance = new Vector2(1f, -1f);
+
+                    var txtObj = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+                    txtObj.transform.SetParent(btnObj.transform, false);
+                    var txtRt = txtObj.GetComponent<RectTransform>();
+                    txtRt.anchorMin = Vector2.zero;
+                    txtRt.anchorMax = Vector2.one;
+                    txtRt.offsetMin = Vector2.zero;
+                    txtRt.offsetMax = Vector2.zero;
+                    var tmp = txtObj.GetComponent<TextMeshProUGUI>();
+                    tmp.text = "X";
+                    tmp.fontSize = 20f;
+                    tmp.fontStyle = FontStyles.Bold;
+                    tmp.alignment = TextAlignmentOptions.Center;
+                    tmp.color = Color.white;
+
+                    _mobileDialogueCloseButton = btnObj.GetComponent<Button>();
+                    _mobileDialogueCloseButton.onClick.AddListener(Close);
+                }
+            }
+
+            if (_mobileDialogueCloseButton != null)
+            {
+                // Only show on Mobile platforms; PC remains untouched
+                _mobileDialogueCloseButton.gameObject.SetActive(MobileControlsManager.IsMobileActive);
+            }
+        }
+
+        private void EnsureBackgroundDismissButton()
+        {
+            if (backgroundTapButton == null && rootPanel != null)
+            {
+                var bg = rootPanel.transform.Find("BackgroundDismiss");
+                if (bg != null)
+                {
+                    backgroundTapButton = bg.GetComponent<Button>();
+                    if (backgroundTapButton == null)
+                    {
+                        backgroundTapButton = bg.gameObject.AddComponent<Button>();
+                        backgroundTapButton.transition = Selectable.Transition.None;
+                    }
+                }
+            }
+
+            if (backgroundTapButton != null)
+            {
+                backgroundTapButton.onClick.RemoveListener(Close);
+                backgroundTapButton.onClick.AddListener(Close);
+            }
+        }
+
         public void TriggerAdvanceDialogue()
         {
             if (!_isOpen) return;
-            if ((plaquePopup != null && plaquePopup.activeSelf) || (artifactPopup != null && artifactPopup.activeSelf))
-            {
-                OnDialogueArrowClicked();
-            }
+            OnDialogueArrowClicked();
         }
 
         private void Update()
@@ -489,9 +602,12 @@ namespace TopDownGame
 
         public void Open(ArtifactInteractable artifact)
         {
+            if (_isOpen) return; // Prevent duplicate re-entrant calls from overwriting _hiddenHudObjects
             if (Instance == null) Instance = this;
             _currentArtifact = artifact;
             _isOpen = true;
+
+            EnsureBackgroundDismissButton();
 
             // Pause player movement
             if (_playerMovement == null)
@@ -617,7 +733,7 @@ namespace TopDownGame
                     choiceRt.anchorMax = new Vector2(1f, 0f);
                     choiceRt.pivot = new Vector2(1f, 0f);
                     choiceRt.anchoredPosition = new Vector2(-65f, 335f);
-                    choiceRt.sizeDelta = new Vector2(360f, 220f);
+                    choiceRt.sizeDelta = MobileControlsManager.IsMobileActive ? new Vector2(360f, 280f) : new Vector2(360f, 220f);
                 }
                 choiceContainer.SetActive(true);
             }
@@ -634,6 +750,8 @@ namespace TopDownGame
             if (inspectArtifactButton != null) inspectArtifactButton.gameObject.SetActive(true);
             if (inspectPlaqueButton != null) inspectPlaqueButton.gameObject.SetActive(true);
 
+            EnsureMobileLeaveButton();
+            EnsureMobileDialogueCloseButton();
             EnsureDialogueArrowButton();
             CleanAllChoiceButtons();
             ApplyDialogueBoxMode(false);
@@ -1395,8 +1513,25 @@ namespace TopDownGame
             if (_playerMovement != null)
             {
                 _playerMovement.enabled = true;
+                var rb = _playerMovement.GetComponent<Rigidbody2D>();
+                if (rb != null) rb.linearVelocity = Vector2.zero;
                 var sr = _playerMovement.GetComponentInChildren<SpriteRenderer>(true);
                 if (sr != null) sr.enabled = true;
+            }
+
+            // GUARANTEE MOBILE CONTROLS RESTORATION:
+            // Explicitly assert that virtual joystick & interact button are active on mobile devices
+            if (MobileControlsManager.IsMobileActive)
+            {
+                if (MobileControlsManager.Instance != null)
+                {
+                    MobileControlsManager.Instance.ApplyVisibility(true);
+                }
+                else
+                {
+                    var mgr = FindFirstObjectByType<MobileControlsManager>(FindObjectsInactive.Include);
+                    if (mgr != null) mgr.ApplyVisibility(true);
+                }
             }
 
             _currentArtifact = null;

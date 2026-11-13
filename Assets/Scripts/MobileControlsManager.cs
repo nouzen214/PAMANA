@@ -22,6 +22,7 @@ namespace TopDownGame
         [Tooltip("The Book Button RectTransform. Position will adjust so it does not overlap with the E button.")]
         [SerializeField] private RectTransform bookButtonRT;
 
+        public static MobileControlsManager Instance { get; private set; }
         public static bool IsMobileActive { get; private set; }
 
 #if UNITY_WEBGL && !UNITY_EDITOR
@@ -30,6 +31,19 @@ namespace TopDownGame
 #endif
 
         private void Awake()
+        {
+            Instance = this;
+            EnsureReferences();
+            IsMobileActive = CheckIfMobile();
+            ApplyVisibility(IsMobileActive);
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
+        }
+
+        public void EnsureReferences()
         {
             if (virtualJoystickGO == null)
             {
@@ -70,9 +84,6 @@ namespace TopDownGame
                 }
                 if (bb != null) bookButtonRT = bb.GetComponent<RectTransform>();
             }
-
-            IsMobileActive = CheckIfMobile();
-            ApplyVisibility(IsMobileActive);
         }
 
         private void Update()
@@ -96,6 +107,7 @@ namespace TopDownGame
 
         public void ApplyVisibility(bool isVisible)
         {
+            EnsureReferences();
             if (virtualJoystickGO != null)
             {
                 virtualJoystickGO.SetActive(isVisible);

@@ -72,5 +72,10 @@ namespace TopDownGame
                 handle.anchoredPosition = Vector2.zero;
             }
         }
+
+        private void OnDisable()
+        {
+            ResetJoystick();
+        }
     }
 }

@@ -24,6 +24,7 @@ namespace TopDownGame
         // ─── State ────────────────────────────────────────────────────────────
         private DoorController _nearestDoor;
         private PlayerInputHandler _input;
+        private int _lastInteractFrame = -1;
 
         // ─────────────────────────────────────────────────────────────────────
         private void Awake()
@@ -47,11 +48,14 @@ namespace TopDownGame
 
             // Fire on interact press
             if (_input.InteractPressed)
-                _nearestDoor.Interact();
+                TriggerInteract();
         }
 
         public void TriggerInteract()
         {
+            if (Time.frameCount == _lastInteractFrame) return;
+            _lastInteractFrame = Time.frameCount;
+
             if (_nearestDoor != null)
                 _nearestDoor.Interact();
         }
