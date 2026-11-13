@@ -17,7 +17,7 @@ namespace TopDownGame
                 {
                     var go = new GameObject("FirebaseDatabaseManager");
                     _instance = go.AddComponent<FirebaseDatabaseManager>();
-                    DontDestroyOnLoad(go);
+                    if (Application.isPlaying) DontDestroyOnLoad(go);
                 }
                 return _instance;
             }
@@ -33,7 +33,7 @@ namespace TopDownGame
                 return;
             }
             _instance = this;
-            DontDestroyOnLoad(gameObject);
+            if (Application.isPlaying) DontDestroyOnLoad(gameObject);
         }
 
         /// <summary>

@@ -24,7 +24,7 @@ namespace TopDownGame
                 {
                     var go = new GameObject("FirebaseAuthManager");
                     _instance = go.AddComponent<FirebaseAuthManager>();
-                    DontDestroyOnLoad(go);
+                    if (Application.isPlaying) DontDestroyOnLoad(go);
                 }
                 return _instance;
             }

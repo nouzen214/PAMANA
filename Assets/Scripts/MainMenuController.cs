@@ -10,6 +10,14 @@ namespace TopDownGame
         [Header("Scene Management")]
         [SerializeField] private string gameSceneName = "CharacterSelect";
 
+        [Header("Main Menu Buttons")]
+        [SerializeField] private Button continueButton;
+        [SerializeField] private Button newGameButton;
+        [SerializeField] private Button settingsButton;
+        [SerializeField] private Button exitButton;
+        [SerializeField] private Button logoutButton;
+        [SerializeField] private TextMeshProUGUI accountStatusText;
+
         [Header("Panels")]
         [SerializeField] private GameObject settingsPanel;
         [SerializeField] private GameObject loginPanel;
@@ -28,6 +36,11 @@ namespace TopDownGame
         [SerializeField] private Button connectGoogleButton;
         [SerializeField] private TextMeshProUGUI connectGoogleText;
 
+        private void OnEnable()
+        {
+            UpdateMenuAccountState();
+        }
+
         private void Start()
         {
             if (settingsPanel != null)
@@ -40,7 +53,7 @@ namespace TopDownGame
                 loginPanel.SetActive(false);
             }
 
-            // Clean state when on main menu
+            // Clean local cache state when on main menu
             if (FirebaseDatabaseManager.Instance != null)
             {
                 FirebaseDatabaseManager.Instance.ClearAllLocalGameData();
@@ -48,6 +61,100 @@ namespace TopDownGame
 
             InitializeSliders();
             EnsureVersionDisplay();
+            UpdateMenuAccountState();
+        }
+
+        public void UpdateMenuAccountState()
+        {
+            bool isGoogle = (FirebaseAuthManager.Instance != null && FirebaseAuthManager.Instance.IsGoogleUser);
+            if (logoutButton != null)
+            {
+                logoutButton.gameObject.SetActive(isGoogle);
+            }
+            if (accountStatusText != null)
+            {
+                if (isGoogle)
+                {
+                    string name = !string.IsNullOrEmpty(FirebaseAuthManager.Instance.Username) 
+                        ? FirebaseAuthManager.Instance.Username 
+                        : FirebaseAuthManager.Instance.Email;
+                    accountStatusText.text = $"Logged in as: {name}";
+                    accountStatusText.gameObject.SetActive(true);
+                }
+                else
+                {
+                    accountStatusText.gameObject.SetActive(false);
+                }
+            }
+        }
+
+        public void OnContinueClicked()
+        {
+            Debug.Log("[MainMenuController] Continue clicked");
+            if (FirebaseAuthManager.Instance != null && FirebaseAuthManager.Instance.IsGoogleUser)
+            {
+                SetStatus("Loading cloud save...", isError: false);
+                FirebaseDatabaseManager.Instance.LoadPlayerData((success, data) =>
+                {
+                    if (success && data != null)
+                    {
+                        ProceedToGame(data);
+                    }
+                    else
+                    {
+                        ProceedToGame();
+                    }
+                });
+            }
+            else
+            {
+                SetStatus("Sign in with Google to continue your saved game...", isError: false);
+                FirebaseAuthManager.Instance.GoogleSignIn((success, msg) =>
+                {
+                    if (success)
+                    {
+                        UpdateMenuAccountState();
+                        SetStatus("Google connected! Loading cloud save...", isError: false);
+                        FirebaseDatabaseManager.Instance.LoadPlayerData((loadSuccess, data) =>
+                        {
+                            ProceedToGame(data);
+                        });
+                    }
+                    else
+                    {
+                        SetStatus(msg ?? "Google sign-in cancelled or failed.", isError: true);
+                    }
+                });
+            }
+        }
+
+        public void OnNewGameClicked()
+        {
+            Debug.Log("[MainMenuController] New Game clicked - opening login selection panel");
+            if (loginPanel != null)
+            {
+                if (settingsPanel != null) settingsPanel.SetActive(false);
+                loginPanel.SetActive(true);
+            }
+            else
+            {
+                ProceedToGame();
+            }
+        }
+
+        public void OnLogoutClicked()
+        {
+            Debug.Log("[MainMenuController] Logout clicked");
+            if (FirebaseAuthManager.Instance != null)
+            {
+                FirebaseAuthManager.Instance.SignOut();
+            }
+            if (FirebaseDatabaseManager.Instance != null)
+            {
+                FirebaseDatabaseManager.Instance.ClearAllLocalGameData();
+            }
+            UpdateMenuAccountState();
+            SetStatus("Logged out of Google account.", isError: false);
         }
 
         private void EnsureVersionDisplay()
@@ -105,16 +212,7 @@ namespace TopDownGame
 
         public void OnStartGameClicked()
         {
-            Debug.Log("Start Game clicked - opening login panel...");
-            if (loginPanel != null)
-            {
-                if (settingsPanel != null) settingsPanel.SetActive(false);
-                loginPanel.SetActive(true);
-            }
-            else
-            {
-                ProceedToGame();
-            }
+            OnNewGameClicked();
         }
 
         public void OnCloseLoginClicked()

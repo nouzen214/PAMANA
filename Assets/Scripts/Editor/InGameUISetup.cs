@@ -1657,6 +1657,34 @@ namespace TopDownGame.Editor
             }
         }
 
+        private static Button ConfigureMenuHoverButton(Transform parent, string name, Sprite sprNormal, Sprite sprHover, Vector2 pos, Vector2 size)
+        {
+            var obj = GetOrCreateChild(parent, name);
+            var rt = obj.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = size;
+
+            var img = obj.GetComponent<Image>() ?? obj.AddComponent<Image>();
+            img.sprite = sprNormal;
+            img.color = Color.white;
+            img.preserveAspect = true;
+            img.raycastTarget = true;
+
+            var btn = obj.GetComponent<Button>() ?? obj.AddComponent<Button>();
+            btn.targetGraphic = img;
+            btn.transition = Selectable.Transition.SpriteSwap;
+            var state = btn.spriteState;
+            state.highlightedSprite = sprHover;
+            state.pressedSprite = sprHover;
+            state.selectedSprite = sprNormal;
+            btn.spriteState = state;
+
+            return btn;
+        }
+
         public static void SetupMainMenuScene()
         {
             string scenePath = "Assets/Scenes/MainMenu.unity";
@@ -1669,7 +1697,104 @@ namespace TopDownGame.Editor
             var menuCtrl = canvas.GetComponent<MainMenuController>();
             if (menuCtrl == null) menuCtrl = canvas.AddComponent<MainMenuController>();
 
-            // Setup SettingsPanel
+            // 1. Background Image with new pixel-art brick wall, torches, and logo
+            var bgObj = canvas.transform.Find("BackgroundImage");
+            if (bgObj != null)
+            {
+                var bgImg = bgObj.GetComponent<Image>() ?? bgObj.gameObject.AddComponent<Image>();
+                var sprMainBg = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/MainMenu_Background.png");
+                if (sprMainBg != null) bgImg.sprite = sprMainBg;
+                bgImg.color = Color.white;
+                bgImg.preserveAspect = true;
+                bgImg.raycastTarget = false;
+                var bgRt = bgObj.GetComponent<RectTransform>();
+                bgRt.anchorMin = Vector2.zero;
+                bgRt.anchorMax = Vector2.one;
+                bgRt.offsetMin = Vector2.zero;
+                bgRt.offsetMax = Vector2.zero;
+            }
+
+            // 2. ButtonsContainer: Center Buttons with pixel-perfect hover states
+            var bcObj = GetOrCreateChild(canvas.transform, "ButtonsContainer");
+            var bcRt = bcObj.GetComponent<RectTransform>();
+            bcRt.anchorMin = new Vector2(0.5f, 0.5f);
+            bcRt.anchorMax = new Vector2(0.5f, 0.5f);
+            bcRt.pivot = new Vector2(0.5f, 0.5f);
+            bcRt.anchoredPosition = Vector2.zero;
+            bcRt.sizeDelta = new Vector2(1920f, 1080f);
+
+            var sprTransparent = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Login/Login_Btn_Transparent.png");
+            var sprContinueHover = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_MainMenu_Continue_Hover.png");
+            var sprNewGameHover = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_MainMenu_NewGame_Hover.png");
+            var sprSettingsHover = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_MainMenu_Settings_Hover.png");
+            var sprExitHover = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_MainMenu_Exit_Hover.png");
+            var sprLogoutNormal = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_MainMenu_Logout_Normal.png");
+            var sprLogoutHover = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_MainMenu_Logout_Hover.png");
+
+            // Clean old StartGameButton if exists
+            var oldStart = bcObj.transform.Find("StartGameButton");
+            if (oldStart != null) Object.DestroyImmediate(oldStart.gameObject);
+
+            Button btnContinue = ConfigureMenuHoverButton(bcObj.transform, "ContinueButton", sprTransparent, sprContinueHover, new Vector2(0f, 6f), new Vector2(468f, 117f));
+            btnContinue.onClick = new Button.ButtonClickedEvent();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(btnContinue.onClick, menuCtrl.OnContinueClicked);
+
+            Button btnNewGame = ConfigureMenuHoverButton(bcObj.transform, "NewGameButton", sprTransparent, sprNewGameHover, new Vector2(0f, -126f), new Vector2(468f, 118f));
+            btnNewGame.onClick = new Button.ButtonClickedEvent();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(btnNewGame.onClick, menuCtrl.OnNewGameClicked);
+
+            Button btnSettings = ConfigureMenuHoverButton(bcObj.transform, "SettingsButton", sprTransparent, sprSettingsHover, new Vector2(0f, -257f), new Vector2(468f, 117f));
+            btnSettings.onClick = new Button.ButtonClickedEvent();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(btnSettings.onClick, menuCtrl.OnSettingsClicked);
+
+            Button btnExit = ConfigureMenuHoverButton(bcObj.transform, "ExitButton", sprTransparent, sprExitHover, new Vector2(0f, -388f), new Vector2(468f, 116f));
+            btnExit.onClick = new Button.ButtonClickedEvent();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(btnExit.onClick, menuCtrl.OnExitClicked);
+
+            // 3. Logout Button at bottom-left corner (visible exclusively for logged-in Google users)
+            var logoutObj = GetOrCreateChild(canvas.transform, "LogoutButton");
+            var logoutRt = logoutObj.GetComponent<RectTransform>();
+            logoutRt.anchorMin = new Vector2(0f, 0f);
+            logoutRt.anchorMax = new Vector2(0f, 0f);
+            logoutRt.pivot = new Vector2(0.5f, 0.5f);
+            logoutRt.anchoredPosition = new Vector2(210f, 152f);
+            logoutRt.sizeDelta = new Vector2(165f, 165f);
+
+            var logoutImg = logoutObj.GetComponent<Image>() ?? logoutObj.AddComponent<Image>();
+            logoutImg.sprite = sprLogoutNormal;
+            logoutImg.preserveAspect = true;
+            logoutImg.color = Color.white;
+            logoutImg.raycastTarget = true;
+
+            var logoutBtn = logoutObj.GetComponent<Button>() ?? logoutObj.AddComponent<Button>();
+            logoutBtn.targetGraphic = logoutImg;
+            logoutBtn.transition = Selectable.Transition.SpriteSwap;
+            var lState = logoutBtn.spriteState;
+            lState.highlightedSprite = sprLogoutHover;
+            lState.pressedSprite = sprLogoutHover;
+            lState.selectedSprite = sprLogoutNormal;
+            logoutBtn.spriteState = lState;
+            logoutBtn.onClick = new Button.ButtonClickedEvent();
+            UnityEditor.Events.UnityEventTools.AddPersistentListener(logoutBtn.onClick, menuCtrl.OnLogoutClicked);
+            logoutObj.SetActive(false); // dynamically activated by MainMenuController for Google accounts only
+
+            // 4. Account Status Text at bottom-left
+            var statusObj = GetOrCreateChild(canvas.transform, "AccountStatusText");
+            var statusRt = statusObj.GetComponent<RectTransform>();
+            statusRt.anchorMin = new Vector2(0f, 0f);
+            statusRt.anchorMax = new Vector2(0f, 0f);
+            statusRt.pivot = new Vector2(0f, 0.5f);
+            statusRt.anchoredPosition = new Vector2(130f, 50f);
+            statusRt.sizeDelta = new Vector2(500f, 35f);
+            var statusTmp = statusObj.GetComponent<TextMeshProUGUI>() ?? statusObj.AddComponent<TextMeshProUGUI>();
+            statusTmp.fontSize = 20f;
+            statusTmp.fontStyle = FontStyles.Bold;
+            statusTmp.color = new Color(0.95f, 0.90f, 0.75f, 0.95f);
+            statusTmp.text = "";
+            statusTmp.raycastTarget = false;
+            statusObj.SetActive(false);
+
+            // 5. Setup SettingsPanel
             var panelObj = GetOrCreateChild(canvas.transform, "SettingsPanel");
             panelObj.SetActive(false);
 
@@ -1774,33 +1899,27 @@ namespace TopDownGame.Editor
             GenerateLoginBaseTexture();
             var loginPanel = BuildLoginPanel(canvas.transform, menuCtrl);
 
-            // Connect StartGameButton to menuCtrl.OnStartGameClicked
-            var startBtnObj = canvas.transform.Find("ButtonsContainer/StartGameButton");
-            if (startBtnObj != null)
-            {
-                var startBtn = startBtnObj.GetComponent<Button>();
-                if (startBtn != null)
-                {
-                    startBtn.onClick = new Button.ButtonClickedEvent();
-                    UnityEditor.Events.UnityEventTools.AddPersistentListener(startBtn.onClick, menuCtrl.OnStartGameClicked);
-                }
-            }
-
-            // Connect SettingsButton to menuCtrl.OnSettingsClicked
-            var settingsBtnObj = canvas.transform.Find("ButtonsContainer/SettingsButton");
-            if (settingsBtnObj != null)
-            {
-                var sBtn = settingsBtnObj.GetComponent<Button>();
-                if (sBtn != null)
-                {
-                    sBtn.onClick = new Button.ButtonClickedEvent();
-                    UnityEditor.Events.UnityEventTools.AddPersistentListener(sBtn.onClick, menuCtrl.OnSettingsClicked);
-                }
-            }
-
             // Connect references on MainMenuController
             var so = new SerializedObject(menuCtrl);
             so.Update();
+            var spContinue = so.FindProperty("continueButton");
+            if (spContinue != null) spContinue.objectReferenceValue = btnContinue;
+
+            var spNewGame = so.FindProperty("newGameButton");
+            if (spNewGame != null) spNewGame.objectReferenceValue = btnNewGame;
+
+            var spMenuSettings = so.FindProperty("settingsButton");
+            if (spMenuSettings != null) spMenuSettings.objectReferenceValue = btnSettings;
+
+            var spExit = so.FindProperty("exitButton");
+            if (spExit != null) spExit.objectReferenceValue = btnExit;
+
+            var spLogout = so.FindProperty("logoutButton");
+            if (spLogout != null) spLogout.objectReferenceValue = logoutBtn;
+
+            var spAccStatus = so.FindProperty("accountStatusText");
+            if (spAccStatus != null) spAccStatus.objectReferenceValue = statusTmp;
+
             var spSettings = so.FindProperty("settingsPanel");
             if (spSettings != null) spSettings.objectReferenceValue = panelObj;
 
@@ -1826,7 +1945,7 @@ namespace TopDownGame.Editor
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
-            Debug.Log("[InGameUISetup] MainMenu.unity Settings and Login UI updated successfully!");
+            Debug.Log("[InGameUISetup] MainMenu.unity Settings, Login, and Buttons updated successfully!");
         }
     }
 }
