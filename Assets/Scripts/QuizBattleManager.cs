@@ -65,7 +65,13 @@ namespace TopDownGame
         [SerializeField] private GameObject monsterPortraitContainer;
         [SerializeField] private TMP_Text questionSpeakerText;
         [SerializeField] private TMP_Text questionBodyText;
-        [SerializeField] private string monsterSpeakerName = "Manang";
+        [SerializeField] private string monsterSpeakerName = "Aswang";
+
+        public string MonsterSpeakerName
+        {
+            get => !string.IsNullOrWhiteSpace(monsterSpeakerName) ? monsterSpeakerName : "Monster";
+            set => monsterSpeakerName = value;
+        }
 
         [Header("Dialogue UI (Bottom - Player Thought)")]
         [SerializeField] private GameObject bottomDialogueBox;
@@ -483,7 +489,7 @@ namespace TopDownGame
 
             if (questionSpeakerText != null)
             {
-                questionSpeakerText.text = monsterSpeakerName;
+                questionSpeakerText.text = MonsterSpeakerName;
             }
             if (questionBodyText != null)
             {
@@ -556,7 +562,7 @@ namespace TopDownGame
             // Display question in Top Box
             if (questionSpeakerText != null)
             {
-                questionSpeakerText.text = $"[QUIZ] {slot.artifactName}";
+                questionSpeakerText.text = MonsterSpeakerName;
             }
             if (questionBodyText != null)
             {
@@ -577,7 +583,7 @@ namespace TopDownGame
             // Legacy fallbacks
             if (dialogueSpeakerText != null)
             {
-                dialogueSpeakerText.text = $"[QUIZ] {slot.artifactName}";
+                dialogueSpeakerText.text = MonsterSpeakerName;
             }
             if (dialogueBodyText != null)
             {
@@ -682,7 +688,7 @@ namespace TopDownGame
 
         private IEnumerator CorrectAnswerRoutine(ArtifactBattleSlot slot)
         {
-            if (questionSpeakerText != null) questionSpeakerText.text = $"[QUIZ] {slot.artifactName}";
+            if (questionSpeakerText != null) questionSpeakerText.text = MonsterSpeakerName;
             if (questionBodyText != null) questionBodyText.text = "Argh! How did you know that?!";
 
             string successMsg = $"<color=#1E7E34><b>CORRECT!</b></color> You recovered the {slot.artifactName}! You dealt damage to the monster!";
@@ -749,7 +755,7 @@ namespace TopDownGame
 
         private IEnumerator WrongAnswerRoutine(ArtifactBattleSlot slot)
         {
-            if (questionSpeakerText != null) questionSpeakerText.text = $"[QUIZ] {slot.artifactName}";
+            if (questionSpeakerText != null) questionSpeakerText.text = MonsterSpeakerName;
             if (questionBodyText != null) questionBodyText.text = "Foolish mortal! Suffer my wrath!";
 
             string failMsg = $"<color=#C82333><b>INCORRECT!</b></color> The monster counterattacked! You lost 1 HP and failed to retrieve {slot.artifactName}!";
