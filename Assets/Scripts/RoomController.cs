@@ -91,9 +91,19 @@ namespace TopDownGame
                     int readCount = GameProgression.GetPlaquesReadCount(currentRoom);
                     NotificationBannerUI.Show(
                         $"ROOM {currentRoom}",
-                        $"Read all 5 artifact plaques in this room to unlock the Alterworld trial! ({readCount}/5 studied)",
+                        $"Study all 5 artifact plaques and review Topic {currentRoom} in your Field Guide! ({readCount}/5 plaques studied)",
                         5.0f,
                         new Color(0.24f, 0.14f, 0.07f, 1f),
+                        "i"
+                    );
+                }
+                else if (!GameProgression.IsBookTopicReviewed(currentRoom))
+                {
+                    NotificationBannerUI.Show(
+                        $"ROOM {currentRoom}",
+                        $"All 5 plaques studied! (5/5)\nOpen your Museum Field Guide (Book icon / [H]) and review Topic {currentRoom} to awaken the trial!",
+                        5.5f,
+                        new Color(0.95f, 0.65f, 0.25f, 1f),
                         "i"
                     );
                 }
@@ -101,7 +111,7 @@ namespace TopDownGame
                 {
                     NotificationBannerUI.Show(
                         $"ROOM {currentRoom}",
-                        $"All 5 plaques studied! (5/5)\nEnter the Lobby portal to face the Alterworld trial for Room {currentRoom}!",
+                        $"Plaques studied & Topic {currentRoom} reviewed!\nEnter the Lobby portal to face the Alterworld trial for Room {currentRoom}!",
                         5.5f,
                         new Color(0.24f, 0.14f, 0.07f, 1f),
                         "★"

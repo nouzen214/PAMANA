@@ -52,6 +52,7 @@ namespace TopDownGame
             GameProgression.OnPedestalRestored += HandlePedestalRestored;
             GameProgression.OnPortalUnlocked += UpdateLockState;
             GameProgression.OnRoomBattleUnlockedForRetry += HandleRoomBattleUnlockedForRetry;
+            GameProgression.OnBookTopicReviewed += HandleBookTopicReviewed;
         }
 
         private void OnDisable()
@@ -65,8 +66,10 @@ namespace TopDownGame
             GameProgression.OnPedestalRestored -= HandlePedestalRestored;
             GameProgression.OnPortalUnlocked -= UpdateLockState;
             GameProgression.OnRoomBattleUnlockedForRetry -= HandleRoomBattleUnlockedForRetry;
+            GameProgression.OnBookTopicReviewed -= HandleBookTopicReviewed;
         }
 
+        private void HandleBookTopicReviewed(int topicNum) => UpdateLockState();
         private void HandleRoomBattleUnlockedForRetry(int roomNum) => UpdateLockState();
         private void HandlePlaqueRead(int roomNum, int count) => UpdateLockState();
         private void HandleAllPlaquesRead(int roomNum) => UpdateLockState();
@@ -94,17 +97,19 @@ namespace TopDownGame
                 }
                 else if (roomNum == 1)
                 {
-                    // Room 1 Alterworld battle unlocks ONLY when all 5 plaques in Room 1 are read!
-                    isLocked = !GameProgression.AreAllPlaquesRead(1);
+                    // Room 1 Alterworld battle unlocks ONLY when all 5 plaques in Room 1 are read AND Topic 1 is reviewed in the Book!
+                    isLocked = !(GameProgression.AreAllPlaquesRead(1) && GameProgression.IsBookTopicReviewed(1));
                 }
                 else
                 {
                     // Next room Alterworld battle: UNLOCKED only after:
                     // 1) previous room has at least 1 artifact restored in the Real World!
                     // 2) AND all 5 plaques in this room have been read in the Real World!
+                    // 3) AND the topic corresponding to this room has been reviewed in the Book!
                     bool prevReturned = GameProgression.HasReturnedRoomArtifactsToRealWorld(roomNum - 1);
                     bool plaquesRead = GameProgression.AreAllPlaquesRead(roomNum);
-                    isLocked = (!prevReturned || !plaquesRead);
+                    bool topicReviewed = GameProgression.IsBookTopicReviewed(roomNum);
+                    isLocked = (!prevReturned || !plaquesRead || !topicReviewed);
                 }
             }
             else
@@ -160,12 +165,34 @@ namespace TopDownGame
                     }
                     else if (GameProgression.IsRoomBattleCompleted(roomNum) && GameProgression.GetRoomRetrievedCount(roomNum) > 0)
                     {
-                        lockMessage = $"{roomDisplayName} trial is locked!\nVisit Real World Room {roomNum} and inspect any unobtained artifact pedestal to unlock this battle for retry!";
+                        bool topicReviewed = GameProgression.IsBookTopicReviewed(roomNum);
+                        if (!topicReviewed)
+                        {
+                            lockMessage = $"{roomDisplayName} trial is locked!\nVisit Real World Room {roomNum} to inspect unobtained pedestals and review Topic {roomNum} in your Museum Field Guide to retry this battle!";
+                        }
+                        else
+                        {
+                            lockMessage = $"{roomDisplayName} trial is locked!\nVisit Real World Room {roomNum} and inspect any unobtained artifact pedestal to unlock this battle for retry!";
+                        }
                     }
                     else if (roomNum == 1)
                     {
                         int readCount = GameProgression.GetPlaquesReadCount(1);
-                        lockMessage = $"Alterworld Battle 1 is locked!\nVisit Real World Room 1 and read all 5 plaques first! ({readCount}/5 studied)";
+                        bool plaquesDone = GameProgression.AreAllPlaquesRead(1);
+                        bool topicDone = GameProgression.IsBookTopicReviewed(1);
+
+                        if (!plaquesDone)
+                        {
+                            lockMessage = $"Alterworld Battle 1 is locked!\nVisit Real World Room 1 and read all 5 plaques first! ({readCount}/5 studied)";
+                        }
+                        else if (!topicDone)
+                        {
+                            lockMessage = $"Alterworld Battle 1 is locked!\nAll plaques studied, but you must open your Field Guide (Book icon) and review Topic 1 to unlock this battle!";
+                        }
+                        else
+                        {
+                            lockMessage = "Alterworld Battle 1 is locked!";
+                        }
                     }
                     else
                     {
@@ -184,7 +211,21 @@ namespace TopDownGame
                         else
                         {
                             int readCount = GameProgression.GetPlaquesReadCount(roomNum);
-                            lockMessage = $"{roomDisplayName} trial is locked!\nVisit Real World Room {roomNum} and review all 5 plaques first! ({readCount}/5 studied)";
+                            bool plaquesDone = GameProgression.AreAllPlaquesRead(roomNum);
+                            bool topicDone = GameProgression.IsBookTopicReviewed(roomNum);
+
+                            if (!plaquesDone)
+                            {
+                                lockMessage = $"{roomDisplayName} trial is locked!\nVisit Real World Room {roomNum} and review all 5 plaques first! ({readCount}/5 studied)";
+                            }
+                            else if (!topicDone)
+                            {
+                                lockMessage = $"{roomDisplayName} trial is locked!\nAll plaques studied, but you must open your Museum Field Guide (Book icon) and review Topic {roomNum} to unlock this battle!";
+                            }
+                            else
+                            {
+                                lockMessage = $"{roomDisplayName} trial is locked!";
+                            }
                         }
                     }
                 }

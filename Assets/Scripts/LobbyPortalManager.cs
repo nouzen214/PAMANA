@@ -36,11 +36,18 @@ namespace TopDownGame
         {
             UpdatePortalState();
             GameProgression.OnPortalUnlocked += UpdatePortalState;
+            GameProgression.OnBookTopicReviewed += HandleBookTopicReviewed;
         }
 
         private void OnDestroy()
         {
             GameProgression.OnPortalUnlocked -= UpdatePortalState;
+            GameProgression.OnBookTopicReviewed -= HandleBookTopicReviewed;
+        }
+
+        private void HandleBookTopicReviewed(int topicNum)
+        {
+            if (topicNum == 1) UpdatePortalState();
         }
 
         public GameObject EnsurePortalBlocker()

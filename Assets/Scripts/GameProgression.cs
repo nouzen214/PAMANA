@@ -27,6 +27,7 @@ namespace TopDownGame
         public static event Action<int, string> OnPedestalRestored; // (roomNumber, artifactName)
         public static event Action<int, int> OnRoomRestorationStageChanged; // (roomNumber, newStage)
         public static event Action<int> OnRoomBattleUnlockedForRetry; // (roomNumber)
+        public static event Action<int> OnBookTopicReviewed; // (topicNumber)
 
         public static bool IsBookUnlocked
         {
@@ -450,13 +451,50 @@ namespace TopDownGame
                 Debug.Log($"[GameProgression] All plaques read in Room {roomNumber}!");
                 OnAllPlaquesReadInRoom?.Invoke(roomNumber);
 
-                if (roomNumber == 1)
+                // Both plaques (5/5) AND the corresponding Book Topic must be studied to awaken the Portal / Alterworld battle!
+                if (roomNumber == 1 && IsBookTopicReviewed(1))
                 {
                     UnlockPortal();
                 }
             }
 
             return true;
+        }
+
+        public static bool IsBookTopicReviewed(int topicNumber)
+        {
+            if (topicNumber <= 0) return false;
+            return PlayerPrefs.GetInt($"GameProgression_BookTopic{topicNumber}_Reviewed", 0) == 1;
+        }
+
+        public static bool RecordBookTopicReviewed(int topicNumber)
+        {
+            if (topicNumber <= 0) return false;
+            string key = $"GameProgression_BookTopic{topicNumber}_Reviewed";
+            bool wasReviewed = PlayerPrefs.GetInt(key, 0) == 1;
+            PlayerPrefs.SetInt(key, 1);
+            PlayerPrefs.Save();
+
+            if (!wasReviewed)
+            {
+                Debug.Log($"[GameProgression] Field Guide Topic {topicNumber} reviewed for the first time!");
+                OnBookTopicReviewed?.Invoke(topicNumber);
+
+                // If Room 1: check if all 5 plaques are also read, which unlocks the portal!
+                if (topicNumber == 1 && AreAllPlaquesRead(1))
+                {
+                    UnlockPortal();
+                }
+
+                // If unobtained artifacts in Room {topicNumber} need retry, unlock retry automatically!
+                if (CanRoomBeRetried(topicNumber) && (HasRetrievedRoomArtifact(topicNumber) || IsRoomBattleCompleted(topicNumber)))
+                {
+                    UnlockRoomBattleForRetry(topicNumber);
+                }
+
+                return true;
+            }
+            return false;
         }
 
         public static int GetPlaquesReadCount(int roomNumber)
@@ -500,6 +538,7 @@ namespace TopDownGame
             PlayerPrefs.DeleteKey(KEY_ROOM1_ARTIFACT_RETURNED);
             for (int i = 1; i <= 12; i++)
             {
+                PlayerPrefs.DeleteKey($"GameProgression_BookTopic{i}_Reviewed");
                 PlayerPrefs.DeleteKey($"GameProgression_Room{i}BattleCompleted");
                 PlayerPrefs.DeleteKey($"GameProgression_Room{i}ArtifactRetrieved");
                 PlayerPrefs.DeleteKey($"GameProgression_Room{i}ArtifactReturnedToRealWorld");

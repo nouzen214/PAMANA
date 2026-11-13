@@ -445,18 +445,33 @@ namespace TopDownGame
 
             if (hasAttemptedOrCompleted && GameProgression.CanRoomBeRetried(rNum))
             {
-                bool wasLocked = GameProgression.UnlockRoomBattleForRetry(rNum);
-                if (wasLocked)
+                bool topicReviewed = GameProgression.IsBookTopicReviewed(rNum);
+                if (topicReviewed)
+                {
+                    bool wasLocked = GameProgression.UnlockRoomBattleForRetry(rNum);
+                    if (wasLocked)
+                    {
+                        NotificationBannerUI.Show(
+                            "TRIAL UNLOCKED FOR RETRY",
+                            $"Alterworld Battle {rNum} is now unlocked! Topic {rNum} reviewed. Challenge it again to retrieve '{artifact.ArtifactName}'.",
+                            5.5f,
+                            new Color(0.18f, 0.40f, 0.16f, 1f),
+                            "★"
+                        );
+                    }
+                    return true;
+                }
+                else
                 {
                     NotificationBannerUI.Show(
-                        "TRIAL UNLOCKED FOR RETRY",
-                        $"Alterworld Battle {rNum} is now unlocked! Challenge it again to retrieve '{artifact.ArtifactName}'.",
+                        "REVIEW FIELD GUIDE REQUIRED",
+                        $"To retry Battle {rNum} for '{artifact.ArtifactName}', open your Field Guide and review Topic {rNum}!",
                         5.5f,
-                        new Color(0.18f, 0.40f, 0.16f, 1f),
-                        "★"
+                        new Color(0.95f, 0.55f, 0.25f, 1f),
+                        "!"
                     );
+                    return false;
                 }
-                return true;
             }
 
             return false;
@@ -526,6 +541,9 @@ namespace TopDownGame
             bool allRead = GameProgression.AreAllPlaquesRead(rNum);
             int readCount = GameProgression.GetPlaquesReadCount(rNum);
             bool hasMatchingInBag = DoesPlayerHaveArtifactForPedestal(artifact);
+            bool hasAttemptedOrCompleted = GameProgression.HasRetrievedRoomArtifact(rNum) || 
+                                           GameProgression.IsRoomBattleCompleted(rNum) ||
+                                           GameProgression.GetRoomRetrievedCount(rNum) > 0;
             bool retryUnlocked = CheckAndUnlockRetryForUnobtainedArtifact(artifact);
 
             UpdateChoiceButtons();
@@ -541,18 +559,34 @@ namespace TopDownGame
             }
             else if (retryUnlocked)
             {
-                initMsg = $"The {artifact.ArtifactName} hasn't been recovered yet! By inspecting this pedestal, Alterworld Battle {rNum} is now unlocked for retry. I can enter the portal to retrieve it!";
+                initMsg = $"The {artifact.ArtifactName} hasn't been recovered yet! By inspecting this pedestal and reviewing Topic {rNum}, Alterworld Battle {rNum} is now unlocked for retry. I can enter the portal to retrieve it!";
+            }
+            else if (hasAttemptedOrCompleted && GameProgression.CanRoomBeRetried(rNum) && !GameProgression.IsBookTopicReviewed(rNum))
+            {
+                initMsg = $"The {artifact.ArtifactName} hasn't been recovered yet! To retry Alterworld Battle {rNum}, I must open the Museum Field Guide (Book icon) and review Topic {rNum}!";
             }
             else if (allRead)
             {
+                bool topicReviewed = GameProgression.IsBookTopicReviewed(rNum);
                 if (rNum == 1)
-                    initMsg = "I have studied all 5 plaques in Room 1! The mysterious portal in the museum lobby is now awakened!";
+                {
+                    initMsg = topicReviewed
+                        ? "I have studied all 5 plaques and reviewed Topic 1 in the Field Guide! The mysterious portal in the museum lobby is now awakened!"
+                        : "I have studied all 5 plaques in Room 1! Now I must open the Museum Field Guide (Book icon) and review Topic 1 to awaken the portal!";
+                }
                 else
-                    initMsg = $"I have studied all 5 plaques in Room {rNum}! The Alterworld trial for Room {rNum} is now unlocked!";
+                {
+                    initMsg = topicReviewed
+                        ? $"I have studied all 5 plaques and reviewed Topic {rNum} in the Field Guide! The Alterworld trial for Room {rNum} is now unlocked!"
+                        : $"I have studied all 5 plaques in Room {rNum}! Now I must open the Museum Field Guide (Book icon) and review Topic {rNum} to unlock this battle!";
+                }
             }
             else
             {
-                initMsg = $"I need to study all 5 historical plaques in this room ({readCount}/5 studied). What should I do?";
+                bool topicReviewed = GameProgression.IsBookTopicReviewed(rNum);
+                initMsg = topicReviewed
+                    ? $"I have reviewed Topic {rNum} in the Field Guide! Now I need to study all 5 historical plaques in this room ({readCount}/5 studied). What should I do?"
+                    : $"I need to study all 5 plaques ({readCount}/5 studied) and review Topic {rNum} in the Museum Field Guide. What should I do?";
             }
             SetDialogueMessage(initMsg);
 
@@ -638,20 +672,42 @@ namespace TopDownGame
                 {
                     menuMsg = "I have a matching artifact in my bag! I should place it on this pedestal.";
                 }
-                else if (battleDone)
+                else if (battleDone && !isPedestalRestored && !hasMatchingInBag)
                 {
-                    menuMsg = "This pedestal is empty. The artifact was lost in the Alterworld battle and was not recovered.";
+                    bool topicReviewed = GameProgression.IsBookTopicReviewed(rNum);
+                    if (GameProgression.CanRoomBeRetried(rNum))
+                    {
+                        menuMsg = topicReviewed
+                            ? $"The {_currentArtifact.ArtifactName} was lost in the Alterworld battle! With Topic {rNum} reviewed, this battle is unlocked for retry. Enter the portal to reclaim it!"
+                            : $"The {_currentArtifact.ArtifactName} was lost in the Alterworld battle! Open the Museum Field Guide (Book icon) and review Topic {rNum} to unlock this battle for retry!";
+                    }
+                    else
+                    {
+                        menuMsg = "This pedestal is empty. The artifact was lost in the Alterworld battle and was not recovered.";
+                    }
                 }
                 else if (allRead)
                 {
+                    bool topicReviewed = GameProgression.IsBookTopicReviewed(rNum);
                     if (rNum == 1)
-                        menuMsg = "I have studied all 5 plaques in Room 1! The mysterious portal in the museum lobby is now awakened!";
+                    {
+                        menuMsg = topicReviewed
+                            ? "I have studied all 5 plaques and reviewed Topic 1 in the Field Guide! The mysterious portal in the museum lobby is now awakened!"
+                            : "I have studied all 5 plaques in Room 1! Now I must open the Museum Field Guide (Book icon) and review Topic 1 to awaken the portal!";
+                    }
                     else
-                        menuMsg = $"I have studied all 5 plaques in Room {rNum}! The Alterworld trial for Room {rNum} is now unlocked!";
+                    {
+                        menuMsg = topicReviewed
+                            ? $"I have studied all 5 plaques and reviewed Topic {rNum} in the Field Guide! The Alterworld trial for Room {rNum} is now unlocked!"
+                            : $"I have studied all 5 plaques in Room {rNum}! Now I must open the Museum Field Guide (Book icon) and review Topic {rNum} to unlock this battle!";
+                    }
                 }
                 else
                 {
-                    menuMsg = $"I need to study all 5 historical plaques in this room ({readCount}/5 studied). What should I do?";
+                    bool topicReviewed = GameProgression.IsBookTopicReviewed(rNum);
+                    menuMsg = topicReviewed
+                        ? $"I have reviewed Topic {rNum} in the Field Guide! Now I need to study all 5 historical plaques in this room ({readCount}/5 studied). What should I do?"
+                        : $"I need to study all 5 plaques ({readCount}/5 studied) and review Topic {rNum} in the Museum Field Guide. What should I do?";
                 }
                 SetDialogueMessage(menuMsg);
             }
@@ -1173,25 +1229,52 @@ namespace TopDownGame
 
                 if (totalRead >= 5)
                 {
+                    bool topicReviewed = GameProgression.IsBookTopicReviewed(rNum);
                     if (rNum == 1)
                     {
-                        NotificationBannerUI.Show(
-                            "PORTAL AWAKENED!",
-                            "All 5 plaques in Room 1 studied!\nA mysterious portal has opened in the museum lobby!",
-                            6.0f,
-                            new Color(0.24f, 0.14f, 0.07f, 1f),
-                            "★"
-                        );
+                        if (topicReviewed)
+                        {
+                            NotificationBannerUI.Show(
+                                "PORTAL AWAKENED!",
+                                "All 5 plaques in Room 1 studied & Topic 1 reviewed!\nThe mysterious portal in the museum lobby is now awakened!",
+                                6.0f,
+                                new Color(0.24f, 0.14f, 0.07f, 1f),
+                                "★"
+                            );
+                        }
+                        else
+                        {
+                            NotificationBannerUI.Show(
+                                "ROOM 1 PLAQUES COMPLETE (5/5)",
+                                "All 5 plaques in Room 1 studied!\nNow open your Museum Field Guide (Book icon) and review Topic 1 to awaken the portal!",
+                                6.0f,
+                                new Color(0.95f, 0.65f, 0.25f, 1f),
+                                "i"
+                            );
+                        }
                     }
                     else
                     {
-                        NotificationBannerUI.Show(
-                            $"ALTERWORLD BATTLE {rNum} UNLOCKED!",
-                            $"All 5 plaques & clues studied in Room {rNum}!\nEnter the Alterworld portal in the Lobby to start the battle!",
-                            6.5f,
-                            new Color(0.24f, 0.14f, 0.07f, 1f),
-                            "★"
-                        );
+                        if (topicReviewed)
+                        {
+                            NotificationBannerUI.Show(
+                                $"ALTERWORLD BATTLE {rNum} UNLOCKED!",
+                                $"All 5 plaques studied & Topic {rNum} reviewed!\nEnter the Alterworld portal in the Lobby to start the battle!",
+                                6.5f,
+                                new Color(0.24f, 0.14f, 0.07f, 1f),
+                                "★"
+                            );
+                        }
+                        else
+                        {
+                            NotificationBannerUI.Show(
+                                $"ROOM {rNum} PLAQUES COMPLETE (5/5)",
+                                $"All 5 plaques studied in Room {rNum}!\nNow open your Museum Field Guide (Book icon) and review Topic {rNum} to unlock this battle!",
+                                6.0f,
+                                new Color(0.95f, 0.65f, 0.25f, 1f),
+                                "i"
+                            );
+                        }
                     }
                 }
                 else

@@ -193,12 +193,39 @@ namespace TopDownGame
             }
         }
 
+        public static void ShowTopic(int topicNumber)
+        {
+            if (Instance == null)
+            {
+                Instance = FindFirstObjectByType<BookModalUI>(FindObjectsInactive.Include);
+                if (Instance == null)
+                {
+                    var canvas = FindFirstObjectByType<Canvas>();
+                    if (canvas != null)
+                    {
+                        Instance = CreateBookModal(canvas.transform);
+                    }
+                }
+            }
+
+            if (Instance != null)
+            {
+                Instance.OpenTopic(topicNumber);
+            }
+        }
+
         public static void Hide()
         {
             if (Instance != null)
             {
                 Instance.CloseBook();
             }
+        }
+
+        public void OpenTopic(int topicNumber)
+        {
+            currentPage = Mathf.Clamp(topicNumber, 1, maxPages);
+            OpenBook();
         }
 
         public void OpenBook()
@@ -317,6 +344,61 @@ namespace TopDownGame
             if (topTopicBadgeText != null)
             {
                 topTopicBadgeText.text = $"<size=15.5><b><color=#FFD700>TOPIC </color><color=#FFF4D0>{currentPage} / {maxPages}</color></b></size>";
+            }
+
+            // Record topic review for progression & battle unlock
+            int topicNumber = currentPage;
+            bool isNewReview = GameProgression.RecordBookTopicReviewed(topicNumber);
+            if (isNewReview)
+            {
+                if (topicNumber == 1)
+                {
+                    if (GameProgression.AreAllPlaquesRead(1))
+                    {
+                        NotificationBannerUI.Show(
+                            "PORTAL AWAKENED!",
+                            "Topic 1 reviewed and all 5 plaques studied!\nThe mysterious portal in the Lobby is now open!",
+                            6.0f,
+                            new Color(0.18f, 0.40f, 0.16f, 1f),
+                            "★"
+                        );
+                    }
+                    else
+                    {
+                        int readCount = GameProgression.GetPlaquesReadCount(1);
+                        NotificationBannerUI.Show(
+                            "TOPIC 1 REVIEWED!",
+                            $"Field Guide Topic 1 studied!\nStudy all 5 plaques in Room 1 ({readCount}/5 studied) to awaken the Lobby portal!",
+                            5.5f,
+                            new Color(0.24f, 0.14f, 0.07f, 1f),
+                            "★"
+                        );
+                    }
+                }
+                else
+                {
+                    if (GameProgression.AreAllPlaquesRead(topicNumber))
+                    {
+                        NotificationBannerUI.Show(
+                            $"ALTERWORLD BATTLE {topicNumber} UNLOCKED!",
+                            $"Topic {topicNumber} reviewed and all 5 plaques studied!\nEnter the Alterworld portal in the Lobby to start the battle!",
+                            6.0f,
+                            new Color(0.18f, 0.40f, 0.16f, 1f),
+                            "★"
+                        );
+                    }
+                    else
+                    {
+                        int readCount = GameProgression.GetPlaquesReadCount(topicNumber);
+                        NotificationBannerUI.Show(
+                            $"TOPIC {topicNumber} REVIEWED!",
+                            $"Field Guide Topic {topicNumber} studied!\nStudy all 5 plaques in Room {topicNumber} ({readCount}/5 studied) to unlock this battle!",
+                            5.5f,
+                            new Color(0.24f, 0.14f, 0.07f, 1f),
+                            "★"
+                        );
+                    }
+                }
             }
 
             // Navigation Buttons Visual State

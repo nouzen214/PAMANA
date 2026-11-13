@@ -4,3 +4,4 @@ mergeInto(LibraryManager.library, {
         return (/iphone|ipad|ipod|android|blackberry|iemobile|opera mini|mobile/i.test(ua));
     }
 });
+
