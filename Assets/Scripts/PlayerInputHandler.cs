@@ -11,6 +11,13 @@ namespace TopDownGame
         public Vector2 MoveInput { get; private set; }
         public bool InteractPressed { get; private set; }
 
+        private static bool _mobileInteractTriggered;
+
+        public static void TriggerMobileInteract()
+        {
+            _mobileInteractTriggered = true;
+        }
+
         private void Update()
         {
             Vector2 input = Vector2.zero;
@@ -63,7 +70,12 @@ namespace TopDownGame
             }
 
             // 4. Mobile / On-Screen Virtual Joystick
-            if (virtualJoystick != null && virtualJoystick.InputDirection.sqrMagnitude > 0.01f)
+            if (virtualJoystick == null)
+            {
+                virtualJoystick = FindFirstObjectByType<VirtualJoystick>();
+            }
+
+            if (virtualJoystick != null && virtualJoystick.gameObject.activeInHierarchy && virtualJoystick.InputDirection.sqrMagnitude > 0.01f)
             {
                 input = virtualJoystick.InputDirection;
             }
@@ -76,12 +88,25 @@ namespace TopDownGame
 
             MoveInput = input;
 
-            // Interact button: E / F key or Gamepad South (A on Xbox / Cross on PS)
+            // Interact button: E / F key or Gamepad South (A on Xbox / Cross on PS) or Mobile Interact Button
             bool interact = false;
             if (Keyboard.current != null)
                 interact = Keyboard.current.eKey.wasPressedThisFrame || Keyboard.current.fKey.wasPressedThisFrame;
             if (!interact && Gamepad.current != null)
                 interact = Gamepad.current.buttonSouth.wasPressedThisFrame;
+            if (!interact)
+            {
+                try
+                {
+                    if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.F))
+                        interact = true;
+                }
+                catch { }
+            }
+            if (!interact && _mobileInteractTriggered)
+                interact = true;
+
+            _mobileInteractTriggered = false;
             InteractPressed = interact;
         }
 

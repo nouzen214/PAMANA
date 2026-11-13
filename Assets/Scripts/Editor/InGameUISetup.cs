@@ -106,6 +106,48 @@ namespace TopDownGame.Editor
                 var bagModalComp = bagModalObj.GetComponent<BagModalUI>();
                 var bookModalObj = BuildBookModal(prefabRoot.transform);
 
+                // Mobile Controls: Interact Button ('E') & MobileControlsManager
+                var sprNormal = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_Interact_Normal.png");
+                var sprPressed = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Btn_Interact_Pressed.png");
+                if (sprNormal != null && sprPressed != null)
+                {
+                    var interactBtnGO = GetOrCreateChild(prefabRoot.transform, "InteractButton");
+                    var interactRt = interactBtnGO.GetComponent<RectTransform>();
+                    interactRt.anchorMin = new Vector2(1f, 0f);
+                    interactRt.anchorMax = new Vector2(1f, 0f);
+                    interactRt.pivot = new Vector2(0.5f, 0.5f);
+                    interactRt.anchoredPosition = new Vector2(-110f, 110f);
+                    interactRt.sizeDelta = new Vector2(110f, 110f);
+
+                    var img = interactBtnGO.GetComponent<Image>() ?? interactBtnGO.AddComponent<Image>();
+                    img.sprite = sprNormal;
+                    img.preserveAspect = true;
+                    img.raycastTarget = true;
+
+                    var btn = interactBtnGO.GetComponent<Button>() ?? interactBtnGO.AddComponent<Button>();
+                    btn.targetGraphic = img;
+                    btn.transition = Selectable.Transition.SpriteSwap;
+                    var state = btn.spriteState;
+                    state.highlightedSprite = sprNormal;
+                    state.pressedSprite = sprPressed;
+                    state.selectedSprite = sprNormal;
+                    btn.spriteState = state;
+
+                    if (interactBtnGO.GetComponent<MobileInteractButton>() == null)
+                        interactBtnGO.AddComponent<MobileInteractButton>();
+
+                    var mcm = prefabRoot.GetComponent<MobileControlsManager>() ?? prefabRoot.AddComponent<MobileControlsManager>();
+                    var soMcm = new SerializedObject(mcm);
+                    var pVJ = soMcm.FindProperty("virtualJoystickGO");
+                    var pBtn = soMcm.FindProperty("interactButtonGO");
+                    var pBook = soMcm.FindProperty("bookButtonRT");
+                    var vj = prefabRoot.transform.Find("VirtualJoystick");
+                    if (pVJ != null) pVJ.objectReferenceValue = vj != null ? vj.gameObject : null;
+                    if (pBtn != null) pBtn.objectReferenceValue = interactBtnGO;
+                    if (pBook != null) pBook.objectReferenceValue = btnBook.GetComponent<RectTransform>();
+                    soMcm.ApplyModifiedProperties();
+                }
+
                 WireInGameMenuController(menuCtrl, settingsPanel, bagModalComp);
 
                 PrefabUtility.SaveAsPrefabAsset(prefabRoot, PrefabPath);

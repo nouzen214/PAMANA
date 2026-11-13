@@ -63,6 +63,7 @@ namespace TopDownGame
         private ArtifactInteractable _currentArtifact;
         private PlayerMovement _playerMovement;
         private bool _isOpen = false;
+        public bool IsOpen => _isOpen;
         private readonly List<GameObject> _hiddenHudObjects = new List<GameObject>();
 
         // Restore from Bag Picker Modal
@@ -374,9 +375,23 @@ namespace TopDownGame
             }
         }
 
+        public void TriggerAdvanceDialogue()
+        {
+            if (!_isOpen) return;
+            if ((plaquePopup != null && plaquePopup.activeSelf) || (artifactPopup != null && artifactPopup.activeSelf))
+            {
+                OnDialogueArrowClicked();
+            }
+        }
+
         private void Update()
         {
             if (!_isOpen) return;
+
+            if (MobileInteractButton.WasPressedThisFrame)
+            {
+                TriggerAdvanceDialogue();
+            }
 
             if (UnityEngine.InputSystem.Keyboard.current != null)
             {
