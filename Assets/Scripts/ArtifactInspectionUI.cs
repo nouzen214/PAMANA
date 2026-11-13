@@ -1161,25 +1161,16 @@ namespace TopDownGame
             GameProgression.RestorePedestal(rNum, _currentArtifact.ArtifactName);
             _currentArtifact.SetRestoredVisual(true);
 
-            NotificationBannerUI.Show(
-                "ARTIFACT RESTORED!",
-                $"You restored '{item.name}' to its pedestal!",
-                4.0f,
-                new Color(0.2f, 0.95f, 0.4f, 1f),
-                "★"
-            );
-
-            SetDialogueMessage($"I placed the {item.name} back on its pedestal where it belongs!");
-
             // Check room door unlock status
             int retrieved = GameProgression.GetRoomRetrievedCount(rNum);
             int restored = GameProgression.GetPedestalsRestoredCount(rNum);
+
             if (restored == 1 && rNum < 12)
             {
                 NotificationBannerUI.Show(
-                    $"ROOM {rNum + 1} UNLOCKED!",
-                    $"First artifact placed on pedestal! (1/5 placed)\nReal World Room {rNum + 1} is now OPEN in the hallway!",
-                    5.5f,
+                    "ARTIFACT RESTORED & ROOM UNLOCKED!",
+                    $"Restored '{item.name}'! Room {rNum + 1} is now OPEN in the hallway!",
+                    1.2f,
                     new Color(0.2f, 0.95f, 0.4f, 1f),
                     "★"
                 );
@@ -1187,13 +1178,25 @@ namespace TopDownGame
             else if (retrieved > 1 && restored >= retrieved)
             {
                 NotificationBannerUI.Show(
-                    $"ROOM {rNum} COMPLETE!",
-                    $"All {retrieved} recovered artifacts restored to Room {rNum}!",
-                    5.0f,
+                    "ARTIFACT RESTORED & ROOM COMPLETE!",
+                    $"All {retrieved} recovered relics restored to Room {rNum}!",
+                    1.2f,
                     new Color(0.2f, 0.95f, 0.4f, 1f),
                     "★"
                 );
             }
+            else
+            {
+                NotificationBannerUI.Show(
+                    "ARTIFACT RESTORED!",
+                    $"You restored '{item.name}' to its pedestal! ({restored}/5 placed)",
+                    1.0f,
+                    new Color(0.2f, 0.95f, 0.4f, 1f),
+                    "★"
+                );
+            }
+
+            SetDialogueMessage($"I placed the {item.name} back on its pedestal where it belongs!");
 
             CloseRestorePicker();
             UpdateChoiceButtons();

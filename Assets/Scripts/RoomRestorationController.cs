@@ -295,7 +295,7 @@ namespace TopDownGame
             overlaySr.color = new Color(1f, 1f, 1f, 0f);
 
             float elapsed = 0f;
-            float duration = 1.4f;
+            float duration = 0.45f;
 
             while (elapsed < duration)
             {
@@ -355,7 +355,7 @@ namespace TopDownGame
                     NotificationBannerUI.Show(
                         $"ROOM {roomNumber} RESTORATION: 33%",
                         $"2/5 artifacts restored to pedestals!\nCobwebs and rubble dissolve from the chamber.",
-                        5.0f,
+                        1.2f,
                         new Color(1f, 0.88f, 0.35f, 1f),
                         "✦"
                     );
@@ -366,7 +366,7 @@ namespace TopDownGame
                     NotificationBannerUI.Show(
                         $"ROOM {roomNumber} RESTORATION: 67%",
                         $"{count}/5 artifacts restored to pedestals!\nThe chamber is 67% restored with clean ancient stone masonry.",
-                        5.0f,
+                        1.2f,
                         new Color(1f, 0.92f, 0.40f, 1f),
                         "✦"
                     );
@@ -378,7 +378,7 @@ namespace TopDownGame
                     NotificationBannerUI.Show(
                         $"ROOM {roomNumber} 100% PURIFIED!",
                         $"All 5/5 artifacts restored to pedestals!\nThe chamber is fully restored to its eternal golden glory!",
-                        6.0f,
+                        1.5f,
                         new Color(0.2f, 0.95f, 0.45f, 1f),
                         "★"
                     );

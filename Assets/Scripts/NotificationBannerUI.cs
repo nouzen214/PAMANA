@@ -32,7 +32,7 @@ namespace TopDownGame
         [SerializeField] private TMP_Text messageText;
 
         [Header("Animation Settings")]
-        [SerializeField] private float animDuration = 0.15f;
+        [SerializeField] private float animDuration = 0.08f;
 
         private readonly Queue<BannerRequest> _requestQueue = new Queue<BannerRequest>();
         private Coroutine _queueCoroutine;
@@ -73,7 +73,7 @@ namespace TopDownGame
             }
         }
 
-        public static void Show(string title, string message, float duration = 2.0f, Color? accentColor = null, string icon = "!")
+        public static void Show(string title, string message, float duration = 1.2f, Color? accentColor = null, string icon = "!")
         {
             var banner = Instance;
             if (banner == null)
@@ -98,10 +98,10 @@ namespace TopDownGame
 
         public void EnqueueNotification(string title, string message, float duration, Color accentColor, string icon = "!")
         {
-            // Debounce identical notifications within 1.2 seconds to prevent rapid double-click stutter
+            // Debounce identical notifications within 0.8 seconds
             if (string.Equals(_lastRequest.title, title, System.StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(_lastRequest.message, message, System.StringComparison.OrdinalIgnoreCase) &&
-                (Time.unscaledTime - _lastRequestTime) < 1.2f)
+                (Time.unscaledTime - _lastRequestTime) < 0.8f)
             {
                 return;
             }
@@ -122,14 +122,14 @@ namespace TopDownGame
                 foreach (var f in filtered) _requestQueue.Enqueue(f);
             }
 
-            // Cap queue size to maximum 2 items so backlogs never build up
-            while (_requestQueue.Count >= 2)
+            // Cap queue size to maximum 3 items so backlogs never build up
+            while (_requestQueue.Count >= 3)
             {
-                _requestQueue.Dequeue(); // drop oldest stale notification
+                _requestQueue.Dequeue();
             }
 
-            // Responsive duration: scale down long durations so interactions feel fast and snappy
-            float effectiveDuration = Mathf.Clamp(duration * 0.50f, 1.4f, 2.6f);
+            // Ultra-fast responsive duration: clamp between 0.75s and 1.5s
+            float effectiveDuration = Mathf.Clamp(duration * 0.35f, 0.75f, 1.5f);
 
             var req = new BannerRequest
             {
@@ -192,7 +192,7 @@ namespace TopDownGame
                         messageText.color = DefaultBodyBrown;
                     }
 
-                    // Fast Slide Down (0.15s EaseOutCubic)
+                    // Ultra-fast slide down (0.08s EaseOutCubic)
                     float elapsed = 0f;
                     Vector2 startPos = bannerRect != null ? bannerRect.anchoredPosition : _hiddenPos;
                     while (elapsed < animDuration)
@@ -210,13 +210,12 @@ namespace TopDownGame
                 }
                 else
                 {
-                    // IN-PLACE FAST CROSS-FADE PUNCH (Only 0.12s total for rapid succession)
-                    // Quick fade out text (0.06s)
+                    // IN-PLACE LIGHTNING CROSS-FADE PUNCH (Only 0.06s total)
                     float fadeOutElapsed = 0f;
-                    while (fadeOutElapsed < 0.06f)
+                    while (fadeOutElapsed < 0.03f)
                     {
                         fadeOutElapsed += Time.unscaledDeltaTime;
-                        float t = Mathf.Clamp01(fadeOutElapsed / 0.06f);
+                        float t = Mathf.Clamp01(fadeOutElapsed / 0.03f);
                         if (bannerGroup != null) bannerGroup.alpha = Mathf.Lerp(1f, 0.25f, t);
                         yield return null;
                     }
@@ -234,12 +233,11 @@ namespace TopDownGame
                         messageText.color = DefaultBodyBrown;
                     }
 
-                    // Quick fade in text (0.06s)
                     float fadeInElapsed = 0f;
-                    while (fadeInElapsed < 0.06f)
+                    while (fadeInElapsed < 0.03f)
                     {
                         fadeInElapsed += Time.unscaledDeltaTime;
-                        float t = Mathf.Clamp01(fadeInElapsed / 0.06f);
+                        float t = Mathf.Clamp01(fadeInElapsed / 0.03f);
                         if (bannerGroup != null) bannerGroup.alpha = Mathf.Lerp(0.25f, 1f, t);
                         yield return null;
                     }
@@ -248,17 +246,16 @@ namespace TopDownGame
                 if (bannerGroup != null) bannerGroup.alpha = 1f;
                 if (bannerRect != null) bannerRect.anchoredPosition = _targetPos;
 
-                // Dynamic hold duration: if notifications are queued behind this, compress hold to 0.85s
-                float holdTime = _requestQueue.Count > 0 ? 0.85f : current.duration;
+                // Dynamic hold duration: if notifications are queued behind this, hold for only 0.40s
+                float holdTime = _requestQueue.Count > 0 ? 0.40f : current.duration;
 
                 _skipCurrentHold = false;
                 float holdElapsed = 0f;
                 while (holdElapsed < holdTime)
                 {
                     holdElapsed += Time.unscaledDeltaTime;
-                    // If player triggered another interaction while this is showing,
-                    // allow a brief moment (0.35s) so the user registers the current notification, then switch instantly!
-                    if (_skipCurrentHold && holdElapsed >= 0.35f)
+                    // If player triggered another interaction, switch after just 0.15s!
+                    if (_skipCurrentHold && holdElapsed >= 0.15f)
                     {
                         break;
                     }
@@ -266,7 +263,7 @@ namespace TopDownGame
                 }
             }
 
-            // Fast Slide Up & Hide (0.15s EaseInCubic)
+            // Ultra-fast slide up & hide (0.08s EaseInCubic)
             float outElapsed = 0f;
             Vector2 curPos = bannerRect != null ? bannerRect.anchoredPosition : _targetPos;
             while (outElapsed < animDuration)
