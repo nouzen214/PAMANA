@@ -1371,6 +1371,7 @@ namespace TopDownGame.Editor
 
             var closeBtn = closeObj.GetComponent<Button>();
             if (closeBtn == null) closeBtn = closeObj.AddComponent<Button>();
+            closeBtn.navigation = new Navigation { mode = Navigation.Mode.None };
             closeBtn.onClick = new Button.ButtonClickedEvent();
             UnityEditor.Events.UnityEventTools.AddPersistentListener(closeBtn.onClick, modalComp.CloseBook);
 
@@ -1397,8 +1398,8 @@ namespace TopDownGame.Editor
             pColors.highlightedColor = new Color(1f, 0.95f, 0.8f, 1f);
             pColors.pressedColor = new Color(0.85f, 0.75f, 0.6f, 1f);
             prevBtn.colors = pColors;
+            prevBtn.navigation = new Navigation { mode = Navigation.Mode.None };
             prevBtn.onClick = new Button.ButtonClickedEvent();
-            UnityEditor.Events.UnityEventTools.AddPersistentListener(prevBtn.onClick, modalComp.OnPrevPageClicked);
 
             // Right Arrow Button (Next Page)
             var nextObj = GetOrCreateChild(bookContObj.transform, "Button_NextPage");
@@ -1419,8 +1420,8 @@ namespace TopDownGame.Editor
             var nextBtn = nextObj.GetComponent<Button>();
             if (nextBtn == null) nextBtn = nextObj.AddComponent<Button>();
             nextBtn.colors = pColors;
+            nextBtn.navigation = new Navigation { mode = Navigation.Mode.None };
             nextBtn.onClick = new Button.ButtonClickedEvent();
-            UnityEditor.Events.UnityEventTools.AddPersistentListener(nextBtn.onClick, modalComp.OnNextPageClicked);
 
             // Left Page Container
             var leftContObj = GetOrCreateChild(bookContObj.transform, "LeftPageContainer");

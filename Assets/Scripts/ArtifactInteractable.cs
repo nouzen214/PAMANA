@@ -131,31 +131,9 @@ namespace TopDownGame
             return promptText;
         }
 
-        private void OnMouseDown()
+        protected override void OnMouseDown()
         {
-            // If pointer is interacting with UI elements (virtual joystick, buttons), skip world tap
-            if (UnityEngine.EventSystems.EventSystem.current != null && 
-                UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
-            {
-                return;
-            }
-
-            // Find player and verify player is within interaction range
-            var player = GameObject.FindWithTag("Player") ?? GameObject.Find("Player");
-            if (player == null)
-            {
-                var pih = FindFirstObjectByType<PlayerInputHandler>();
-                if (pih != null) player = pih.gameObject;
-            }
-
-            if (player != null)
-            {
-                float dist = Vector2.Distance(player.transform.position, transform.position);
-                if (dist <= 3.0f)
-                {
-                    Interact();
-                }
-            }
+            base.OnMouseDown();
         }
 
         public void SetRoomNumber(int r)

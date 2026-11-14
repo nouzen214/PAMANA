@@ -61,6 +61,110 @@ namespace TopDownGame
             {
                 TriggerInteract();
             }
+
+            // Direct touch/tap in world space (tap doors to enter, tap artifacts to inspect)
+            HandleWorldTapInput();
+        }
+
+        private void HandleWorldTapInput()
+        {
+            // If any modal/dialogue UI is already open, skip world tap
+            if (ArtifactInspectionUI.Instance != null && ArtifactInspectionUI.Instance.IsOpen) return;
+            if (BookModalUI.Instance != null && BookModalUI.Instance.IsOpen) return;
+            var bag = FindFirstObjectByType<BagModalUI>(FindObjectsInactive.Include);
+            if (bag != null && bag.IsOpen) return;
+
+            bool tapped = false;
+            Vector2 screenPos = Vector2.zero;
+
+            if (Input.touchCount > 0)
+            {
+                var touch = Input.GetTouch(0);
+                if (touch.phase == TouchPhase.Began)
+                {
+                    tapped = true;
+                    screenPos = touch.position;
+                }
+            }
+            else if (Input.GetMouseButtonDown(0))
+            {
+                tapped = true;
+                screenPos = Input.mousePosition;
+            }
+
+            if (!tapped) return;
+
+            // If tapping UI (joystick, menu buttons, etc.), ignore
+            if (UnityEngine.EventSystems.EventSystem.current != null)
+            {
+                if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return;
+                if (Input.touchCount > 0 && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId)) return;
+            }
+
+            var cam = Camera.main ?? FindFirstObjectByType<Camera>();
+            if (cam == null) return;
+
+            Vector3 worldPos3 = cam.ScreenToWorldPoint(screenPos);
+            Vector2 worldPoint = new Vector2(worldPos3.x, worldPos3.y);
+
+            // 1. Check colliders in radius around tap point (generous touch tolerance for fingers)
+            DoorController target = null;
+            var hits = Physics2D.OverlapCircleAll(worldPoint, 0.65f);
+            float bestTapDist = float.MaxValue;
+            foreach (var hit in hits)
+            {
+                if (hit == null) continue;
+                var door = hit.GetComponentInParent<DoorController>() ?? hit.GetComponent<DoorController>();
+                if (door != null && door.gameObject.activeInHierarchy)
+                {
+                    float d = Vector2.Distance(worldPoint, hit.bounds.ClosestPoint(worldPoint));
+                    if (d < bestTapDist)
+                    {
+                        bestTapDist = d;
+                        target = door;
+                    }
+                }
+            }
+
+            // 2. Fallback: check SpriteRenderer bounds of active DoorControllers
+            if (target == null)
+            {
+                var allDoors = FindObjectsByType<DoorController>(FindObjectsSortMode.None);
+                foreach (var d in allDoors)
+                {
+                    if (d == null || !d.gameObject.activeInHierarchy) continue;
+                    var srs = d.GetComponentsInChildren<SpriteRenderer>();
+                    foreach (var sr in srs)
+                    {
+                        if (sr.bounds.Contains(worldPoint) || Vector2.Distance(sr.bounds.center, worldPoint) < 0.75f)
+                        {
+                            target = d;
+                            break;
+                        }
+                    }
+                    if (target != null) break;
+                }
+            }
+
+            if (target != null)
+            {
+                // Measure player distance to interactable
+                float dist = Vector2.Distance(transform.position, target.transform.position);
+                var cols = target.GetComponentsInChildren<Collider2D>();
+                foreach (var c in cols)
+                {
+                    if (c == null) continue;
+                    float d = Vector2.Distance(transform.position, c.bounds.ClosestPoint(transform.position));
+                    if (d < dist) dist = d;
+                }
+
+                // Make sure character is actually beside the element
+                if (dist <= interactionRadius) // 2.8f
+                {
+                    _nearestDoor = target;
+                    target.Interact();
+                }
+            }
         }
 
         public DoorController GetNearestInteractable(float maxDistance = 2.8f)

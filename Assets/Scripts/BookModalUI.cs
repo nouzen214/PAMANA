@@ -62,6 +62,8 @@ namespace TopDownGame
 
         private PlayerMovement _playerMovement;
         private float _previousTimeScale = 1f;
+        private float _lastPageChangeTime = -1f;
+        private int _lastPageChangeFrame = -1;
 
         public bool IsOpen => modalRoot != null && modalRoot.activeSelf;
         public int CurrentPage => currentPage;
@@ -98,26 +100,36 @@ namespace TopDownGame
         {
             if (closeButton != null)
             {
+                closeButton.navigation = new Navigation { mode = Navigation.Mode.None };
                 closeButton.onClick.RemoveAllListeners();
                 closeButton.onClick.AddListener(CloseBook);
             }
 
             if (dimmerButton != null)
             {
+                dimmerButton.navigation = new Navigation { mode = Navigation.Mode.None };
                 dimmerButton.onClick.RemoveAllListeners();
                 dimmerButton.onClick.AddListener(CloseBook);
             }
 
             if (prevPageButton != null)
             {
+                prevPageButton.navigation = new Navigation { mode = Navigation.Mode.None };
                 prevPageButton.onClick.RemoveAllListeners();
-                prevPageButton.onClick.AddListener(OnPrevPageClicked);
+                if (prevPageButton.onClick.GetPersistentEventCount() == 0)
+                {
+                    prevPageButton.onClick.AddListener(OnPrevPageClicked);
+                }
             }
 
             if (nextPageButton != null)
             {
+                nextPageButton.navigation = new Navigation { mode = Navigation.Mode.None };
                 nextPageButton.onClick.RemoveAllListeners();
-                nextPageButton.onClick.AddListener(OnNextPageClicked);
+                if (nextPageButton.onClick.GetPersistentEventCount() == 0)
+                {
+                    nextPageButton.onClick.AddListener(OnNextPageClicked);
+                }
             }
         }
 
@@ -275,6 +287,14 @@ namespace TopDownGame
 
         public void OnPrevPageClicked()
         {
+            if (Application.isPlaying)
+            {
+                if (Time.frameCount == _lastPageChangeFrame) return;
+                if (_lastPageChangeTime > 0f && Time.unscaledTime - _lastPageChangeTime < 0.15f) return;
+                _lastPageChangeFrame = Time.frameCount;
+                _lastPageChangeTime = Time.unscaledTime;
+            }
+
             if (currentPage > 1)
             {
                 currentPage--;
@@ -284,6 +304,14 @@ namespace TopDownGame
 
         public void OnNextPageClicked()
         {
+            if (Application.isPlaying)
+            {
+                if (Time.frameCount == _lastPageChangeFrame) return;
+                if (_lastPageChangeTime > 0f && Time.unscaledTime - _lastPageChangeTime < 0.15f) return;
+                _lastPageChangeFrame = Time.frameCount;
+                _lastPageChangeTime = Time.unscaledTime;
+            }
+
             if (currentPage < maxPages)
             {
                 currentPage++;
@@ -778,10 +806,7 @@ namespace TopDownGame
             modalComp.topics = GetDefaultTopics();
             modalComp.maxPages = modalComp.topics.Count;
 
-            closeBtn.onClick.AddListener(modalComp.CloseBook);
-            dimmerBtn.onClick.AddListener(modalComp.CloseBook);
-            prevBtn.onClick.AddListener(modalComp.OnPrevPageClicked);
-            nextBtn.onClick.AddListener(modalComp.OnNextPageClicked);
+            modalComp.WireButtons();
 
             modalComp.EnsureUIElements();
             modalComp.UpdatePaginationUI();

@@ -19,6 +19,8 @@ namespace TopDownGame
         [SerializeField] private GameObject virtualJoystickGO;
         [Tooltip("The Mobile Interaction Button ('E') GameObject. If left empty, will auto-detect in children.")]
         [SerializeField] private GameObject interactButtonGO;
+        [Tooltip("Whether to display the on-screen E button. Default is false (interact by directly tapping doors/artifacts).")]
+        [SerializeField] private bool showInteractButton = false;
         [Tooltip("The Book Button RectTransform. Position will adjust so it does not overlap with the E button.")]
         [SerializeField] private RectTransform bookButtonRT;
 
@@ -114,7 +116,7 @@ namespace TopDownGame
             }
             if (interactButtonGO != null)
             {
-                interactButtonGO.SetActive(isVisible);
+                interactButtonGO.SetActive(isVisible && showInteractButton);
             }
             // Note: Menu buttons (Book, Bag, Settings) remain in the top-right toolbar row
             // where they are comfortably accessible and do not clutter the thumb movement zone.

@@ -171,6 +171,57 @@ namespace TopDownGame
                 audioSource.PlayOneShot(clip);
         }
 
+        // ─── Direct Touch / Tap Interaction (Mobile & Mouse) ──────────────────
+        protected virtual void OnMouseDown()
+        {
+            TryDirectTapInteract();
+        }
+
+        public void TryDirectTapInteract()
+        {
+            // If any modal/dialogue UI is open, do not trigger world interactables
+            if (ArtifactInspectionUI.Instance != null && ArtifactInspectionUI.Instance.IsOpen) return;
+            if (BookModalUI.Instance != null && BookModalUI.Instance.IsOpen) return;
+            var bag = FindFirstObjectByType<BagModalUI>(FindObjectsInactive.Include);
+            if (bag != null && bag.IsOpen) return;
+
+            // If pointer is touching UI elements (joystick, menu buttons, etc.), ignore world click
+            if (UnityEngine.EventSystems.EventSystem.current != null)
+            {
+                if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+                    return;
+
+                if (Input.touchCount > 0 && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId))
+                    return;
+            }
+
+            // Find player and verify player is actually beside the door / interactable
+            var player = GameObject.FindWithTag("Player") ?? GameObject.Find("Player");
+            if (player == null)
+            {
+                var pih = FindFirstObjectByType<PlayerInputHandler>();
+                if (pih != null) player = pih.gameObject;
+            }
+
+            if (player != null)
+            {
+                float dist = Vector2.Distance(player.transform.position, transform.position);
+                var cols = GetComponentsInChildren<Collider2D>();
+                foreach (var c in cols)
+                {
+                    if (c == null) continue;
+                    float d = Vector2.Distance(player.transform.position, c.bounds.ClosestPoint(player.transform.position));
+                    if (d < dist) dist = d;
+                }
+
+                // Beside the element (<= 2.8 units)
+                if (dist <= 2.8f)
+                {
+                    Interact();
+                }
+            }
+        }
+
         // ─── Gizmo ────────────────────────────────────────────────────────────
         private void OnDrawGizmosSelected()
         {
