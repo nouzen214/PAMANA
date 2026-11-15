@@ -110,6 +110,14 @@ namespace TopDownGame
             EnsureDialogueBoxReferences();
             ApplyDialogueBoxMode(false);
 
+            DisableButtonNavigation(inspectArtifactButton);
+            DisableButtonNavigation(inspectPlaqueButton);
+            DisableButtonNavigation(restoreArtifactButton);
+            DisableButtonNavigation(closePlaqueButton);
+            DisableButtonNavigation(closeArtifactDetailButton);
+            DisableButtonNavigation(backgroundTapButton);
+            DisableButtonNavigation(dialogueArrowButton);
+
             if (rootPanel != null)
                 rootPanel.SetActive(false);
 
@@ -117,6 +125,22 @@ namespace TopDownGame
                 _playerMovement = FindFirstObjectByType<PlayerMovement>();
             if (_playerMovement != null)
                 _playerMovement.enabled = true;
+        }
+
+        private void OnDisable()
+        {
+            if (_isOpen)
+            {
+                Close();
+            }
+        }
+
+        private void DisableButtonNavigation(Button btn)
+        {
+            if (btn != null)
+            {
+                btn.navigation = new Navigation { mode = Navigation.Mode.None };
+            }
         }
 
         private void OnDestroy()
@@ -160,6 +184,10 @@ namespace TopDownGame
             {
                 _characterNameRt = characterNameText.GetComponent<RectTransform>();
             }
+            if (characterNameText != null)
+            {
+                characterNameText.alignment = TextAlignmentOptions.MidlineLeft;
+            }
             if (_dialogueArrowRt == null && dialogueArrowButton != null)
             {
                 _dialogueArrowRt = dialogueArrowButton.GetComponent<RectTransform>();
@@ -199,12 +227,16 @@ namespace TopDownGame
 
                 if (_characterNameRt != null)
                 {
-                    _characterNameRt.anchoredPosition = new Vector2(82f, -8f);
-                    _characterNameRt.sizeDelta = new Vector2(160f, 26f);
+                    _characterNameRt.pivot = new Vector2(0f, 0.5f);
+                    _characterNameRt.anchorMin = new Vector2(0f, 1f);
+                    _characterNameRt.anchorMax = new Vector2(0f, 1f);
+                    _characterNameRt.anchoredPosition = new Vector2(80f, -18.2f);
+                    _characterNameRt.sizeDelta = new Vector2(200f, 26f);
                 }
                 if (characterNameText != null)
                 {
-                    characterNameText.fontSize = 21f;
+                    characterNameText.alignment = TextAlignmentOptions.MidlineLeft;
+                    characterNameText.fontSize = 20f;
                 }
 
                 if (_dialogueTextRt != null)
@@ -239,11 +271,15 @@ namespace TopDownGame
 
                 if (_characterNameRt != null)
                 {
-                    _characterNameRt.anchoredPosition = new Vector2(120f, -30f);
-                    _characterNameRt.sizeDelta = new Vector2(230f, 45f);
+                    _characterNameRt.pivot = new Vector2(0f, 0.5f);
+                    _characterNameRt.anchorMin = new Vector2(0f, 1f);
+                    _characterNameRt.anchorMax = new Vector2(0f, 1f);
+                    _characterNameRt.anchoredPosition = new Vector2(110f, -41f);
+                    _characterNameRt.sizeDelta = new Vector2(230f, 44f);
                 }
                 if (characterNameText != null)
                 {
+                    characterNameText.alignment = TextAlignmentOptions.MidlineLeft;
                     characterNameText.fontSize = 28f;
                 }
 
@@ -274,14 +310,15 @@ namespace TopDownGame
         public void SetDialogueMessage(string message)
         {
             EnsureDialogueBoxReferences();
+            string formatted = ArtifactInteractable.FormatDialogueSentence(message);
             if (dialogueText != null)
             {
-                dialogueText.text = message;
+                dialogueText.text = formatted;
                 dialogueText.color = new Color(0.18f, 0.12f, 0.08f, 1f);
             }
 
             bool choicesActive = (choiceContainer != null && choiceContainer.activeSelf);
-            bool shouldBeLong = !choicesActive && !string.IsNullOrEmpty(message) && message.Length >= 120;
+            bool shouldBeLong = !choicesActive && !string.IsNullOrEmpty(formatted) && formatted.Length >= 120;
 
             ApplyDialogueBoxMode(shouldBeLong);
         }
@@ -527,16 +564,16 @@ namespace TopDownGame
 
                 if (choiceContainer != null && choiceContainer.activeSelf)
                 {
-                    if ((kb.digit1Key.wasPressedThisFrame || kb.rKey.wasPressedThisFrame) &&
+                    if ((kb.digit1Key.wasPressedThisFrame || kb.numpad1Key.wasPressedThisFrame || kb.rKey.wasPressedThisFrame) &&
                         restoreArtifactButton != null && restoreArtifactButton.gameObject.activeSelf)
                     {
                         OnRestoreArtifactClicked();
                     }
-                    else if (kb.digit2Key.wasPressedThisFrame || kb.aKey.wasPressedThisFrame)
+                    else if (kb.digit2Key.wasPressedThisFrame || kb.numpad2Key.wasPressedThisFrame || kb.iKey.wasPressedThisFrame)
                     {
                         OnInspectArtifactClicked();
                     }
-                    else if (kb.digit3Key.wasPressedThisFrame || kb.pKey.wasPressedThisFrame)
+                    else if (kb.digit3Key.wasPressedThisFrame || kb.numpad3Key.wasPressedThisFrame || kb.pKey.wasPressedThisFrame)
                     {
                         OnInspectPlaqueClicked();
                     }
@@ -556,15 +593,16 @@ namespace TopDownGame
             if (artifact == null) return false;
             int rNum = artifact.RoomNumber;
 
+            // If room is already fully restored, all artifacts are present - never unlock retry or battle
+            if (GameProgression.IsRoomFullyRestored(rNum)) return false;
+
             // An item is unobtained if not restored on pedestal and not in bag
             bool isRestored = artifact.IsRestored;
             bool inBag = DoesPlayerHaveArtifactForPedestal(artifact);
             if (isRestored || inBag) return false;
 
             // Check if room battle was previously attempted or completed
-            bool hasAttemptedOrCompleted = GameProgression.HasRetrievedRoomArtifact(rNum) || 
-                                           GameProgression.IsRoomBattleCompleted(rNum) ||
-                                           GameProgression.GetRoomRetrievedCount(rNum) > 0;
+            bool hasAttemptedOrCompleted = GameProgression.HasAttemptedRoomBattle(rNum);
 
             if (hasAttemptedOrCompleted && GameProgression.CanRoomBeRetried(rNum))
             {
@@ -609,7 +647,7 @@ namespace TopDownGame
 
             EnsureBackgroundDismissButton();
 
-            // Pause player movement
+            // Pause player movement, input polling, and animations
             if (_playerMovement == null)
                 _playerMovement = FindFirstObjectByType<PlayerMovement>();
 
@@ -618,6 +656,12 @@ namespace TopDownGame
                 _playerMovement.enabled = false;
                 var rb = _playerMovement.GetComponent<Rigidbody2D>();
                 if (rb != null) rb.linearVelocity = Vector2.zero;
+
+                var input = _playerMovement.GetComponent<PlayerInputHandler>();
+                if (input != null) input.enabled = false;
+
+                var playerAnim = _playerMovement.GetComponent<CharacterAnimator2D>();
+                if (playerAnim != null) playerAnim.SetIdlePose();
             }
 
             // Hide other gameplay HUD elements (Joystick, Hearts, Room Banner, Home Button)
@@ -658,24 +702,33 @@ namespace TopDownGame
             if (characterNameText != null)
             {
                 string defaultName = isGirl ? "Darla" : "Darrel";
-                characterNameText.text = PlayerPrefs.GetString("CustomCharacterName", defaultName);
+                string rawName = PlayerPrefs.GetString("CustomCharacterName", defaultName);
+                characterNameText.text = CharacterSelectManager.SanitizeAndValidateName(rawName, defaultName);
+                characterNameText.alignment = TextAlignmentOptions.MidlineLeft;
                 characterNameText.color = new Color(1f, 0.95f, 0.85f, 1f);
             }
 
             int rNum = artifact != null ? artifact.RoomNumber : 1;
             bool isPedestalRestored = artifact != null && artifact.IsRestored;
+            bool isRoomFullyRestored = GameProgression.IsRoomFullyRestored(rNum);
             bool allRead = GameProgression.AreAllPlaquesRead(rNum);
             int readCount = GameProgression.GetPlaquesReadCount(rNum);
             bool hasMatchingInBag = DoesPlayerHaveArtifactForPedestal(artifact);
-            bool hasAttemptedOrCompleted = GameProgression.HasRetrievedRoomArtifact(rNum) || 
-                                           GameProgression.IsRoomBattleCompleted(rNum) ||
-                                           GameProgression.GetRoomRetrievedCount(rNum) > 0;
+            bool hasAttemptedOrCompleted = GameProgression.HasAttemptedRoomBattle(rNum);
+            bool canRetry = GameProgression.CanRoomBeRetried(rNum);
+            bool topicReviewed = GameProgression.IsBookTopicReviewed(rNum);
             bool retryUnlocked = CheckAndUnlockRetryForUnobtainedArtifact(artifact);
 
             UpdateChoiceButtons();
 
             string initMsg = "";
-            if (isPedestalRestored)
+            if (isRoomFullyRestored)
+            {
+                initMsg = isPedestalRestored
+                    ? $"The {artifact.ArtifactName} has been safely restored to this pedestal! Room {rNum} is fully restored."
+                    : $"All 5 artifacts in Room {rNum} have been safely recovered and restored!";
+            }
+            else if (isPedestalRestored)
             {
                 initMsg = $"The {artifact.ArtifactName} has been safely restored to this pedestal!";
             }
@@ -683,21 +736,22 @@ namespace TopDownGame
             {
                 initMsg = "I have a matching artifact in my bag! I should place it on this pedestal.";
             }
-            else if (retryUnlocked)
+            else if (hasAttemptedOrCompleted && canRetry)
             {
-                initMsg = $"The {artifact.ArtifactName} hasn't been recovered yet! By inspecting this pedestal and reviewing Topic {rNum}, Alterworld Battle {rNum} is now unlocked for retry. I can enter the portal to retrieve it!";
+                initMsg = topicReviewed
+                    ? $"The {artifact.ArtifactName} hasn't been recovered yet! Alterworld Battle {rNum} is unlocked for retry. I can enter the portal to retrieve it!"
+                    : $"The {artifact.ArtifactName} hasn't been recovered yet! To retry Alterworld Battle {rNum}, I must open the Museum Field Guide (Book icon) and review Topic {rNum}!";
             }
-            else if (hasAttemptedOrCompleted && GameProgression.CanRoomBeRetried(rNum) && !GameProgression.IsBookTopicReviewed(rNum))
+            else if (hasAttemptedOrCompleted && !canRetry)
             {
-                initMsg = $"The {artifact.ArtifactName} hasn't been recovered yet! To retry Alterworld Battle {rNum}, I must open the Museum Field Guide (Book icon) and review Topic {rNum}!";
+                initMsg = $"All artifacts in Room {rNum} have been safely recovered and restored!";
             }
             else if (allRead)
             {
-                bool topicReviewed = GameProgression.IsBookTopicReviewed(rNum);
                 if (rNum == 1)
                 {
                     initMsg = topicReviewed
-                        ? "I have studied all 5 plaques and reviewed Topic 1 in the Field Guide! The mysterious portal in the museum lobby is now awakened!"
+                        ? "I have studied all 5 plaques and reviewed Topic 1 in the Field Guide! The mysterious portal in the museum lobby is open!"
                         : "I have studied all 5 plaques in Room 1! Now I must open the Museum Field Guide (Book icon) and review Topic 1 to awaken the portal!";
                 }
                 else
@@ -709,7 +763,6 @@ namespace TopDownGame
             }
             else
             {
-                bool topicReviewed = GameProgression.IsBookTopicReviewed(rNum);
                 initMsg = topicReviewed
                     ? $"I have reviewed Topic {rNum} in the Field Guide! Now I need to study all 5 historical plaques in this room ({readCount}/5 studied). What should I do?"
                     : $"I need to study all 5 plaques ({readCount}/5 studied) and review Topic {rNum} in the Museum Field Guide. What should I do?";
@@ -753,6 +806,12 @@ namespace TopDownGame
             EnsureMobileLeaveButton();
             EnsureMobileDialogueCloseButton();
             EnsureDialogueArrowButton();
+            DisableButtonNavigation(inspectArtifactButton);
+            DisableButtonNavigation(inspectPlaqueButton);
+            DisableButtonNavigation(restoreArtifactButton);
+            DisableButtonNavigation(_mobileLeaveButton);
+            DisableButtonNavigation(_mobileDialogueCloseButton);
+            DisableButtonNavigation(dialogueArrowButton);
             CleanAllChoiceButtons();
             ApplyDialogueBoxMode(false);
         }
@@ -786,13 +845,22 @@ namespace TopDownGame
             {
                 int rNum = _currentArtifact.RoomNumber;
                 bool isPedestalRestored = _currentArtifact.IsRestored;
+                bool isRoomFullyRestored = GameProgression.IsRoomFullyRestored(rNum);
                 bool allRead = GameProgression.AreAllPlaquesRead(rNum);
                 int readCount = GameProgression.GetPlaquesReadCount(rNum);
                 bool hasMatchingInBag = DoesPlayerHaveArtifactForPedestal(_currentArtifact);
-                bool battleDone = GameProgression.HasRetrievedRoomArtifact(rNum);
+                bool hasAttemptedOrCompleted = GameProgression.HasAttemptedRoomBattle(rNum);
+                bool canRetry = GameProgression.CanRoomBeRetried(rNum);
+                bool topicReviewed = GameProgression.IsBookTopicReviewed(rNum);
 
                 string menuMsg = "";
-                if (isPedestalRestored)
+                if (isRoomFullyRestored)
+                {
+                    menuMsg = isPedestalRestored
+                        ? $"The {_currentArtifact.ArtifactName} is safely preserved here. Room {rNum} is fully restored!"
+                        : $"All artifacts in Room {rNum} have been safely recovered and restored!";
+                }
+                else if (isPedestalRestored)
                 {
                     menuMsg = $"The {_currentArtifact.ArtifactName} has been safely restored to this pedestal!";
                 }
@@ -800,27 +868,22 @@ namespace TopDownGame
                 {
                     menuMsg = "I have a matching artifact in my bag! I should place it on this pedestal.";
                 }
-                else if (battleDone && !isPedestalRestored && !hasMatchingInBag)
+                else if (hasAttemptedOrCompleted && canRetry)
                 {
-                    bool topicReviewed = GameProgression.IsBookTopicReviewed(rNum);
-                    if (GameProgression.CanRoomBeRetried(rNum))
-                    {
-                        menuMsg = topicReviewed
-                            ? $"The {_currentArtifact.ArtifactName} was lost in the Alterworld battle! With Topic {rNum} reviewed, this battle is unlocked for retry. Enter the portal to reclaim it!"
-                            : $"The {_currentArtifact.ArtifactName} was lost in the Alterworld battle! Open the Museum Field Guide (Book icon) and review Topic {rNum} to unlock this battle for retry!";
-                    }
-                    else
-                    {
-                        menuMsg = "This pedestal is empty. The artifact was lost in the Alterworld battle and was not recovered.";
-                    }
+                    menuMsg = topicReviewed
+                        ? $"The {_currentArtifact.ArtifactName} hasn't been recovered yet! With Topic {rNum} reviewed, this battle is unlocked for retry. Enter the portal to reclaim it!"
+                        : $"The {_currentArtifact.ArtifactName} hasn't been recovered yet! Open the Museum Field Guide (Book icon) and review Topic {rNum} to unlock this battle for retry!";
+                }
+                else if (hasAttemptedOrCompleted && !canRetry)
+                {
+                    menuMsg = "All artifacts in this room have been safely recovered and restored!";
                 }
                 else if (allRead)
                 {
-                    bool topicReviewed = GameProgression.IsBookTopicReviewed(rNum);
                     if (rNum == 1)
                     {
                         menuMsg = topicReviewed
-                            ? "I have studied all 5 plaques and reviewed Topic 1 in the Field Guide! The mysterious portal in the museum lobby is now awakened!"
+                            ? "I have studied all 5 plaques and reviewed Topic 1 in the Field Guide! The mysterious portal in the museum lobby is open!"
                             : "I have studied all 5 plaques in Room 1! Now I must open the Museum Field Guide (Book icon) and review Topic 1 to awaken the portal!";
                     }
                     else
@@ -832,7 +895,6 @@ namespace TopDownGame
                 }
                 else
                 {
-                    bool topicReviewed = GameProgression.IsBookTopicReviewed(rNum);
                     menuMsg = topicReviewed
                         ? $"I have reviewed Topic {rNum} in the Field Guide! Now I need to study all 5 historical plaques in this room ({readCount}/5 studied). What should I do?"
                         : $"I need to study all 5 plaques ({readCount}/5 studied) and review Topic {rNum} in the Museum Field Guide. What should I do?";
@@ -1002,6 +1064,7 @@ namespace TopDownGame
             dimmerImg.color = new Color(0f, 0f, 0f, 0.75f);
             var dimmerBtn = dimmerObj.GetComponent<Button>();
             dimmerBtn.transition = Selectable.Transition.None;
+            DisableButtonNavigation(dimmerBtn);
             dimmerBtn.onClick.AddListener(CloseRestorePicker);
 
             // Window
@@ -1022,14 +1085,37 @@ namespace TopDownGame
 #endif
             if (sprSel != null) winImg.sprite = sprSel;
 
-            // Title & Subtitle are baked into the flap art of SelectArtifact_Frame, so we keep them hidden
+            // Title
             var titleObj = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
             titleObj.transform.SetParent(windowObj.transform, false);
-            titleObj.SetActive(false);
+            var titleRt = titleObj.GetComponent<RectTransform>();
+            titleRt.anchorMin = new Vector2(0.5f, 0.5f);
+            titleRt.anchorMax = new Vector2(0.5f, 0.5f);
+            titleRt.pivot = new Vector2(0.5f, 0.5f);
+            titleRt.anchoredPosition = new Vector2(0f, 198f);
+            titleRt.sizeDelta = new Vector2(820f, 36f);
+            var titleTmp = titleObj.GetComponent<TextMeshProUGUI>();
+            titleTmp.text = "Select Artifact to Restore";
+            titleTmp.fontSize = 25f;
+            titleTmp.fontStyle = FontStyles.Bold;
+            titleTmp.alignment = TextAlignmentOptions.Center;
+            titleTmp.color = new Color(0.24f, 0.13f, 0.08f, 1f);
 
+            // Subtitle: Pick an artifact from your bag (enlarged for easy readability)
             var subObj = new GameObject("Subtitle", typeof(RectTransform), typeof(TextMeshProUGUI));
             subObj.transform.SetParent(windowObj.transform, false);
-            subObj.SetActive(false);
+            var subRt = subObj.GetComponent<RectTransform>();
+            subRt.anchorMin = new Vector2(0.5f, 0.5f);
+            subRt.anchorMax = new Vector2(0.5f, 0.5f);
+            subRt.pivot = new Vector2(0.5f, 0.5f);
+            subRt.anchoredPosition = new Vector2(0f, 166f);
+            subRt.sizeDelta = new Vector2(820f, 32f);
+            var subTmp = subObj.GetComponent<TextMeshProUGUI>();
+            subTmp.text = "Pick an artifact from your bag to place on this pedestal:";
+            subTmp.fontSize = 20f;
+            subTmp.fontStyle = FontStyles.Bold;
+            subTmp.alignment = TextAlignmentOptions.Center;
+            subTmp.color = new Color(0.35f, 0.20f, 0.12f, 1f);
 
             // Grid Container
             var gridObj = new GameObject("Grid", typeof(RectTransform), typeof(GridLayoutGroup));
@@ -1078,6 +1164,7 @@ namespace TopDownGame
             closeOutline.effectColor = new Color(0.35f, 0.08f, 0.06f, 0.9f);
             closeOutline.effectDistance = new Vector2(1f, -1f);
             var closeBtn = closeBtnObj.GetComponent<Button>();
+            DisableButtonNavigation(closeBtn);
             closeBtn.onClick.AddListener(CloseRestorePicker);
 
             var closeTxtObj = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -1238,6 +1325,7 @@ namespace TopDownGame
                 placeImg.color = Color.white;
 
                 var placeBtn = placeBtnObj.GetComponent<Button>();
+                DisableButtonNavigation(placeBtn);
                 placeBtn.transition = Selectable.Transition.SpriteSwap;
                 var ss = new SpriteState();
                 ss.highlightedSprite = sprBtnHov;
@@ -1250,6 +1338,7 @@ namespace TopDownGame
 
                 // Also clicking card itself attempts place
                 var cardBtn = cardObj.GetComponent<Button>();
+                DisableButtonNavigation(cardBtn);
                 cardBtn.onClick.AddListener(() => TryPlaceArtifact(itemCaptured));
 
                 _spawnedRestoreCards.Add(cardObj);
@@ -1337,12 +1426,18 @@ namespace TopDownGame
             }
 
             bool retryUnlocked = CheckAndUnlockRetryForUnobtainedArtifact(_currentArtifact);
+            int rNum = _currentArtifact != null ? _currentArtifact.RoomNumber : 1;
+            bool isRoomFullyRestored = GameProgression.IsRoomFullyRestored(rNum);
 
             if (_currentArtifact != null)
             {
                 if (retryUnlocked)
                 {
                     SetDialogueMessage($"Studying this plaque revealed clues about the missing {_currentArtifact.ArtifactName}! Alterworld Battle {_currentArtifact.RoomNumber} is unlocked for retry.");
+                }
+                else if (isRoomFullyRestored)
+                {
+                    SetDialogueMessage($"This plaque commemorates the {_currentArtifact.ArtifactName}. It has been successfully preserved and Room {rNum} is fully restored!");
                 }
                 else
                 {
@@ -1353,70 +1448,127 @@ namespace TopDownGame
             // Record plaque read and check completion
             if (_currentArtifact != null)
             {
-                int rNum = _currentArtifact.RoomNumber;
                 string pId = !string.IsNullOrEmpty(_currentArtifact.ArtifactName) ? _currentArtifact.ArtifactName : _currentArtifact.gameObject.name;
                 bool isNew = GameProgression.RecordPlaqueRead(rNum, pId);
                 int totalRead = GameProgression.GetPlaquesReadCount(rNum);
 
-                if (totalRead >= 5)
+                if (isRoomFullyRestored)
                 {
-                    bool topicReviewed = GameProgression.IsBookTopicReviewed(rNum);
-                    if (rNum == 1)
+                    // Room is fully restored! Do NOT initiate battles or talk about Alterworld trial unlocks
+                    if (isNew)
                     {
-                        if (topicReviewed)
-                        {
-                            NotificationBannerUI.Show(
-                                "PORTAL AWAKENED!",
-                                "All 5 plaques in Room 1 studied & Topic 1 reviewed!\nThe mysterious portal in the museum lobby is now awakened!",
-                                6.0f,
-                                new Color(0.24f, 0.14f, 0.07f, 1f),
-                                "★"
-                            );
-                        }
-                        else
-                        {
-                            NotificationBannerUI.Show(
-                                "ROOM 1 PLAQUES COMPLETE (5/5)",
-                                "All 5 plaques in Room 1 studied!\nNow open your Museum Field Guide (Book icon) and review Topic 1 to awaken the portal!",
-                                6.0f,
-                                new Color(0.95f, 0.65f, 0.25f, 1f),
-                                "i"
-                            );
-                        }
+                        NotificationBannerUI.Show(
+                            "PLAQUE STUDIED",
+                            $"Historical plaque studied. Room {rNum} is fully restored!",
+                            2.5f,
+                            new Color(0.18f, 0.40f, 0.16f, 1f),
+                            "★"
+                        );
                     }
-                    else
+                    else if (!retryUnlocked)
                     {
-                        if (topicReviewed)
+                        NotificationBannerUI.Show(
+                            "PLAQUE REVIEWED",
+                            $"Historical plaque reviewed. Room {rNum} is fully restored!",
+                            2.0f,
+                            new Color(0.18f, 0.40f, 0.16f, 1f),
+                            "i"
+                        );
+                    }
+                }
+                else if (isNew)
+                {
+                    if (totalRead < 5)
+                    {
+                        NotificationBannerUI.Show(
+                            "PLAQUE STUDIED",
+                            $"Plaques studied: {totalRead}/5 in Room {rNum}",
+                            3.5f,
+                            new Color(0.24f, 0.14f, 0.07f, 1f),
+                            "i"
+                        );
+                    }
+                    else if (totalRead == 5)
+                    {
+                        bool topicReviewed = GameProgression.IsBookTopicReviewed(rNum);
+                        bool alreadyAttempted = GameProgression.HasAttemptedRoomBattle(rNum);
+
+                        if (rNum == 1)
                         {
-                            NotificationBannerUI.Show(
-                                $"ALTERWORLD BATTLE {rNum} UNLOCKED!",
-                                $"All 5 plaques studied & Topic {rNum} reviewed!\nEnter the Alterworld portal in the Lobby to start the battle!",
-                                6.5f,
-                                new Color(0.24f, 0.14f, 0.07f, 1f),
-                                "★"
-                            );
+                            if (topicReviewed)
+                            {
+                                if (!GameProgression.IsPortalUnlocked && !alreadyAttempted)
+                                {
+                                    GameProgression.UnlockPortal();
+                                    NotificationBannerUI.Show(
+                                        "PORTAL AWAKENED!",
+                                        "All 5 plaques in Room 1 studied & Topic 1 reviewed!\nThe mysterious portal in the museum lobby is now awakened!",
+                                        6.0f,
+                                        new Color(0.24f, 0.14f, 0.07f, 1f),
+                                        "★"
+                                    );
+                                }
+                                else
+                                {
+                                    NotificationBannerUI.Show(
+                                        "PLAQUES COMPLETED (5/5)",
+                                        "All 5 plaques studied in Room 1!",
+                                        3.5f,
+                                        new Color(0.24f, 0.14f, 0.07f, 1f),
+                                        "★"
+                                    );
+                                }
+                            }
+                            else
+                            {
+                                NotificationBannerUI.Show(
+                                    "ROOM 1 PLAQUES COMPLETE (5/5)",
+                                    "All 5 plaques in Room 1 studied!\nNow open your Museum Field Guide (Book icon) and review Topic 1 to awaken the portal!",
+                                    6.0f,
+                                    new Color(0.95f, 0.65f, 0.25f, 1f),
+                                    "i"
+                                );
+                            }
                         }
                         else
                         {
-                            NotificationBannerUI.Show(
-                                $"ROOM {rNum} PLAQUES COMPLETE (5/5)",
-                                $"All 5 plaques studied in Room {rNum}!\nNow open your Museum Field Guide (Book icon) and review Topic {rNum} to unlock this battle!",
-                                6.0f,
-                                new Color(0.95f, 0.65f, 0.25f, 1f),
-                                "i"
-                            );
+                            if (topicReviewed)
+                            {
+                                NotificationBannerUI.Show(
+                                    $"ALTERWORLD BATTLE {rNum} UNLOCKED!",
+                                    $"All 5 plaques studied & Topic {rNum} reviewed!\nEnter the Alterworld portal in the Lobby to start the battle!",
+                                    6.5f,
+                                    new Color(0.24f, 0.14f, 0.07f, 1f),
+                                    "★"
+                                );
+                            }
+                            else
+                            {
+                                NotificationBannerUI.Show(
+                                    $"ROOM {rNum} PLAQUES COMPLETE (5/5)",
+                                    $"All 5 plaques studied in Room {rNum}!\nNow open your Museum Field Guide (Book icon) and review Topic {rNum} to unlock this battle!",
+                                    6.0f,
+                                    new Color(0.95f, 0.65f, 0.25f, 1f),
+                                    "i"
+                                );
+                            }
                         }
                     }
                 }
                 else
                 {
-                    NotificationBannerUI.Show(
-                        isNew ? "PLAQUE STUDIED" : "PLAQUE REVIEWED",
-                        $"Plaques studied: {totalRead}/5 in Room {rNum}",
-                        3.5f,
-                        new Color(0.24f, 0.14f, 0.07f, 1f),
-                        "i"
-                    );
+                    // Plaque was already read previously (or in retry mode)
+                    // Only show a brief reviewed indicator if retry banner was not already shown
+                    if (!retryUnlocked)
+                    {
+                        NotificationBannerUI.Show(
+                            "PLAQUE REVIEWED",
+                            totalRead >= 5 ? $"All 5 plaques studied in Room {rNum}" : $"Plaques studied: {totalRead}/5 in Room {rNum}",
+                            2.5f,
+                            new Color(0.24f, 0.14f, 0.07f, 1f),
+                            "i"
+                        );
+                    }
                 }
             }
         }
@@ -1483,9 +1635,11 @@ namespace TopDownGame
             }
             else
             {
-                string diag = (_currentArtifact != null && !string.IsNullOrEmpty(_currentArtifact.ArtifactDialogue) && _currentArtifact.ArtifactDialogue != "what could this artifact be")
+                string diag = (_currentArtifact != null && !string.IsNullOrEmpty(_currentArtifact.ArtifactDialogue) &&
+                               !string.Equals(_currentArtifact.ArtifactDialogue, "what could this artifact be", StringComparison.OrdinalIgnoreCase) &&
+                               !string.Equals(_currentArtifact.ArtifactDialogue, "what could this artifact be?", StringComparison.OrdinalIgnoreCase))
                     ? _currentArtifact.ArtifactDialogue
-                    : "i wonder what this artifact looks like";
+                    : "I wonder what this artifact looks like...";
                 SetDialogueMessage(diag);
             }
         }
@@ -1509,7 +1663,7 @@ namespace TopDownGame
             }
             _hiddenHudObjects.Clear();
 
-            // Re-enable player movement & ensure player sprite is enabled
+            // Re-enable player movement, input polling & ensure player sprite is enabled
             if (_playerMovement != null)
             {
                 _playerMovement.enabled = true;
@@ -1517,6 +1671,12 @@ namespace TopDownGame
                 if (rb != null) rb.linearVelocity = Vector2.zero;
                 var sr = _playerMovement.GetComponentInChildren<SpriteRenderer>(true);
                 if (sr != null) sr.enabled = true;
+
+                var input = _playerMovement.GetComponent<PlayerInputHandler>();
+                if (input != null) input.enabled = true;
+
+                var playerAnim = _playerMovement.GetComponent<CharacterAnimator2D>();
+                if (playerAnim != null) playerAnim.SetIdlePose();
             }
 
             // GUARANTEE MOBILE CONTROLS RESTORATION:

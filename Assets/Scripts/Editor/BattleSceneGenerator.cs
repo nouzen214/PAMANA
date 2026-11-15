@@ -1378,6 +1378,12 @@ namespace TopDownGame.Editor
             EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_Resume_Hover.png");
             EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_Retreat_Normal.png");
             EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_Retreat_Hover.png");
+            EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_Finalize_Normal.png");
+            EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_Finalize_Hover.png");
+            EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_Exit_Normal.png");
+            EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_Exit_Hover.png");
+            EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_KeepFighting_Normal.png");
+            EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_KeepFighting_Hover.png");
 
             string[] battleScenes = new string[]
             {
@@ -1413,6 +1419,12 @@ namespace TopDownGame.Editor
             var sprResumeHov = LoadSprite("Assets/UI/Pause/Pause_Btn_Resume_Hover.png");
             var sprRetreatNorm = LoadSprite("Assets/UI/Pause/Pause_Btn_Retreat_Normal.png");
             var sprRetreatHov = LoadSprite("Assets/UI/Pause/Pause_Btn_Retreat_Hover.png");
+            var sprFinalizeNorm = LoadSprite("Assets/UI/Pause/Pause_Btn_Finalize_Normal.png");
+            var sprFinalizeHov = LoadSprite("Assets/UI/Pause/Pause_Btn_Finalize_Hover.png");
+            var sprExitNorm = LoadSprite("Assets/UI/Pause/Pause_Btn_Exit_Normal.png");
+            var sprExitHov = LoadSprite("Assets/UI/Pause/Pause_Btn_Exit_Hover.png");
+            var sprKeepFightingNorm = LoadSprite("Assets/UI/Pause/Pause_Btn_KeepFighting_Normal.png");
+            var sprKeepFightingHov = LoadSprite("Assets/UI/Pause/Pause_Btn_KeepFighting_Hover.png");
 
             var sm = GameObject.Find("SettingsModal");
             if (sm == null)
@@ -1516,10 +1528,19 @@ namespace TopDownGame.Editor
 
             if (qbm != null)
             {
-                var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+                var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public;
                 qbm.GetType().GetField("settingsModal", flags)?.SetValue(qbm, sm);
                 if (resumeBtn != null) qbm.GetType().GetField("settingsCloseButton", flags)?.SetValue(qbm, resumeBtn);
                 if (exitBtn != null) qbm.GetType().GetField("settingsExitHallwayButton", flags)?.SetValue(qbm, exitBtn);
+                qbm.GetType().GetField("pauseBtnResumeNorm", flags)?.SetValue(qbm, sprResumeNorm);
+                qbm.GetType().GetField("pauseBtnResumeHov", flags)?.SetValue(qbm, sprResumeHov);
+                qbm.GetType().GetField("pauseBtnFinalizeNorm", flags)?.SetValue(qbm, sprFinalizeNorm);
+                qbm.GetType().GetField("pauseBtnFinalizeHov", flags)?.SetValue(qbm, sprFinalizeHov);
+                qbm.GetType().GetField("pauseBtnExitNorm", flags)?.SetValue(qbm, sprExitNorm);
+                qbm.GetType().GetField("pauseBtnExitHov", flags)?.SetValue(qbm, sprExitHov);
+                qbm.GetType().GetField("pauseBtnKeepFightingNorm", flags)?.SetValue(qbm, sprKeepFightingNorm);
+                qbm.GetType().GetField("pauseBtnKeepFightingHov", flags)?.SetValue(qbm, sprKeepFightingHov);
+                qbm.GetType().GetMethod("EnsurePauseUIReferences", flags)?.Invoke(qbm, null);
                 EditorUtility.SetDirty(qbm);
             }
 

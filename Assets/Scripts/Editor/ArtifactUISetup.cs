@@ -1023,12 +1023,13 @@ namespace TopDownGame.Editor
             var nameRt = nameObj.GetComponent<RectTransform>();
             nameRt.anchorMin = new Vector2(0f, 1f);
             nameRt.anchorMax = new Vector2(0f, 1f);
-            nameRt.pivot = new Vector2(0f, 1f);
-            nameRt.anchoredPosition = new Vector2(120f, -30f);
-            nameRt.sizeDelta = new Vector2(230f, 45f);
+            nameRt.pivot = new Vector2(0f, 0.5f);
+            nameRt.anchoredPosition = new Vector2(110f, -41f);
+            nameRt.sizeDelta = new Vector2(230f, 44f);
             var nameTmp = nameObj.GetComponent<TextMeshProUGUI>();
             nameTmp.text = "Darrel";
             nameTmp.fontSize = 28f;
+            nameTmp.alignment = TextAlignmentOptions.MidlineLeft;
             nameTmp.fontStyle = FontStyles.Bold;
             nameTmp.color = new Color(1f, 0.95f, 0.85f, 1f);
 
@@ -1041,7 +1042,7 @@ namespace TopDownGame.Editor
             diagRt.offsetMin = new Vector2(55f, 30f);
             diagRt.offsetMax = new Vector2(-110f, -100f);
             var diagTmp = diagObj.GetComponent<TextMeshProUGUI>();
-            diagTmp.text = "what should i do";
+            diagTmp.text = "What should I do?";
             diagTmp.fontSize = 28f;
             diagTmp.enableAutoSizing = true;
             diagTmp.fontSizeMin = 22f;
@@ -1243,6 +1244,7 @@ namespace TopDownGame.Editor
             img.sprite = plaqueSprite;
 
             var btn = bObj.GetComponent<Button>();
+            btn.navigation = new Navigation { mode = Navigation.Mode.None };
             var colors = btn.colors;
             colors.normalColor = Color.white;
             colors.highlightedColor = new Color(1f, 0.95f, 0.85f, 1f);
@@ -1283,6 +1285,7 @@ namespace TopDownGame.Editor
             img.sprite = plaqueSprite;
 
             var btn = bObj.GetComponent<Button>();
+            btn.navigation = new Navigation { mode = Navigation.Mode.None };
             var colors = btn.colors;
             colors.normalColor = Color.white;
             colors.highlightedColor = new Color(1f, 0.94f, 0.85f, 1f);
@@ -1330,9 +1333,9 @@ namespace TopDownGame.Editor
                     names[i],
                     plaqueTexts[i],
                     inspectTexts[i],
-                    "what should i do",
-                    "what could this artifact be",
-                    "i wonder what this artifact looks like",
+                    "What should I do?",
+                    "What could this artifact be?",
+                    "I wonder what this artifact looks like...",
                     rNum
                 );
                 EditorUtility.SetDirty(interactable);

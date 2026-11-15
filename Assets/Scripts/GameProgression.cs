@@ -28,6 +28,9 @@ namespace TopDownGame
         public static event Action<int, int> OnRoomRestorationStageChanged; // (roomNumber, newStage)
         public static event Action<int> OnRoomBattleUnlockedForRetry; // (roomNumber)
         public static event Action<int> OnBookTopicReviewed; // (topicNumber)
+        public static event Action OnLeftWingRestored;
+        public static event Action OnRightWingRestored;
+        public static event Action OnLobbyRestored;
 
         public static bool IsBookUnlocked
         {
@@ -50,6 +53,17 @@ namespace TopDownGame
                 return true;
             }
             return false;
+        }
+
+        public static void SetBookUnlocked(bool unlocked)
+        {
+            bool wasUnlocked = IsBookUnlocked;
+            IsBookUnlocked = unlocked;
+            if (unlocked && !wasUnlocked)
+            {
+                Debug.Log("[GameProgression] Museum Field Guide (Book) unlocked via sync/restore!");
+                OnBookUnlocked?.Invoke();
+            }
         }
 
         public static bool IsRoom1BattleCompleted
@@ -109,16 +123,71 @@ namespace TopDownGame
             PlayerPrefs.Save();
         }
 
+        public static bool IsRoomFullyRestored(int roomNumber)
+        {
+            if (roomNumber <= 0) return false;
+            return GetPedestalsRestoredCount(roomNumber) >= 5;
+        }
+
+        public static bool IsLeftWingRestored()
+        {
+            for (int r = 1; r <= 6; r++)
+            {
+                if (!IsRoomFullyRestored(r)) return false;
+            }
+            return true;
+        }
+
+        public static bool IsRightWingRestored()
+        {
+            for (int r = 7; r <= 12; r++)
+            {
+                if (!IsRoomFullyRestored(r)) return false;
+            }
+            return true;
+        }
+
+        public static bool IsLobbyRestored()
+        {
+            return IsLeftWingRestored() && IsRightWingRestored();
+        }
+
+        public static int GetLeftWingCompletedRoomsCount()
+        {
+            int count = 0;
+            for (int r = 1; r <= 6; r++)
+            {
+                if (IsRoomFullyRestored(r)) count++;
+            }
+            return count;
+        }
+
+        public static int GetRightWingCompletedRoomsCount()
+        {
+            int count = 0;
+            for (int r = 7; r <= 12; r++)
+            {
+                if (IsRoomFullyRestored(r)) count++;
+            }
+            return count;
+        }
+
+        public static int GetTotalCompletedRoomsCount()
+        {
+            return GetLeftWingCompletedRoomsCount() + GetRightWingCompletedRoomsCount();
+        }
+
         public static bool CanRoomBeRetried(int roomNumber)
         {
             if (roomNumber <= 0) return false;
-            // A room can be retried if fewer than 5 artifacts are restored in the real world room
-            return GetPedestalsRestoredCount(roomNumber) < 5;
+            // A room can be retried only if it is not already fully restored (fewer than 5 artifacts placed)
+            return !IsRoomFullyRestored(roomNumber);
         }
 
         public static bool UnlockRoomBattleForRetry(int roomNumber)
         {
             if (roomNumber <= 0) return false;
+            if (IsRoomFullyRestored(roomNumber)) return false;
             if (!CanRoomBeRetried(roomNumber)) return false;
 
             bool wasCompleted = IsRoomBattleCompleted(roomNumber);
@@ -127,6 +196,24 @@ namespace TopDownGame
             Debug.Log($"[GameProgression] Room {roomNumber} Alterworld Battle unlocked for retry because an unobtained artifact was inspected!");
             OnRoomBattleUnlockedForRetry?.Invoke(roomNumber);
             return wasCompleted;
+        }
+
+        public static bool HasAttemptedRoomBattle(int roomNumber)
+        {
+            if (roomNumber <= 0) return false;
+            if (IsRoomBattleCompleted(roomNumber)) return true;
+            if (HasRetrievedRoomArtifact(roomNumber)) return true;
+            if (GetRoomRetrievedCount(roomNumber) > 0) return true;
+            if (GetPedestalsRestoredCount(roomNumber) > 0) return true;
+            if (PlayerPrefs.GetInt($"GameProgression_Room{roomNumber}_BattleAttempted", 0) == 1) return true;
+            return false;
+        }
+
+        public static void MarkRoomBattleAttempted(int roomNumber)
+        {
+            if (roomNumber <= 0) return;
+            PlayerPrefs.SetInt($"GameProgression_Room{roomNumber}_BattleAttempted", 1);
+            PlayerPrefs.Save();
         }
 
         public static bool IsArtifactObtained(int roomNumber, string artifactId, string artifactName)
@@ -413,6 +500,31 @@ namespace TopDownGame
                 ReturnRoomArtifactsToRealWorld(roomNumber);
             }
 
+            // Check if Left Wing, Right Wing, or Lobby became fully restored
+            if (IsLeftWingRestored() && PlayerPrefs.GetInt("GameProgression_LeftWing_Restored", 0) == 0)
+            {
+                PlayerPrefs.SetInt("GameProgression_LeftWing_Restored", 1);
+                PlayerPrefs.Save();
+                Debug.Log("[GameProgression] Left Wing (Rooms 1-6) is FULLY RESTORED!");
+                OnLeftWingRestored?.Invoke();
+            }
+
+            if (IsRightWingRestored() && PlayerPrefs.GetInt("GameProgression_RightWing_Restored", 0) == 0)
+            {
+                PlayerPrefs.SetInt("GameProgression_RightWing_Restored", 1);
+                PlayerPrefs.Save();
+                Debug.Log("[GameProgression] Right Wing (Rooms 7-12) is FULLY RESTORED!");
+                OnRightWingRestored?.Invoke();
+            }
+
+            if (IsLobbyRestored() && PlayerPrefs.GetInt("GameProgression_Lobby_Restored", 0) == 0)
+            {
+                PlayerPrefs.SetInt("GameProgression_Lobby_Restored", 1);
+                PlayerPrefs.Save();
+                Debug.Log("[GameProgression] All 12 rooms complete! Lobby is FULLY RESTORED!");
+                OnLobbyRestored?.Invoke();
+            }
+
             return true;
         }
 
@@ -467,6 +579,14 @@ namespace TopDownGame
             return PlayerPrefs.GetInt($"GameProgression_BookTopic{topicNumber}_Reviewed", 0) == 1;
         }
 
+        public static void SetBookTopicReviewed(int topicNumber, bool reviewed)
+        {
+            if (topicNumber <= 0) return;
+            string key = $"GameProgression_BookTopic{topicNumber}_Reviewed";
+            PlayerPrefs.SetInt(key, reviewed ? 1 : 0);
+            PlayerPrefs.Save();
+        }
+
         public static bool RecordBookTopicReviewed(int topicNumber)
         {
             if (topicNumber <= 0) return false;
@@ -487,7 +607,7 @@ namespace TopDownGame
                 }
 
                 // If unobtained artifacts in Room {topicNumber} need retry, unlock retry automatically!
-                if (CanRoomBeRetried(topicNumber) && (HasRetrievedRoomArtifact(topicNumber) || IsRoomBattleCompleted(topicNumber)))
+                if (CanRoomBeRetried(topicNumber) && (HasRetrievedRoomArtifact(topicNumber) || IsRoomBattleCompleted(topicNumber) || HasAttemptedRoomBattle(topicNumber)))
                 {
                     UnlockRoomBattleForRetry(topicNumber);
                 }
@@ -536,10 +656,17 @@ namespace TopDownGame
             PlayerPrefs.DeleteKey(KEY_ROOM1_ARTIFACT_RETRIEVED);
             PlayerPrefs.DeleteKey(KEY_ROOM1_BATTLE_COMPLETED);
             PlayerPrefs.DeleteKey(KEY_ROOM1_ARTIFACT_RETURNED);
+            PlayerPrefs.DeleteKey("GameProgression_LeftWing_Restored");
+            PlayerPrefs.DeleteKey("GameProgression_RightWing_Restored");
+            PlayerPrefs.DeleteKey("GameProgression_Lobby_Restored");
+            PlayerPrefs.DeleteKey("GameProgression_LeftWing_Celebrated");
+            PlayerPrefs.DeleteKey("GameProgression_RightWing_Celebrated");
+            PlayerPrefs.DeleteKey("GameProgression_Lobby_Celebrated");
             for (int i = 1; i <= 12; i++)
             {
                 PlayerPrefs.DeleteKey($"GameProgression_BookTopic{i}_Reviewed");
                 PlayerPrefs.DeleteKey($"GameProgression_Room{i}BattleCompleted");
+                PlayerPrefs.DeleteKey($"GameProgression_Room{i}_BattleAttempted");
                 PlayerPrefs.DeleteKey($"GameProgression_Room{i}ArtifactRetrieved");
                 PlayerPrefs.DeleteKey($"GameProgression_Room{i}ArtifactReturnedToRealWorld");
                 PlayerPrefs.DeleteKey($"GameProgression_Room{i}_PlaquesList");

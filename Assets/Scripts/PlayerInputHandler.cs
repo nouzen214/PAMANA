@@ -18,8 +18,25 @@ namespace TopDownGame
             _mobileInteractTriggered = true;
         }
 
+        private void OnDisable()
+        {
+            MoveInput = Vector2.zero;
+            InteractPressed = false;
+            _mobileInteractTriggered = false;
+        }
+
         private void Update()
         {
+            // Block character movement while settings or modal menus are open
+            if (InGameMenuController.IsSettingsOpen ||
+                (BagModalUI.Instance != null && BagModalUI.Instance.IsOpen) ||
+                (BookModalUI.Instance != null && BookModalUI.Instance.IsOpen) ||
+                (ArtifactInspectionUI.Instance != null && ArtifactInspectionUI.Instance.IsOpen))
+            {
+                MoveInput = Vector2.zero;
+                return;
+            }
+
             Vector2 input = Vector2.zero;
 
             // 1. Primary: New Input System Keyboard (Direct Hardware Polling)

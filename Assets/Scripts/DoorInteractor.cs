@@ -40,6 +40,18 @@ namespace TopDownGame
 
         private void Update()
         {
+            // If any modal (Artifact Inspection, Book) is open, suppress prompts & interaction
+            bool isModalOpen = (ArtifactInspectionUI.Instance != null && ArtifactInspectionUI.Instance.IsOpen) ||
+                               (BookModalUI.Instance != null && BookModalUI.Instance.IsOpen);
+            if (isModalOpen)
+            {
+                if (promptLabel != null && promptLabel.gameObject.activeSelf)
+                {
+                    promptLabel.gameObject.SetActive(false);
+                }
+                return;
+            }
+
             // Continuously verify and update nearest door / interactable within range
             var detected = GetNearestInteractable(interactionRadius);
             if (detected != _nearestDoor)

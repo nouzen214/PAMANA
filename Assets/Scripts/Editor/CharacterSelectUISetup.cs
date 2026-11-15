@@ -136,7 +136,7 @@ namespace TopDownGame.Editor
             var inputField = inputObj.GetComponent<TMP_InputField>();
             if (inputField == null) inputField = inputObj.AddComponent<TMP_InputField>();
             inputField.targetGraphic = inputImg;
-            inputField.characterLimit = 16;
+            inputField.characterLimit = 8;
 
             var textAreaObj = GetOrCreateChild(inputObj.transform, "Text Area");
             var textAreaRt = textAreaObj.GetComponent<RectTransform>();

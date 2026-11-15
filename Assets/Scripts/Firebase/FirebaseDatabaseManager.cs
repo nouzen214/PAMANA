@@ -91,6 +91,8 @@ namespace TopDownGame
                 sfxVolume = 1f,
                 bgmVolume = 1f,
                 isPortalUnlocked = false,
+                isBookUnlocked = false,
+                reviewedBookTopics = new List<int>(),
                 hasCompletedTutorial = false,
                 isRoom1BattleCompleted = false,
                 roomProgress = new List<RoomProgressData>(),
@@ -134,6 +136,15 @@ namespace TopDownGame
             }
 
             // 3. Room progress data clamping and structure validation
+            if (data.reviewedBookTopics != null)
+            {
+                data.reviewedBookTopics.RemoveAll(t => t < 1 || t > 12);
+            }
+            else
+            {
+                data.reviewedBookTopics = new List<int>();
+            }
+
             if (data.roomProgress != null)
             {
                 foreach (var rp in data.roomProgress)
@@ -198,6 +209,13 @@ namespace TopDownGame
 
         public void LoadPlayerData(Action<bool, PlayerData> onComplete)
         {
+            if (FirebaseAuthManager.Instance != null && FirebaseAuthManager.Instance.IsGuest)
+            {
+                var guestData = CurrentPlayerData ?? BuildPlayerDataFromLocalState();
+                onComplete?.Invoke(guestData != null, guestData);
+                return;
+            }
+
             string userId = FirebaseAuthManager.Instance.UserId;
             if (string.IsNullOrEmpty(userId))
             {
@@ -243,10 +261,69 @@ namespace TopDownGame
             }));
         }
 
-        public void ApplyDataToGame(PlayerData data)
+        public PlayerData BuildPlayerDataFromLocalState()
         {
-            // Clear all local game state first to avoid cross-account contamination
-            ClearAllLocalGameData();
+            bool hasChar = PlayerPrefs.GetInt("HasSelectedCharacter", 0) == 1;
+            string chosenChar = PlayerPrefs.GetString("SelectedCharacter", "");
+            if (!hasChar && string.IsNullOrEmpty(chosenChar)) return null;
+
+            var data = CreateFreshPlayerData();
+            data.username = PlayerPrefs.GetString("PlayerUsername", "Guest");
+            data.selectedCharacter = chosenChar;
+            data.characterName = PlayerPrefs.GetString("CustomCharacterName", chosenChar == "Girl" ? "Darla" : "Darrel");
+            data.hasSelectedCharacter = true;
+            data.currentScene = PlayerPrefs.GetString("LastActiveScene", "Lobby");
+            data.returnSceneName = PlayerPrefs.GetString("RoomTransition_ReturnScene", "");
+            data.returnDoorName = PlayerPrefs.GetString("RoomTransition_ReturnDoor", "");
+            data.returnPositionX = PlayerPrefs.GetFloat("RoomTransition_ReturnPosX", 0f);
+            data.returnPositionY = PlayerPrefs.GetFloat("RoomTransition_ReturnPosY", 0f);
+            data.hasReturnPosition = PlayerPrefs.GetInt("RoomTransition_HasReturnPos", 0) == 1;
+            data.isPortalUnlocked = GameProgression.IsPortalUnlocked;
+            data.isBookUnlocked = GameProgression.IsBookUnlocked;
+            data.reviewedBookTopics = new List<int>();
+            for (int t = 1; t <= 12; t++)
+            {
+                if (GameProgression.IsBookTopicReviewed(t))
+                {
+                    data.reviewedBookTopics.Add(t);
+                }
+            }
+            data.hasCompletedTutorial = GameProgression.HasCompletedTutorial;
+            data.isRoom1BattleCompleted = GameProgression.IsRoom1BattleCompleted;
+
+            // Load any saved room progress
+            for (int r = 1; r <= 12; r++)
+            {
+                var entry = data.roomProgress.Find(p => p.roomNumber == r);
+                if (entry != null)
+                {
+                    entry.battleCompleted = GameProgression.IsRoomBattleCompleted(r);
+                    entry.artifactRetrieved = GameProgression.HasRetrievedRoomArtifact(r);
+                    entry.returnedToRealWorld = GameProgression.HasReturnedRoomArtifactsToRealWorld(r);
+                    entry.retrievedCount = GameProgression.GetRoomRetrievedCount(r);
+                    entry.restoredPedestalsCount = GameProgression.GetPedestalsRestoredCount(r);
+                    entry.plaquesList = PlayerPrefs.GetString($"GameProgression_Room{r}_PlaquesList", "");
+
+                    string listKey = $"GameProgression_Room{r}_RestoredArtifactsList";
+                    string currentList = PlayerPrefs.GetString(listKey, "");
+                    if (!string.IsNullOrEmpty(currentList))
+                    {
+                        entry.restoredPedestalArtifacts = new List<string>(currentList.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+                    }
+                }
+            }
+
+            CurrentPlayerData = data;
+            return data;
+        }
+
+        public void ApplyDataToGame(PlayerData data, bool clearExisting = true)
+        {
+            // Clear all local game state first if requested (for clean cloud load / fresh account isolation)
+            if (clearExisting)
+            {
+                ClearAllLocalGameData();
+            }
 
             if (data == null) return;
             CurrentPlayerData = data;
@@ -278,8 +355,28 @@ namespace TopDownGame
             AudioSettingsManager.Save();
 
             GameProgression.IsPortalUnlocked = data.isPortalUnlocked;
+            GameProgression.SetBookUnlocked(data.isBookUnlocked);
+            if (data.reviewedBookTopics != null)
+            {
+                foreach (int topic in data.reviewedBookTopics)
+                {
+                    if (topic >= 1 && topic <= 12)
+                    {
+                        GameProgression.SetBookTopicReviewed(topic, true);
+                    }
+                }
+            }
             GameProgression.HasCompletedTutorial = data.hasCompletedTutorial;
             GameProgression.IsRoom1BattleCompleted = data.isRoom1BattleCompleted;
+
+            if (!string.IsNullOrEmpty(data.returnSceneName))
+            {
+                RoomTransitionManager.ReturnSceneName = data.returnSceneName;
+                RoomTransitionManager.ReturnDoorName = data.returnDoorName;
+                RoomTransitionManager.ReturnPosition = new Vector2(data.returnPositionX, data.returnPositionY);
+                RoomTransitionManager.HasReturnPosition = data.hasReturnPosition;
+                RoomTransitionManager.SaveToPrefs();
+            }
 
             // Restore all 12 rooms progress
             if (data.roomProgress != null)
@@ -347,6 +444,15 @@ namespace TopDownGame
             data.sfxVolume = AudioSettingsManager.SFXVolume;
             data.bgmVolume = AudioSettingsManager.BGMVolume;
             data.isPortalUnlocked = GameProgression.IsPortalUnlocked;
+            data.isBookUnlocked = GameProgression.IsBookUnlocked;
+            data.reviewedBookTopics = new List<int>();
+            for (int t = 1; t <= 12; t++)
+            {
+                if (GameProgression.IsBookTopicReviewed(t))
+                {
+                    data.reviewedBookTopics.Add(t);
+                }
+            }
             data.hasCompletedTutorial = GameProgression.HasCompletedTutorial;
             data.isRoom1BattleCompleted = GameProgression.IsRoom1BattleCompleted;
 
@@ -355,6 +461,14 @@ namespace TopDownGame
             {
                 data.currentScene = activeScene;
             }
+
+            // Ensure return hallway/door information is synced
+            RoomTransitionManager.EnsureRoomReturnInfo(activeScene);
+            data.returnSceneName = RoomTransitionManager.ReturnSceneName;
+            data.returnDoorName = RoomTransitionManager.ReturnDoorName;
+            data.returnPositionX = RoomTransitionManager.ReturnPosition.x;
+            data.returnPositionY = RoomTransitionManager.ReturnPosition.y;
+            data.hasReturnPosition = RoomTransitionManager.HasReturnPosition;
 
             var playerObj = GameObject.FindWithTag("Player");
             if (playerObj != null)

@@ -7,6 +7,9 @@ namespace TopDownGame
 {
     public class InGameMenuController : MonoBehaviour
     {
+        public static InGameMenuController Instance { get; private set; }
+        public static bool IsSettingsOpen => Instance != null && Instance.settingsPanel != null && Instance.settingsPanel.activeSelf;
+
         [Header("Scene Config")]
         [SerializeField] private string mainMenuSceneName = "MainMenu";
 
@@ -29,7 +32,13 @@ namespace TopDownGame
 
         private void Awake()
         {
+            Instance = this;
             FindBookButton();
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
         }
 
         private void OnEnable()
@@ -41,6 +50,11 @@ namespace TopDownGame
         private void OnDisable()
         {
             GameProgression.OnBookUnlocked -= UpdateBookButtonState;
+            if (settingsPanel != null && settingsPanel.activeSelf)
+            {
+                Time.timeScale = 1f;
+                SetPlayerMovementState(true);
+            }
         }
 
         public void FindBookButton()
@@ -85,25 +99,78 @@ namespace TopDownGame
         {
             AudioSettingsManager.Load();
 
-            if (masterVolumeSlider != null)
+            SetupSlider(masterVolumeSlider, AudioSettingsManager.MasterVolume, OnMasterVolumeChanged);
+            SetupSlider(sfxVolumeSlider, AudioSettingsManager.SFXVolume, OnSFXVolumeChanged);
+            SetupSlider(bgmVolumeSlider, AudioSettingsManager.BGMVolume, OnBGMVolumeChanged);
+        }
+
+        private void SetupSlider(Slider slider, float initialValue, UnityEngine.Events.UnityAction<float> onChanged)
+        {
+            if (slider == null) return;
+
+            var nav = slider.navigation;
+            nav.mode = Navigation.Mode.None;
+            slider.navigation = nav;
+
+            if (slider.GetComponent<SliderNoKeyboardNavigation>() == null)
             {
-                masterVolumeSlider.value = AudioSettingsManager.MasterVolume;
-                masterVolumeSlider.onValueChanged.RemoveAllListeners();
-                masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
+                slider.gameObject.AddComponent<SliderNoKeyboardNavigation>();
             }
 
-            if (sfxVolumeSlider != null)
-            {
-                sfxVolumeSlider.value = AudioSettingsManager.SFXVolume;
-                sfxVolumeSlider.onValueChanged.RemoveAllListeners();
-                sfxVolumeSlider.onValueChanged.AddListener(OnSFXVolumeChanged);
-            }
+            slider.value = initialValue;
+            slider.onValueChanged.RemoveAllListeners();
+            slider.onValueChanged.AddListener(onChanged);
+        }
 
-            if (bgmVolumeSlider != null)
+        private void SetPlayerMovementState(bool canMove)
+        {
+            var player = GameObject.FindWithTag("Player");
+            if (player != null)
             {
-                bgmVolumeSlider.value = AudioSettingsManager.BGMVolume;
-                bgmVolumeSlider.onValueChanged.RemoveAllListeners();
-                bgmVolumeSlider.onValueChanged.AddListener(OnBGMVolumeChanged);
+                var movement = player.GetComponent<PlayerMovement>();
+                if (movement != null) movement.enabled = canMove;
+
+                var input = player.GetComponent<PlayerInputHandler>();
+                if (input != null) input.enabled = canMove;
+
+                var rb = player.GetComponent<Rigidbody2D>();
+                if (rb != null) rb.linearVelocity = Vector2.zero;
+
+                var anim = player.GetComponent<CharacterAnimator2D>();
+                if (anim != null && !canMove) anim.SetIdlePose();
+            }
+        }
+
+        private void Update()
+        {
+            if (settingsPanel != null && settingsPanel.activeSelf)
+            {
+                // Ensure no slider remains selected in EventSystem while settings is open
+                if (UnityEngine.EventSystems.EventSystem.current != null &&
+                    UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject != null)
+                {
+                    var selected = UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject;
+                    if (selected.GetComponent<Slider>() != null)
+                    {
+                        UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+                    }
+                }
+
+                // Allow Escape to close settings
+                bool escapePressed = false;
+                if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
+                {
+                    escapePressed = true;
+                }
+                else
+                {
+                    try { if (Input.GetKeyDown(KeyCode.Escape)) escapePressed = true; } catch { }
+                }
+
+                if (escapePressed)
+                {
+                    OnCloseSettingsClicked();
+                }
             }
         }
 
@@ -129,6 +196,12 @@ namespace TopDownGame
                 }
                 settingsPanel.SetActive(willOpen);
                 Time.timeScale = willOpen ? 0f : 1f;
+                SetPlayerMovementState(!willOpen);
+
+                if (UnityEngine.EventSystems.EventSystem.current != null)
+                {
+                    UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+                }
             }
             else
             {
@@ -211,6 +284,12 @@ namespace TopDownGame
                 settingsPanel.SetActive(false);
             }
             Time.timeScale = 1f;
+            SetPlayerMovementState(true);
+
+            if (UnityEngine.EventSystems.EventSystem.current != null)
+            {
+                UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+            }
         }
 
         public void OnSaveSettingsClicked()
@@ -253,6 +332,7 @@ namespace TopDownGame
             {
                 settingsPanel.SetActive(false);
                 Time.timeScale = 1f;
+                SetPlayerMovementState(true);
             }
 
             if (BookModalUI.Instance != null && BookModalUI.Instance.IsOpen)
@@ -300,6 +380,7 @@ namespace TopDownGame
             if (settingsPanel != null && settingsPanel.activeSelf)
             {
                 settingsPanel.SetActive(false);
+                SetPlayerMovementState(true);
             }
 
             if (bagModal != null && bagModal.IsOpen)
@@ -322,6 +403,7 @@ namespace TopDownGame
             if (settingsPanel != null)
             {
                 settingsPanel.SetActive(false);
+                SetPlayerMovementState(true);
             }
             if (bagModal != null && bagModal.IsOpen)
             {
@@ -333,6 +415,19 @@ namespace TopDownGame
         public void GoToMainMenu()
         {
             Time.timeScale = 1f;
+
+            string currentScene = SceneManager.GetActiveScene().name;
+            if (currentScene != "MainMenu" && currentScene != "CharacterSelect")
+            {
+                PlayerPrefs.SetString("LastActiveScene", currentScene);
+                PlayerPrefs.Save();
+            }
+
+            if (FirebaseDatabaseManager.Instance != null)
+            {
+                FirebaseDatabaseManager.Instance.SyncFromGameAndSave(null);
+            }
+
             SceneManager.LoadScene(mainMenuSceneName);
         }
 

@@ -36,6 +36,18 @@ namespace TopDownGame
         [SerializeField] private Button connectGoogleButton;
         [SerializeField] private TextMeshProUGUI connectGoogleText;
 
+        public enum AccountModalMode { NewGame, Continue }
+        private AccountModalMode _accountModalMode = AccountModalMode.NewGame;
+
+        [Header("Account Modal Sprites")]
+        [SerializeField] private Sprite playAsGuestNormal;
+        [SerializeField] private Sprite playAsGuestHover;
+        [SerializeField] private Sprite continueGuestNormal;
+        [SerializeField] private Sprite continueGuestHover;
+
+        private static bool _hasActiveSession = false;
+        public static void MarkSessionActive() => _hasActiveSession = true;
+
         private void OnEnable()
         {
             UpdateMenuAccountState();
@@ -53,10 +65,14 @@ namespace TopDownGame
                 loginPanel.SetActive(false);
             }
 
-            // Clean local cache state when on main menu
-            if (FirebaseDatabaseManager.Instance != null)
+            // Only clean local cache on fresh game boot / page reload (no active session yet)
+            // and when the user is not a signed-in Google user.
+            if (!_hasActiveSession && (FirebaseAuthManager.Instance == null || !FirebaseAuthManager.Instance.IsGoogleUser))
             {
-                FirebaseDatabaseManager.Instance.ClearAllLocalGameData();
+                if (FirebaseDatabaseManager.Instance != null)
+                {
+                    FirebaseDatabaseManager.Instance.ClearAllLocalGameData();
+                }
             }
 
             InitializeSliders();
@@ -91,6 +107,8 @@ namespace TopDownGame
         public void OnContinueClicked()
         {
             Debug.Log("[MainMenuController] Continue clicked");
+
+            // If already signed into Google, load cloud save directly
             if (FirebaseAuthManager.Instance != null && FirebaseAuthManager.Instance.IsGoogleUser)
             {
                 SetStatus("Loading cloud save...", isError: false);
@@ -105,40 +123,99 @@ namespace TopDownGame
                         ProceedToGame();
                     }
                 });
+                return;
             }
-            else
-            {
-                SetStatus("Sign in with Google to continue your saved game...", isError: false);
-                FirebaseAuthManager.Instance.GoogleSignIn((success, msg) =>
-                {
-                    if (success)
-                    {
-                        UpdateMenuAccountState();
-                        SetStatus("Google connected! Loading cloud save...", isError: false);
-                        FirebaseDatabaseManager.Instance.LoadPlayerData((loadSuccess, data) =>
-                        {
-                            ProceedToGame(data);
-                        });
-                    }
-                    else
-                    {
-                        SetStatus(msg ?? "Google sign-in cancelled or failed.", isError: true);
-                    }
-                });
-            }
+
+            // Not signed into Google (Guest / unauthenticated):
+            // Open account modal in Continue mode, giving player the choice to Continue as Guest or Sign in with Google
+            OpenAccountModal(AccountModalMode.Continue);
         }
 
         public void OnNewGameClicked()
         {
             Debug.Log("[MainMenuController] New Game clicked - opening login selection panel");
+            OpenAccountModal(AccountModalMode.NewGame);
+        }
+
+        public void OpenAccountModal(AccountModalMode mode)
+        {
+            _accountModalMode = mode;
+
+            if (settingsPanel != null) settingsPanel.SetActive(false);
+
             if (loginPanel != null)
             {
-                if (settingsPanel != null) settingsPanel.SetActive(false);
+                EnsureModalSpritesLoaded();
+
+                // Find Button_PlayAsGuest image and button component
+                Transform guestBtnTr = null;
+                var buttons = loginPanel.GetComponentsInChildren<Button>(true);
+                foreach (var b in buttons)
+                {
+                    if (b.name == "Button_PlayAsGuest")
+                    {
+                        guestBtnTr = b.transform;
+                        break;
+                    }
+                }
+
+                if (guestBtnTr != null)
+                {
+                    var img = guestBtnTr.GetComponent<Image>();
+                    var btn = guestBtnTr.GetComponent<Button>();
+
+                    if (_accountModalMode == AccountModalMode.Continue)
+                    {
+                        if (img != null && continueGuestNormal != null) img.sprite = continueGuestNormal;
+                        if (btn != null && continueGuestHover != null)
+                        {
+                            var ss = btn.spriteState;
+                            ss.highlightedSprite = continueGuestHover;
+                            btn.spriteState = ss;
+                        }
+                    }
+                    else
+                    {
+                        if (img != null && playAsGuestNormal != null) img.sprite = playAsGuestNormal;
+                        if (btn != null && playAsGuestHover != null)
+                        {
+                            var ss = btn.spriteState;
+                            ss.highlightedSprite = playAsGuestHover;
+                            btn.spriteState = ss;
+                        }
+                    }
+                }
+
+                if (loginStatusText != null)
+                {
+                    loginStatusText.text = "";
+                }
+
                 loginPanel.SetActive(true);
             }
             else
             {
                 ProceedToGame();
+            }
+        }
+
+        private void EnsureModalSpritesLoaded()
+        {
+            if (continueGuestNormal == null)
+            {
+                continueGuestNormal = Resources.Load<Sprite>("UI/Login/Login_Btn_ContinueGuest_Normal");
+            }
+            if (continueGuestHover == null)
+            {
+                continueGuestHover = Resources.Load<Sprite>("UI/Login/Login_Btn_ContinueGuest_Hover");
+            }
+            if (playAsGuestNormal == null)
+            {
+                playAsGuestNormal = Resources.Load<Sprite>("UI/Login/Login_Btn_Guest_Normal");
+            }
+            if (playAsGuestHover == null)
+            {
+                playAsGuestHover = Resources.Load<Sprite>("UI/Login/Login_Btn_Guest_Hover");
             }
         }
 
@@ -153,6 +230,7 @@ namespace TopDownGame
             {
                 FirebaseDatabaseManager.Instance.ClearAllLocalGameData();
             }
+            _hasActiveSession = false;
             UpdateMenuAccountState();
             SetStatus("Logged out of Google account.", isError: false);
         }
@@ -188,26 +266,27 @@ namespace TopDownGame
         {
             AudioSettingsManager.Load();
 
-            if (masterVolumeSlider != null)
+            SetupSlider(masterVolumeSlider, AudioSettingsManager.MasterVolume, OnMasterVolumeChanged);
+            SetupSlider(sfxVolumeSlider, AudioSettingsManager.SFXVolume, OnSFXVolumeChanged);
+            SetupSlider(bgmVolumeSlider, AudioSettingsManager.BGMVolume, OnBGMVolumeChanged);
+        }
+
+        private void SetupSlider(Slider slider, float initialValue, UnityEngine.Events.UnityAction<float> onChanged)
+        {
+            if (slider == null) return;
+
+            var nav = slider.navigation;
+            nav.mode = Navigation.Mode.None;
+            slider.navigation = nav;
+
+            if (slider.GetComponent<SliderNoKeyboardNavigation>() == null)
             {
-                masterVolumeSlider.value = AudioSettingsManager.MasterVolume;
-                masterVolumeSlider.onValueChanged.RemoveAllListeners();
-                masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
+                slider.gameObject.AddComponent<SliderNoKeyboardNavigation>();
             }
 
-            if (sfxVolumeSlider != null)
-            {
-                sfxVolumeSlider.value = AudioSettingsManager.SFXVolume;
-                sfxVolumeSlider.onValueChanged.RemoveAllListeners();
-                sfxVolumeSlider.onValueChanged.AddListener(OnSFXVolumeChanged);
-            }
-
-            if (bgmVolumeSlider != null)
-            {
-                bgmVolumeSlider.value = AudioSettingsManager.BGMVolume;
-                bgmVolumeSlider.onValueChanged.RemoveAllListeners();
-                bgmVolumeSlider.onValueChanged.AddListener(OnBGMVolumeChanged);
-            }
+            slider.value = initialValue;
+            slider.onValueChanged.RemoveAllListeners();
+            slider.onValueChanged.AddListener(onChanged);
         }
 
         public void OnStartGameClicked()
@@ -298,6 +377,12 @@ namespace TopDownGame
 
         public void OnGuestLoginClicked()
         {
+            if (_accountModalMode == AccountModalMode.Continue)
+            {
+                OnGuestContinueClicked();
+                return;
+            }
+
             SetStatus("Entering as Guest...", isError: false);
             FirebaseAuthManager.Instance.GuestSignIn((success, msg) =>
             {
@@ -314,6 +399,50 @@ namespace TopDownGame
                     SetStatus(msg, isError: true);
                 }
             });
+        }
+
+        public void OnGuestContinueClicked()
+        {
+            Debug.Log("[MainMenuController] Continue as Guest clicked");
+            var guestData = FirebaseDatabaseManager.Instance != null 
+                ? (FirebaseDatabaseManager.Instance.CurrentPlayerData ?? FirebaseDatabaseManager.Instance.BuildPlayerDataFromLocalState())
+                : null;
+
+            bool hasSavedGame = (guestData != null && guestData.hasSelectedCharacter && !string.IsNullOrEmpty(guestData.selectedCharacter)) ||
+                                (PlayerPrefs.GetInt("HasSelectedCharacter", 0) == 1 && !string.IsNullOrEmpty(PlayerPrefs.GetString("SelectedCharacter", "")));
+
+            if (hasSavedGame)
+            {
+                SetStatus("Resuming guest game...", isError: false);
+                _hasActiveSession = true;
+                if (guestData != null)
+                {
+                    FirebaseDatabaseManager.Instance.ApplyDataToGame(guestData, clearExisting: false);
+                    ProceedToGame(guestData);
+                }
+                else
+                {
+                    ProceedToGame();
+                }
+            }
+            else
+            {
+                // No active guest save in this session -> start new guest game
+                SetStatus("No active guest game found. Starting new guest game...", isError: false);
+                FirebaseAuthManager.Instance.GuestSignIn((success, msg) =>
+                {
+                    if (success)
+                    {
+                        var freshData = FirebaseDatabaseManager.Instance.CreateFreshPlayerData();
+                        FirebaseDatabaseManager.Instance.ApplyDataToGame(freshData, clearExisting: false);
+                        ProceedToGame(freshData);
+                    }
+                    else
+                    {
+                        SetStatus(msg, isError: true);
+                    }
+                });
+            }
         }
 
         public void OnForgotPasswordClicked()
@@ -349,28 +478,34 @@ namespace TopDownGame
         {
             Debug.Log("Proceeding to Game...");
             Time.timeScale = 1f;
+            _hasActiveSession = true;
 
-            if (data == null)
+            if (data == null && FirebaseDatabaseManager.Instance != null)
             {
-                data = FirebaseDatabaseManager.Instance.CurrentPlayerData;
+                data = FirebaseDatabaseManager.Instance.CurrentPlayerData ?? FirebaseDatabaseManager.Instance.BuildPlayerDataFromLocalState();
             }
 
             // ONLY consider already selected if THIS SPECIFIC ACCOUNT has selected a character!
-            bool alreadySelected = (data != null && data.hasSelectedCharacter && !string.IsNullOrEmpty(data.selectedCharacter));
+            bool alreadySelected = (data != null && data.hasSelectedCharacter && !string.IsNullOrEmpty(data.selectedCharacter)) ||
+                                   (PlayerPrefs.GetInt("HasSelectedCharacter", 0) == 1 && !string.IsNullOrEmpty(PlayerPrefs.GetString("SelectedCharacter", "")));
 
             if (alreadySelected)
             {
                 // Returning user: Do not make them pick a character again!
-                string chosenChar = data.selectedCharacter;
+                string chosenChar = (data != null && !string.IsNullOrEmpty(data.selectedCharacter))
+                    ? data.selectedCharacter
+                    : PlayerPrefs.GetString("SelectedCharacter", "Boy");
+
                 PlayerPrefs.SetString("SelectedCharacter", chosenChar);
                 PlayerPrefs.SetInt("HasSelectedCharacter", 1);
                 PlayerPrefs.Save();
 
                 string destinationScene = "Lobby";
-                if (!string.IsNullOrEmpty(data.currentScene) &&
-                    data.currentScene != "MainMenu" && data.currentScene != "CharacterSelect")
+                string savedScene = data != null ? data.currentScene : PlayerPrefs.GetString("LastActiveScene", "Lobby");
+                if (!string.IsNullOrEmpty(savedScene) &&
+                    savedScene != "MainMenu" && savedScene != "CharacterSelect")
                 {
-                    destinationScene = data.currentScene;
+                    destinationScene = savedScene;
                 }
 
                 Debug.Log($"[MainMenuController] Returning user ({chosenChar}). Skipping CharacterSelect -> Loading scene: {destinationScene}");
@@ -380,7 +515,6 @@ namespace TopDownGame
             {
                 // First-time player on this account: Must pick character!
                 Debug.Log("[MainMenuController] First-time player on this account. Directing to CharacterSelect...");
-                FirebaseDatabaseManager.Instance.ClearAllLocalGameData();
                 PlayerPrefs.SetInt("HasSelectedCharacter", 0);
                 PlayerPrefs.Save();
                 SceneManager.LoadScene(gameSceneName); // "CharacterSelect"
@@ -394,6 +528,10 @@ namespace TopDownGame
                 InitializeSliders();
                 UpdateGoogleConnectUI();
                 settingsPanel.SetActive(true);
+                if (UnityEngine.EventSystems.EventSystem.current != null)
+                {
+                    UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+                }
             }
         }
 
@@ -437,6 +575,10 @@ namespace TopDownGame
             {
                 settingsPanel.SetActive(false);
             }
+            if (UnityEngine.EventSystems.EventSystem.current != null)
+            {
+                UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+            }
         }
 
         public void OnSaveSettingsClicked()
@@ -476,6 +618,13 @@ namespace TopDownGame
         public void OnExitClicked()
         {
             Debug.Log("Exit Game clicked");
+            // Clear guest session on explicit game exit
+            if (FirebaseAuthManager.Instance != null && FirebaseAuthManager.Instance.IsGuest)
+            {
+                FirebaseDatabaseManager.Instance?.ClearAllLocalGameData();
+            }
+            _hasActiveSession = false;
+
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #elif UNITY_WEBGL

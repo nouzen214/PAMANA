@@ -60,8 +60,17 @@ namespace TopDownGame
 
             if (nameInputField != null)
             {
-                nameInputField.characterLimit = 16;
-                nameInputField.text = !string.IsNullOrEmpty(savedName) ? savedName : defaultName;
+                nameInputField.characterLimit = 8;
+                nameInputField.contentType = TMP_InputField.ContentType.Custom;
+                nameInputField.onValidateInput = (string text, int charIndex, char addedChar) =>
+                {
+                    if (char.IsLetter(addedChar) && !char.IsWhiteSpace(addedChar))
+                    {
+                        return addedChar;
+                    }
+                    return '\0';
+                };
+                nameInputField.text = !string.IsNullOrEmpty(savedName) ? SanitizeAndValidateName(savedName, defaultName) : defaultName;
                 nameInputField.onValueChanged.RemoveAllListeners();
                 nameInputField.onValueChanged.AddListener(OnNameInputChanged);
             }
@@ -71,6 +80,24 @@ namespace TopDownGame
 
         private void OnNameInputChanged(string val)
         {
+            if (nameInputField != null && !string.IsNullOrEmpty(val))
+            {
+                var sb = new System.Text.StringBuilder();
+                foreach (char c in val)
+                {
+                    if (char.IsLetter(c) && !char.IsWhiteSpace(c))
+                    {
+                        sb.Append(c);
+                        if (sb.Length >= 8) break;
+                    }
+                }
+                string filtered = sb.ToString();
+                if (filtered != val)
+                {
+                    nameInputField.text = filtered;
+                    return;
+                }
+            }
             UpdateUI();
         }
 
@@ -195,6 +222,7 @@ namespace TopDownGame
             PlayerPrefs.Save();
             GameProgression.ResetProgression();
             PlayerInventory.Clear();
+            MainMenuController.MarkSessionActive();
             Debug.Log($"Character chosen: {selectedCharacter}, Name: '{chosenName}'. Starting game...");
 
             // Persist to Firebase so returning logins remember the choice
@@ -216,25 +244,18 @@ namespace TopDownGame
         {
             if (string.IsNullOrWhiteSpace(input)) return defaultFallback;
 
-            string trimmed = input.Trim();
-
-            // 1. Length constraint: 1 to 15 characters
-            if (trimmed.Length > 15)
-            {
-                trimmed = trimmed.Substring(0, 15).Trim();
-            }
-
-            // 2. Character whitelist: letters, digits, spaces, hyphens, and underscores only
+            // Strictly letters only, no spaces, maximum 8 letters
             var sb = new System.Text.StringBuilder();
-            foreach (char c in trimmed)
+            foreach (char c in input)
             {
-                if (char.IsLetterOrDigit(c) || c == ' ' || c == '-' || c == '_')
+                if (char.IsLetter(c) && !char.IsWhiteSpace(c))
                 {
                     sb.Append(c);
+                    if (sb.Length >= 8) break;
                 }
             }
 
-            string sanitized = sb.ToString().Trim();
+            string sanitized = sb.ToString();
             return string.IsNullOrEmpty(sanitized) ? defaultFallback : sanitized;
         }
 

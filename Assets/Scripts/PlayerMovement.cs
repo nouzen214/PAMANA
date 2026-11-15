@@ -63,6 +63,7 @@ namespace TopDownGame
             {
                 _rb.linearVelocity = Vector2.zero;
             }
+            _currentVelocity = Vector2.zero;
         }
 
         private void FixedUpdate()

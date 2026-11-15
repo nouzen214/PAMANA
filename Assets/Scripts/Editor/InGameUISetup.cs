@@ -1007,7 +1007,7 @@ namespace TopDownGame.Editor
             dialogRt.anchorMax = new Vector2(0.5f, 0.5f);
             dialogRt.pivot = new Vector2(0.5f, 0.5f);
             dialogRt.anchoredPosition = Vector2.zero;
-            dialogRt.sizeDelta = new Vector2(899f, 492f);
+            dialogRt.sizeDelta = new Vector2(1214f, 664f);
 
             var dialogImg = dialogObj.GetComponent<Image>();
             if (dialogImg == null) dialogImg = dialogObj.AddComponent<Image>();
@@ -1037,13 +1037,13 @@ namespace TopDownGame.Editor
             countRt.anchorMin = new Vector2(0.5f, 0.5f);
             countRt.anchorMax = new Vector2(0.5f, 0.5f);
             countRt.pivot = new Vector2(0f, 0.5f);
-            countRt.anchoredPosition = new Vector2(82f, 169f);
-            countRt.sizeDelta = new Vector2(120f, 30f);
+            countRt.anchoredPosition = new Vector2(111f, 228f);
+            countRt.sizeDelta = new Vector2(150f, 38f);
 
             var countTmp = countObj.GetComponent<TextMeshProUGUI>();
             if (countTmp == null) countTmp = countObj.AddComponent<TextMeshProUGUI>();
             countTmp.text = "0";
-            countTmp.fontSize = 22f;
+            countTmp.fontSize = 28f;
             countTmp.fontStyle = FontStyles.Bold;
             countTmp.alignment = TextAlignmentOptions.MidlineLeft;
             countTmp.color = new Color(0.24f, 0.16f, 0.08f, 1f);
@@ -1053,20 +1053,27 @@ namespace TopDownGame.Editor
             scrollRt.anchorMin = new Vector2(0.5f, 0.5f);
             scrollRt.anchorMax = new Vector2(0.5f, 0.5f);
             scrollRt.pivot = new Vector2(0.5f, 0.5f);
-            scrollRt.anchoredPosition = new Vector2(0f, -36f);
-            scrollRt.sizeDelta = new Vector2(790f, 325f);
+            scrollRt.anchoredPosition = new Vector2(0f, -44f);
+            scrollRt.sizeDelta = new Vector2(1070f, 440f);
+
+            var scrollImg = scrollObj.GetComponent<Image>();
+            if (scrollImg == null) scrollImg = scrollObj.AddComponent<Image>();
+            scrollImg.color = Color.clear;
+            scrollImg.raycastTarget = true;
 
             var scrollRect = scrollObj.GetComponent<ScrollRect>();
             if (scrollRect == null) scrollRect = scrollObj.AddComponent<ScrollRect>();
             scrollRect.horizontal = false;
             scrollRect.vertical = true;
+            scrollRect.movementType = ScrollRect.MovementType.Clamped;
+            scrollRect.scrollSensitivity = 35f;
 
             var viewportObj = GetOrCreateChild(scrollObj.transform, "Viewport");
             var viewportRt = viewportObj.GetComponent<RectTransform>();
             viewportRt.anchorMin = Vector2.zero;
             viewportRt.anchorMax = Vector2.one;
             viewportRt.offsetMin = Vector2.zero;
-            viewportRt.offsetMax = Vector2.zero;
+            viewportRt.offsetMax = new Vector2(-22f, 0f); // Reserve space for scrollbar
 
             var viewportMask = viewportObj.GetComponent<Mask>();
             if (viewportMask == null) viewportMask = viewportObj.AddComponent<Mask>();
@@ -1082,13 +1089,13 @@ namespace TopDownGame.Editor
             gridRt.anchorMax = new Vector2(1f, 1f);
             gridRt.pivot = new Vector2(0.5f, 1f);
             gridRt.anchoredPosition = Vector2.zero;
-            gridRt.sizeDelta = new Vector2(0f, 325f);
+            gridRt.sizeDelta = new Vector2(0f, 440f);
 
             var glg = gridObj.GetComponent<GridLayoutGroup>();
             if (glg == null) glg = gridObj.AddComponent<GridLayoutGroup>();
-            glg.cellSize = new Vector2(382f, 95f);
-            glg.spacing = new Vector2(16f, 12f);
-            glg.padding = new RectOffset(0, 0, 0, 0);
+            glg.cellSize = new Vector2(498f, 110f);
+            glg.spacing = new Vector2(16f, 14f);
+            glg.padding = new RectOffset(6, 6, 8, 12);
             glg.startCorner = GridLayoutGroup.Corner.UpperLeft;
             glg.startAxis = GridLayoutGroup.Axis.Horizontal;
             glg.childAlignment = TextAnchor.UpperLeft;
@@ -1102,18 +1109,64 @@ namespace TopDownGame.Editor
             scrollRect.content = gridRt;
             scrollRect.viewport = viewportRt;
 
+            // Scrollbar
+            var sbObj = GetOrCreateChild(scrollObj.transform, "VerticalScrollbar");
+            var sbRt = sbObj.GetComponent<RectTransform>();
+            sbRt.anchorMin = new Vector2(1f, 0f);
+            sbRt.anchorMax = new Vector2(1f, 1f);
+            sbRt.pivot = new Vector2(1f, 0.5f);
+            sbRt.anchoredPosition = new Vector2(-4f, 0f);
+            sbRt.sizeDelta = new Vector2(12f, -16f);
+
+            var sbImg = sbObj.GetComponent<Image>();
+            if (sbImg == null) sbImg = sbObj.AddComponent<Image>();
+            sbImg.color = new Color(0.12f, 0.09f, 0.06f, 0.70f);
+
+            var sbOutline = sbObj.GetComponent<Outline>();
+            if (sbOutline == null) sbOutline = sbObj.AddComponent<Outline>();
+            sbOutline.effectColor = new Color(0.35f, 0.25f, 0.15f, 0.5f);
+            sbOutline.effectDistance = new Vector2(1f, -1f);
+
+            var slideArea = GetOrCreateChild(sbObj.transform, "Sliding Area");
+            var slideRt = slideArea.GetComponent<RectTransform>();
+            slideRt.anchorMin = Vector2.zero;
+            slideRt.anchorMax = Vector2.one;
+            slideRt.offsetMin = new Vector2(2f, 2f);
+            slideRt.offsetMax = new Vector2(-2f, -2f);
+
+            var handle = GetOrCreateChild(slideArea.transform, "Handle");
+            var handleRt = handle.GetComponent<RectTransform>();
+            handleRt.sizeDelta = new Vector2(8f, 30f);
+            var handleImg = handle.GetComponent<Image>();
+            if (handleImg == null) handleImg = handle.AddComponent<Image>();
+            handleImg.color = new Color(0.78f, 0.62f, 0.38f, 0.95f);
+
+            var handleOutline = handle.GetComponent<Outline>();
+            if (handleOutline == null) handleOutline = handle.AddComponent<Outline>();
+            handleOutline.effectColor = new Color(0.95f, 0.85f, 0.60f, 0.8f);
+            handleOutline.effectDistance = new Vector2(1f, -1f);
+
+            var sbComp = sbObj.GetComponent<Scrollbar>();
+            if (sbComp == null) sbComp = sbObj.AddComponent<Scrollbar>();
+            sbComp.direction = Scrollbar.Direction.BottomToTop;
+            sbComp.handleRect = handleRt;
+            sbComp.targetGraphic = handleImg;
+
+            scrollRect.verticalScrollbar = sbComp;
+            scrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+
             var emptyNoticeObj = GetOrCreateChild(dialogObj.transform, "EmptyNoticeText");
             var enRt = emptyNoticeObj.GetComponent<RectTransform>();
             enRt.anchorMin = new Vector2(0.5f, 0.5f);
             enRt.anchorMax = new Vector2(0.5f, 0.5f);
             enRt.pivot = new Vector2(0.5f, 0.5f);
-            enRt.anchoredPosition = new Vector2(0f, -36f);
-            enRt.sizeDelta = new Vector2(650f, 100f);
+            enRt.anchoredPosition = new Vector2(0f, -44f);
+            enRt.sizeDelta = new Vector2(850f, 120f);
 
             var enTmp = emptyNoticeObj.GetComponent<TextMeshProUGUI>();
             if (enTmp == null) enTmp = emptyNoticeObj.AddComponent<TextMeshProUGUI>();
             enTmp.text = "No artifacts in your bag yet.\nAnswer quizzes correctly in Alterworld trials to recover artifacts!";
-            enTmp.fontSize = 20f;
+            enTmp.fontSize = 24f;
             enTmp.alignment = TextAlignmentOptions.Center;
             enTmp.color = new Color(0.85f, 0.80f, 0.70f, 0.95f);
 
@@ -1122,8 +1175,8 @@ namespace TopDownGame.Editor
             closeRt.anchorMin = new Vector2(1f, 1f);
             closeRt.anchorMax = new Vector2(1f, 1f);
             closeRt.pivot = new Vector2(1f, 1f);
-            closeRt.anchoredPosition = new Vector2(-16f, -16f);
-            closeRt.sizeDelta = new Vector2(34f, 34f);
+            closeRt.anchoredPosition = new Vector2(-22f, -22f);
+            closeRt.sizeDelta = new Vector2(46f, 46f);
 
             var closeImg = closeBtnObj.GetComponent<Image>();
             if (closeImg == null) closeImg = closeBtnObj.AddComponent<Image>();
@@ -1147,7 +1200,7 @@ namespace TopDownGame.Editor
             var closeTmp = closeTxtObj.GetComponent<TextMeshProUGUI>();
             if (closeTmp == null) closeTmp = closeTxtObj.AddComponent<TextMeshProUGUI>();
             closeTmp.text = "X";
-            closeTmp.fontSize = 20f;
+            closeTmp.fontSize = 26f;
             closeTmp.fontStyle = FontStyles.Bold;
             closeTmp.alignment = TextAlignmentOptions.Center;
             closeTmp.color = Color.white;
@@ -1162,6 +1215,9 @@ namespace TopDownGame.Editor
 
             var spGrid = soModal.FindProperty("itemsGridContainer");
             if (spGrid != null) spGrid.objectReferenceValue = gridObj.transform;
+
+            var spScroll = soModal.FindProperty("scrollRect");
+            if (spScroll != null) spScroll.objectReferenceValue = scrollRect;
 
             var spTitle = soModal.FindProperty("titleText");
             if (spTitle != null) spTitle.objectReferenceValue = null;

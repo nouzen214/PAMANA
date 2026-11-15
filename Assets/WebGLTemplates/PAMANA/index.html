@@ -140,13 +140,46 @@
         triggerFullscreenFlow();
       };
 
+      function resizeCanvas() {
+        var w = window.innerWidth;
+        var h = window.innerHeight;
+
+        if (isMobile) {
+          canvas.style.width = "100%";
+          canvas.style.height = "100%";
+          return;
+        }
+
+        // Dynamically scale canvas to fit inside the browser window
+        // preserving the 16:9 aspect ratio
+        var targetAspect = 16 / 9;
+        var windowAspect = w / h;
+
+        var renderW, renderH;
+        if (windowAspect > targetAspect) {
+          // Window is wider than 16:9 -> fit to available window height
+          renderH = h;
+          renderW = Math.floor(h * targetAspect);
+        } else {
+          // Window is taller than 16:9 -> fit to available window width
+          renderW = w;
+          renderH = Math.floor(w / targetAspect);
+        }
+
+        canvas.style.width = renderW + "px";
+        canvas.style.height = renderH + "px";
+      }
+
       if (isMobile) {
         container.className = "unity-mobile";
         canvas.className = "unity-mobile";
       } else {
-        canvas.style.width = "{{{ WIDTH }}}px";
-        canvas.style.height = "{{{ HEIGHT }}}px";
+        container.className = "unity-desktop";
       }
+
+      window.addEventListener("resize", resizeCanvas);
+      window.addEventListener("orientationchange", resizeCanvas);
+      resizeCanvas();
 
       var buildUrl = "Build";
       var loaderUrl = buildUrl + "/{{{ LOADER_FILENAME }}}";
@@ -183,9 +216,13 @@
         }).then((unityInstance) => {
           window.unityInstance = unityInstance;
           document.querySelector("#unity-loading-bar").style.display = "none";
-          document.querySelector("#unity-fullscreen-button").onclick = () => {
-            unityInstance.SetFullscreen(1);
-          };
+          resizeCanvas();
+          var fsBtn = document.querySelector("#unity-fullscreen-button");
+          if (fsBtn) {
+            fsBtn.onclick = () => {
+              unityInstance.SetFullscreen(1);
+            };
+          }
         }).catch((message) => {
           alert(message);
         });

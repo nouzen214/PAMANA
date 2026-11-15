@@ -107,7 +107,13 @@ namespace TopDownGame
             }
             if (spriteRenderer == null || _activeData == null) return;
 
-            Vector2 moveInput = inputHandler != null ? inputHandler.MoveInput : Vector2.zero;
+            Vector2 moveInput = (inputHandler != null && inputHandler.enabled) ? inputHandler.MoveInput : Vector2.zero;
+
+            var movement = GetComponent<PlayerMovement>();
+            if (movement != null && !movement.enabled)
+            {
+                moveInput = Vector2.zero;
+            }
 
             // Fallback: If inputHandler hasn't updated or input is zero but physics body is moving, use linearVelocity
             if (moveInput.sqrMagnitude < 0.01f && rb != null && rb.linearVelocity.sqrMagnitude > 0.05f)

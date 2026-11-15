@@ -36,6 +36,11 @@ namespace TopDownGame
         public string currentScene = "Lobby";
         public float positionX = 0f;
         public float positionY = 0f;
+        public string returnSceneName = "";
+        public string returnDoorName = "";
+        public float returnPositionX = 0f;
+        public float returnPositionY = 0f;
+        public bool hasReturnPosition = false;
         public float currentHealth = 100f;
         public float maxHealth = 100f;
         public int coins = 0;
@@ -43,6 +48,8 @@ namespace TopDownGame
         public float sfxVolume = 1f;
         public float bgmVolume = 1f;
         public bool isPortalUnlocked = false;
+        public bool isBookUnlocked = false;
+        public List<int> reviewedBookTopics = new List<int>();
         public bool hasCompletedTutorial = false;
         public bool isRoom1BattleCompleted = false;
         public string lastLogin = "";

@@ -28,6 +28,8 @@ namespace TopDownGame
 
         private float _lastSaveTime = -999f;
         private bool _isSavingNow = false;
+        private bool _hasPendingSave = false;
+        private string _pendingSaveReason = "";
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void AutoInit()
@@ -59,6 +61,10 @@ namespace TopDownGame
             GameProgression.OnPortalUnlocked += () => TriggerAutoSave("Portal Unlocked");
             GameProgression.OnRoom1ArtifactRetrieved += () => TriggerAutoSave("Artifact Retrieved");
             GameProgression.OnRoom1ArtifactReturned += () => TriggerAutoSave("Artifact Returned");
+            GameProgression.OnPedestalRestored += (r, a) => TriggerAutoSave($"Pedestal Restored: Room {r} {a}");
+            GameProgression.OnPlaqueRead += (r, c) => TriggerAutoSave($"Plaque Read: Room {r} ({c}/5)");
+            GameProgression.OnBookUnlocked += () => TriggerAutoSave("Field Guide Unlocked");
+            GameProgression.OnBookTopicReviewed += (t) => TriggerAutoSave($"Field Guide Topic {t} Reviewed");
 
             // Subscribe to inventory events
             PlayerInventory.OnInventoryChanged += () => TriggerAutoSave("Inventory Changed");
@@ -116,14 +122,36 @@ namespace TopDownGame
                 return;
             }
 
-            // Cooldown check
-            if (Time.unscaledTime < _lastSaveTime + minSaveCooldown)
+            // Cooldown or active save check -> queue pending save so progress isn't lost
+            if (_isSavingNow || Time.unscaledTime < _lastSaveTime + minSaveCooldown)
             {
+                _pendingSaveReason = reason;
+                if (!_hasPendingSave)
+                {
+                    _hasPendingSave = true;
+                    StartCoroutine(ProcessPendingSaveCoroutine());
+                }
                 return;
             }
 
-            if (_isSavingNow) return;
+            ExecuteSave(reason);
+        }
 
+        private IEnumerator ProcessPendingSaveCoroutine()
+        {
+            while (_isSavingNow || Time.unscaledTime < _lastSaveTime + minSaveCooldown)
+            {
+                yield return new WaitForSecondsRealtime(0.5f);
+            }
+            if (_hasPendingSave)
+            {
+                _hasPendingSave = false;
+                ExecuteSave(_pendingSaveReason);
+            }
+        }
+
+        private void ExecuteSave(string reason)
+        {
             _lastSaveTime = Time.unscaledTime;
             _isSavingNow = true;
 

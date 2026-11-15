@@ -379,17 +379,52 @@ namespace TopDownGame
             bool isNewReview = GameProgression.RecordBookTopicReviewed(topicNumber);
             if (isNewReview)
             {
-                if (topicNumber == 1)
+                bool isRoomFullyRestored = GameProgression.IsRoomFullyRestored(topicNumber);
+
+                if (isRoomFullyRestored)
+                {
+                    NotificationBannerUI.Show(
+                        $"TOPIC {topicNumber} REVIEWED!",
+                        $"Field Guide Topic {topicNumber} studied! Room {topicNumber} is already fully restored.",
+                        3.5f,
+                        new Color(0.18f, 0.40f, 0.16f, 1f),
+                        "★"
+                    );
+                }
+                else if (topicNumber == 1)
                 {
                     if (GameProgression.AreAllPlaquesRead(1))
                     {
-                        NotificationBannerUI.Show(
-                            "PORTAL AWAKENED!",
-                            "Topic 1 reviewed and all 5 plaques studied!\nThe mysterious portal in the Lobby is now open!",
-                            6.0f,
-                            new Color(0.18f, 0.40f, 0.16f, 1f),
-                            "★"
-                        );
+                        if (!GameProgression.IsPortalUnlocked && !GameProgression.HasAttemptedRoomBattle(1))
+                        {
+                            NotificationBannerUI.Show(
+                                "PORTAL AWAKENED!",
+                                "Topic 1 reviewed and all 5 plaques studied!\nThe mysterious portal in the Lobby is now open!",
+                                6.0f,
+                                new Color(0.18f, 0.40f, 0.16f, 1f),
+                                "★"
+                            );
+                        }
+                        else if (GameProgression.HasAttemptedRoomBattle(1) && GameProgression.CanRoomBeRetried(1))
+                        {
+                            NotificationBannerUI.Show(
+                                "TRIAL UNLOCKED FOR RETRY",
+                                "Topic 1 reviewed! Alterworld Battle 1 is now unlocked for retry.",
+                                5.5f,
+                                new Color(0.18f, 0.40f, 0.16f, 1f),
+                                "★"
+                            );
+                        }
+                        else
+                        {
+                            NotificationBannerUI.Show(
+                                "TOPIC 1 REVIEWED!",
+                                "Field Guide Topic 1 studied!",
+                                4.0f,
+                                new Color(0.18f, 0.40f, 0.16f, 1f),
+                                "★"
+                            );
+                        }
                     }
                     else
                     {

@@ -93,6 +93,15 @@ namespace TopDownGame
 
             EnsurePortalBlocker();
 
+            if (GameProgression.IsLobbyRestored())
+            {
+                // All 12 rooms complete! Museum is fully restored, portal has closed and grand double doors are restored.
+                if (portalObject != null) portalObject.SetActive(false);
+                if (portalBlocker != null) portalBlocker.SetActive(true);
+                Debug.Log("[LobbyPortalManager] Lobby is fully restored! Portal deactivated and grand entrance restored.");
+                return;
+            }
+
             bool isUnlocked = GameProgression.IsPortalUnlocked;
 
             if (portalObject != null)

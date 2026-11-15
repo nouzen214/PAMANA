@@ -32,7 +32,7 @@ namespace TopDownGame
         [SerializeField] private TMP_Text messageText;
 
         [Header("Animation Settings")]
-        [SerializeField] private float animDuration = 0.08f;
+        [SerializeField] private float animDuration = 0.22f;
 
         private readonly Queue<BannerRequest> _requestQueue = new Queue<BannerRequest>();
         private Coroutine _queueCoroutine;
@@ -73,7 +73,7 @@ namespace TopDownGame
             }
         }
 
-        public static void Show(string title, string message, float duration = 1.2f, Color? accentColor = null, string icon = "!")
+        public static void Show(string title, string message, float duration = 2.5f, Color? accentColor = null, string icon = "!")
         {
             var banner = Instance;
             if (banner == null)
@@ -98,10 +98,10 @@ namespace TopDownGame
 
         public void EnqueueNotification(string title, string message, float duration, Color accentColor, string icon = "!")
         {
-            // Debounce identical notifications within 0.8 seconds
+            // Debounce identical notifications within 1.2 seconds
             if (string.Equals(_lastRequest.title, title, System.StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(_lastRequest.message, message, System.StringComparison.OrdinalIgnoreCase) &&
-                (Time.unscaledTime - _lastRequestTime) < 0.8f)
+                (Time.unscaledTime - _lastRequestTime) < 1.2f)
             {
                 return;
             }
@@ -128,8 +128,8 @@ namespace TopDownGame
                 _requestQueue.Dequeue();
             }
 
-            // Ultra-fast responsive duration: clamp between 0.75s and 1.5s
-            float effectiveDuration = Mathf.Clamp(duration * 0.35f, 0.75f, 1.5f);
+            // Ensure player has comfortable reading time: at least 2.0s, up to 5.0s for detailed lore/instructions
+            float effectiveDuration = Mathf.Clamp(duration, 2.0f, 5.0f);
 
             var req = new BannerRequest
             {
@@ -145,7 +145,7 @@ namespace TopDownGame
 
             _requestQueue.Enqueue(req);
 
-            // Signal the currently running hold to immediately fast-forward so the new notification displays without lag
+            // Signal the currently running hold to fast-forward only after player has had time to read
             _skipCurrentHold = true;
 
             if (_queueCoroutine == null)
@@ -192,7 +192,7 @@ namespace TopDownGame
                         messageText.color = DefaultBodyBrown;
                     }
 
-                    // Ultra-fast slide down (0.08s EaseOutCubic)
+                    // Smooth slide down (EaseOutCubic)
                     float elapsed = 0f;
                     Vector2 startPos = bannerRect != null ? bannerRect.anchoredPosition : _hiddenPos;
                     while (elapsed < animDuration)
@@ -210,12 +210,12 @@ namespace TopDownGame
                 }
                 else
                 {
-                    // IN-PLACE LIGHTNING CROSS-FADE PUNCH (Only 0.06s total)
+                    // Smooth cross-fade between sequential notifications
                     float fadeOutElapsed = 0f;
-                    while (fadeOutElapsed < 0.03f)
+                    while (fadeOutElapsed < 0.10f)
                     {
                         fadeOutElapsed += Time.unscaledDeltaTime;
-                        float t = Mathf.Clamp01(fadeOutElapsed / 0.03f);
+                        float t = Mathf.Clamp01(fadeOutElapsed / 0.10f);
                         if (bannerGroup != null) bannerGroup.alpha = Mathf.Lerp(1f, 0.25f, t);
                         yield return null;
                     }
@@ -234,10 +234,10 @@ namespace TopDownGame
                     }
 
                     float fadeInElapsed = 0f;
-                    while (fadeInElapsed < 0.03f)
+                    while (fadeInElapsed < 0.10f)
                     {
                         fadeInElapsed += Time.unscaledDeltaTime;
-                        float t = Mathf.Clamp01(fadeInElapsed / 0.03f);
+                        float t = Mathf.Clamp01(fadeInElapsed / 0.10f);
                         if (bannerGroup != null) bannerGroup.alpha = Mathf.Lerp(0.25f, 1f, t);
                         yield return null;
                     }
@@ -246,16 +246,16 @@ namespace TopDownGame
                 if (bannerGroup != null) bannerGroup.alpha = 1f;
                 if (bannerRect != null) bannerRect.anchoredPosition = _targetPos;
 
-                // Dynamic hold duration: if notifications are queued behind this, hold for only 0.40s
-                float holdTime = _requestQueue.Count > 0 ? 0.40f : current.duration;
+                // Comfortable hold duration: if notifications are queued behind this, hold for at least 1.8s
+                float holdTime = _requestQueue.Count > 0 ? Mathf.Min(current.duration, 1.8f) : current.duration;
 
                 _skipCurrentHold = false;
                 float holdElapsed = 0f;
                 while (holdElapsed < holdTime)
                 {
                     holdElapsed += Time.unscaledDeltaTime;
-                    // If player triggered another interaction, switch after just 0.15s!
-                    if (_skipCurrentHold && holdElapsed >= 0.15f)
+                    // If player triggered another interaction, allow fast-forward only after at least 1.5s reading time!
+                    if (_skipCurrentHold && holdElapsed >= 1.5f)
                     {
                         break;
                     }
@@ -263,7 +263,7 @@ namespace TopDownGame
                 }
             }
 
-            // Ultra-fast slide up & hide (0.08s EaseInCubic)
+            // Smooth slide up & hide (EaseInCubic)
             float outElapsed = 0f;
             Vector2 curPos = bannerRect != null ? bannerRect.anchoredPosition : _targetPos;
             while (outElapsed < animDuration)

@@ -30,7 +30,7 @@ namespace TopDownGame.Editor
                 var pc = portal.GetComponent<PortalController>();
                 if (pc != null)
                 {
-                    pc.SetConfig("AltLobby", new Vector2(0f, 2.5f), CharacterAnimator2D.FacingDirection.Down);
+                    pc.SetConfig("AltLobby", new Vector2(0f, 1.8f), CharacterAnimator2D.FacingDirection.Down);
                     EditorUtility.SetDirty(pc);
                 }
             }
@@ -64,7 +64,7 @@ namespace TopDownGame.Editor
                 var pc = portal.GetComponent<PortalController>();
                 if (pc != null)
                 {
-                    pc.SetConfig("Lobby", new Vector2(0f, 2.5f), CharacterAnimator2D.FacingDirection.Down);
+                    pc.SetConfig("Lobby", new Vector2(0f, 1.8f), CharacterAnimator2D.FacingDirection.Down);
                     EditorUtility.SetDirty(pc);
                 }
             }

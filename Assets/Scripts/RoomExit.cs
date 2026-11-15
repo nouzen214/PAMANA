@@ -21,6 +21,7 @@ namespace TopDownGame
 
         private void Start()
         {
+            RoomTransitionManager.EnsureRoomReturnInfo();
             StartCoroutine(EnableExitCooldownRoutine());
         }
 

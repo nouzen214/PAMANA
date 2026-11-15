@@ -75,8 +75,13 @@ namespace TopDownGame
 
                 int retrieved = GameProgression.GetRoomRetrievedCount(currentRoom);
                 int restored = GameProgression.GetPedestalsRestoredCount(currentRoom);
+                bool isRoomFullyRestored = GameProgression.IsRoomFullyRestored(currentRoom);
 
-                if (retrieved > 0 && restored < retrieved)
+                if (isRoomFullyRestored)
+                {
+                    // Room is 100% fully restored! No battle alerts, trial awaken banners, or study plaque notifications should pop up.
+                }
+                else if (retrieved > 0 && restored < retrieved)
                 {
                     NotificationBannerUI.Show(
                         $"ROOM {currentRoom}",

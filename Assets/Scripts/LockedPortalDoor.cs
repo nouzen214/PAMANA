@@ -14,12 +14,25 @@ namespace TopDownGame
 
         public override string GetPromptText(string openText, string closeText)
         {
+            if (GameProgression.IsLobbyRestored()) return "[E] Grand Museum Entrance";
             if (GameProgression.IsPortalUnlocked) return string.Empty;
             return "[E] Examine Chained Door";
         }
 
         public override void Interact()
         {
+            if (GameProgression.IsLobbyRestored())
+            {
+                NotificationBannerUI.Show(
+                    "PAMANA GRAND ENTRANCE",
+                    "The grand front entrance of the Pamana Museum.\nAll 12 historical exhibition halls across both wings are 100% restored!",
+                    5.0f,
+                    new Color(0.95f, 0.85f, 0.35f, 1f),
+                    "★"
+                );
+                return;
+            }
+
             if (GameProgression.IsPortalUnlocked) return;
 
             int count = GameProgression.GetPlaquesReadCount(1);

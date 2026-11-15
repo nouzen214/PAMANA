@@ -20,9 +20,9 @@ namespace TopDownGame
         [SerializeField] private string artifactInspectionDescription = "Exquisite craftsmanship preserved through the centuries.";
 
         [Header("Character Dialogue")]
-        [SerializeField] private string initialDialogue = "what should i do";
-        [SerializeField] private string plaqueDialogue = "what could this artifact be";
-        [SerializeField] private string artifactDialogue = "i wonder what this artifact looks like";
+        [SerializeField] private string initialDialogue = "What should I do?";
+        [SerializeField] private string plaqueDialogue = "What could this artifact be?";
+        [SerializeField] private string artifactDialogue = "I wonder what this artifact looks like...";
 
         [Header("Interaction Prompt")]
         [SerializeField] private string promptText = "[E] Inspect Artifact";
@@ -55,9 +55,51 @@ namespace TopDownGame
         public string PlaqueTitle => plaqueTitle;
         public string PlaqueDescription => plaqueDescription;
         public string ArtifactInspectionDescription => artifactInspectionDescription;
-        public string InitialDialogue => initialDialogue;
-        public string PlaqueDialogue => plaqueDialogue;
-        public string ArtifactDialogue => artifactDialogue;
+        public string InitialDialogue => FormatDialogueSentence(initialDialogue);
+        public string PlaqueDialogue => FormatDialogueSentence(plaqueDialogue);
+        public string ArtifactDialogue => FormatDialogueSentence(artifactDialogue);
+
+        public static string FormatDialogueSentence(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return "";
+            string trimmed = text.Trim();
+
+            // Special known dialogue
+            if (string.Equals(trimmed, "what could this artifact be", System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(trimmed, "what could this artifact be?", System.StringComparison.OrdinalIgnoreCase))
+                return "What could this artifact be?";
+
+            if (string.Equals(trimmed, "what should i do", System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(trimmed, "what should i do?", System.StringComparison.OrdinalIgnoreCase))
+                return "What should I do?";
+
+            if (string.Equals(trimmed, "i wonder what this artifact looks like", System.StringComparison.OrdinalIgnoreCase))
+                return "I wonder what this artifact looks like...";
+
+            // Ensure first letter is capitalized
+            if (char.IsLower(trimmed[0]))
+            {
+                trimmed = char.ToUpper(trimmed[0]) + (trimmed.Length > 1 ? trimmed.Substring(1) : "");
+            }
+
+            // Replace lowercase isolated 'i' with 'I'
+            trimmed = System.Text.RegularExpressions.Regex.Replace(trimmed, @"\bi\b", "I");
+
+            // If question word and missing punctuation, append ?
+            string lower = trimmed.ToLowerInvariant();
+            if (lower.StartsWith("what ") || lower.StartsWith("why ") || lower.StartsWith("how ") ||
+                lower.StartsWith("who ") || lower.StartsWith("where ") || lower.StartsWith("when ") ||
+                lower.StartsWith("could ") || lower.StartsWith("would ") || lower.StartsWith("is ") ||
+                lower.StartsWith("can "))
+            {
+                if (!trimmed.EndsWith("?") && !trimmed.EndsWith(".") && !trimmed.EndsWith("!"))
+                {
+                    trimmed += "?";
+                }
+            }
+
+            return trimmed;
+        }
 
         public bool IsRestored => GameProgression.IsPedestalRestored(RoomNumber, artifactName);
         public string DisplayName => IsRestored ? artifactName : "???";
@@ -141,7 +183,7 @@ namespace TopDownGame
             roomNumber = r;
         }
 
-        public void Configure(string name, Sprite sprite, string title, string plaqueDesc, string inspectDesc, string initialDiag, string reactionDiag, string artDiag = "i wonder what this artifact looks like", int rNum = 1)
+        public void Configure(string name, Sprite sprite, string title, string plaqueDesc, string inspectDesc, string initialDiag, string reactionDiag, string artDiag = "I wonder what this artifact looks like...", int rNum = 1)
         {
             artifactName = name;
             artifactSprite = sprite;
