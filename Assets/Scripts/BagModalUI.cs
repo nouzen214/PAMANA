@@ -334,20 +334,6 @@ namespace TopDownGame
 
         private void Update()
         {
-            if (UnityEngine.InputSystem.Keyboard.current != null)
-            {
-                var kb = UnityEngine.InputSystem.Keyboard.current;
-                if (kb.bKey.wasPressedThisFrame || kb.iKey.wasPressedThisFrame)
-                {
-                    if (IsOpen) CloseBag();
-                    else OpenBag();
-                }
-                else if (IsOpen && kb.escapeKey.wasPressedThisFrame)
-                {
-                    CloseBag();
-                }
-            }
-
             // Mouse scroll wheel support for when artifacts exceed current space
             if (IsOpen && scrollRect != null && scrollRect.content != null)
             {

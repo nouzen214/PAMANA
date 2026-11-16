@@ -135,53 +135,30 @@ namespace TopDownGame
 
         private void Update()
         {
+            if (!IsOpen) return;
+
+            // Page navigation via A / D and Left / Right arrow keys
+            bool prevPage = false;
+            bool nextPage = false;
+
             if (Keyboard.current != null)
             {
                 var kb = Keyboard.current;
-
-                if (IsOpen)
-                {
-                    if (kb.escapeKey.wasPressedThisFrame)
-                    {
-                        CloseBook();
-                        return;
-                    }
-
-                    if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame)
-                    {
-                        OnPrevPageClicked();
-                    }
-                    else if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame)
-                    {
-                        OnNextPageClicked();
-                    }
-                }
-
-                // Hotkey to toggle book when unlocked
-                if (kb.hKey.wasPressedThisFrame || kb.f1Key.wasPressedThisFrame)
-                {
-                    if (!GameProgression.IsBookUnlocked)
-                    {
-                        NotificationBannerUI.Show(
-                            "FIELD GUIDE LOCKED",
-                            "Inspect the book pedestal in the Main Lobby to unlock the Field Guide!",
-                            3.5f,
-                            new Color(0.95f, 0.35f, 0.35f, 1f),
-                            "!"
-                        );
-                        return;
-                    }
-
-                    if (IsOpen)
-                    {
-                        CloseBook();
-                    }
-                    else
-                    {
-                        OpenBook();
-                    }
-                }
+                if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame) prevPage = true;
+                if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) nextPage = true;
             }
+            else
+            {
+                try
+                {
+                    if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A)) prevPage = true;
+                    if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) nextPage = true;
+                }
+                catch { }
+            }
+
+            if (prevPage) OnPrevPageClicked();
+            else if (nextPage) OnNextPageClicked();
         }
 
         public static void Show()

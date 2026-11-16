@@ -143,6 +143,81 @@ namespace TopDownGame
 
         private void Update()
         {
+            if (ArtifactInspectionUI.Instance != null && ArtifactInspectionUI.Instance.IsOpen)
+            {
+                return;
+            }
+
+            // 1. Keyboard Shortcut: H key -> Open / Toggle History Book
+            bool hPressed = false;
+            if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.hKey.wasPressedThisFrame)
+            {
+                hPressed = true;
+            }
+            else
+            {
+                try { if (Input.GetKeyDown(KeyCode.H)) hPressed = true; } catch { }
+            }
+
+            if (hPressed)
+            {
+                OnBookClicked();
+                return;
+            }
+
+            // 2. Keyboard Shortcut: B key -> Open / Toggle Bag (also supports I key for inventory)
+            bool bPressed = false;
+            if (UnityEngine.InputSystem.Keyboard.current != null &&
+                (UnityEngine.InputSystem.Keyboard.current.bKey.wasPressedThisFrame || UnityEngine.InputSystem.Keyboard.current.iKey.wasPressedThisFrame))
+            {
+                bPressed = true;
+            }
+            else
+            {
+                try { if (Input.GetKeyDown(KeyCode.B) || Input.GetKeyDown(KeyCode.I)) bPressed = true; } catch { }
+            }
+
+            if (bPressed)
+            {
+                OnBagClicked();
+                return;
+            }
+
+            // 3. Escape key -> Close open modal (Settings, Book, or Bag)
+            bool escapePressed = false;
+            if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
+            {
+                escapePressed = true;
+            }
+            else
+            {
+                try { if (Input.GetKeyDown(KeyCode.Escape)) escapePressed = true; } catch { }
+            }
+
+            if (escapePressed)
+            {
+                if (settingsPanel != null && settingsPanel.activeSelf)
+                {
+                    OnCloseSettingsClicked();
+                    return;
+                }
+                if (BookModalUI.Instance != null && BookModalUI.Instance.IsOpen)
+                {
+                    BookModalUI.Instance.CloseBook();
+                    return;
+                }
+                if (bagModal == null)
+                {
+                    bagModal = FindFirstObjectByType<BagModalUI>(FindObjectsInactive.Include);
+                }
+                if (bagModal != null && bagModal.IsOpen)
+                {
+                    bagModal.CloseBag();
+                    return;
+                }
+            }
+
+            // Keep settings slider selection clean while settings panel is open
             if (settingsPanel != null && settingsPanel.activeSelf)
             {
                 // Ensure no slider remains selected in EventSystem while settings is open
@@ -154,22 +229,6 @@ namespace TopDownGame
                     {
                         UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
                     }
-                }
-
-                // Allow Escape to close settings
-                bool escapePressed = false;
-                if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
-                {
-                    escapePressed = true;
-                }
-                else
-                {
-                    try { if (Input.GetKeyDown(KeyCode.Escape)) escapePressed = true; } catch { }
-                }
-
-                if (escapePressed)
-                {
-                    OnCloseSettingsClicked();
                 }
             }
         }
@@ -603,20 +662,20 @@ namespace TopDownGame
         {
             if (!GameProgression.IsBookUnlocked)
             {
-                NotificationBannerUI.Show(
-                    "FIELD GUIDE LOCKED",
-                    "Inspect the book pedestal in the Main Lobby to unlock the Field Guide!",
-                    3.5f,
-                    new Color(0.95f, 0.35f, 0.35f, 1f),
-                    "!"
-                );
-                return;
+                GameProgression.UnlockBook();
+                UpdateBookButtonState();
             }
 
             if (settingsPanel != null && settingsPanel.activeSelf)
             {
                 settingsPanel.SetActive(false);
+                Time.timeScale = 1f;
                 SetPlayerMovementState(true);
+            }
+
+            if (bagModal == null)
+            {
+                bagModal = FindFirstObjectByType<BagModalUI>(FindObjectsInactive.Include);
             }
 
             if (bagModal != null && bagModal.IsOpen)
