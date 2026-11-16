@@ -261,6 +261,66 @@ namespace TopDownGame
             }));
         }
 
+        /// <summary>
+        /// Checks whether a cloud save already exists in Firebase for the specified user ID without modifying local state.
+        /// Returns (requestSuccess, hasExistingProgress, data).
+        /// </summary>
+        public void CheckCloudSaveExists(string userId, string token, Action<bool, bool, PlayerData> onComplete)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                onComplete?.Invoke(false, false, null);
+                return;
+            }
+
+            string url = $"{FirebaseConfig.DatabaseUrl}/users/{userId}.json";
+            if (!string.IsNullOrEmpty(token) && token != "mock_editor_token")
+            {
+                url += $"?auth={token}";
+            }
+
+            StartCoroutine(GetCoroutine(url, (success, response) =>
+            {
+                if (!success)
+                {
+                    Debug.LogError($"[FirebaseDatabaseManager] CheckCloudSaveExists error: {response}");
+                    onComplete?.Invoke(false, false, null);
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(response) || response == "null")
+                {
+                    // No existing save in Firebase
+                    onComplete?.Invoke(true, false, null);
+                    return;
+                }
+
+                try
+                {
+                    var data = JsonUtility.FromJson<PlayerData>(response);
+                    if (data != null)
+                    {
+                        bool hasProgress = data.hasSelectedCharacter ||
+                                           !string.IsNullOrEmpty(data.selectedCharacter) ||
+                                           (data.roomProgress != null && data.roomProgress.Count > 0) ||
+                                           (data.reviewedBookTopics != null && data.reviewedBookTopics.Count > 0) ||
+                                           data.hasCompletedTutorial ||
+                                           data.isPortalUnlocked ||
+                                           (data.inventoryArtifacts != null && data.inventoryArtifacts.Count > 0);
+
+                        onComplete?.Invoke(true, hasProgress, data);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[FirebaseDatabaseManager] CheckCloudSaveExists parse error: {ex.Message}");
+                }
+
+                onComplete?.Invoke(true, false, null);
+            }));
+        }
+
         public PlayerData BuildPlayerDataFromLocalState()
         {
             bool hasChar = PlayerPrefs.GetInt("HasSelectedCharacter", 0) == 1;

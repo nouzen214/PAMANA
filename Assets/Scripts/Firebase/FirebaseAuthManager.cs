@@ -51,6 +51,27 @@ namespace TopDownGame
             Debug.Log($"[FirebaseAuthManager] Google account unbound. Session reverted to guest ({guestId}).");
         }
 
+        public void RestoreGuestSession(string guestId = null, string guestUsername = null)
+        {
+            if (string.IsNullOrEmpty(guestId))
+            {
+                guestId = PlayerPrefs.GetString("GuestUserId", "");
+                if (string.IsNullOrEmpty(guestId))
+                {
+                    guestId = "guest_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+                }
+            }
+
+            UserId = guestId;
+            Username = string.IsNullOrEmpty(guestUsername) ? "Guest" : guestUsername;
+            Email = $"{guestId}@pamana.game";
+            IdToken = "";
+            PlayerPrefs.SetString("GuestUserId", guestId);
+            PlayerPrefs.SetString("PlayerUsername", Username);
+            PlayerPrefs.Save();
+            Debug.Log($"[FirebaseAuthManager] Restored guest session ({guestId}, {Username}).");
+        }
+
         private Action<bool, string> _pendingGoogleCallback;
         private readonly ConcurrentQueue<Action> _mainThreadActions = new ConcurrentQueue<Action>();
 
