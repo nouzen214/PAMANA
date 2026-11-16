@@ -115,11 +115,12 @@ namespace TopDownGame
             else
             {
                 // In Normal World:
-                // Room 1 is UNLOCKED from the start.
+                // Room 1 is unlocked once Field Guide (Book) is inspected during tutorial.
                 // Room N (N >= 2) unlocks when the previous room (N - 1) has at least 1 artifact restored to a pedestal!
                 if (roomNum == 1)
                 {
-                    isLocked = false;
+                    bool bookDone = GameProgression.IsBookUnlocked || GameProgression.IsBookTopicReviewed(1);
+                    isLocked = !GameProgression.HasCompletedTutorial && !bookDone;
                 }
                 else
                 {
@@ -231,16 +232,23 @@ namespace TopDownGame
                 }
                 else
                 {
-                    int prevRoom = roomNum - 1;
-                    int retrieved = GameProgression.GetRoomRetrievedCount(prevRoom);
-                    int restored = GameProgression.GetPedestalsRestoredCount(prevRoom);
-                    if (retrieved > 0 && restored == 0)
+                    if (roomNum == 1)
                     {
-                        lockMessage = $"{roomDisplayName} is currently locked!\nPlace at least 1 recovered artifact on a pedestal in Room {prevRoom} to unlock this door!";
+                        lockMessage = "Room 1 is locked!\nInspect the Museum Field Guide on the pedestal in the Main Lobby first!";
                     }
                     else
                     {
-                        lockMessage = $"{roomDisplayName} is currently locked!\nConquer Room {prevRoom} trial in the Alterworld and recover at least 1 artifact first!";
+                        int prevRoom = roomNum - 1;
+                        int retrieved = GameProgression.GetRoomRetrievedCount(prevRoom);
+                        int restored = GameProgression.GetPedestalsRestoredCount(prevRoom);
+                        if (retrieved > 0 && restored == 0)
+                        {
+                            lockMessage = $"{roomDisplayName} is currently locked!\nPlace at least 1 recovered artifact on a pedestal in Room {prevRoom} to unlock this door!";
+                        }
+                        else
+                        {
+                            lockMessage = $"{roomDisplayName} is currently locked!\nConquer Room {prevRoom} trial in the Alterworld and recover at least 1 artifact first!";
+                        }
                     }
                 }
 

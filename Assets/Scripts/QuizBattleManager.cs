@@ -103,10 +103,17 @@ namespace TopDownGame
         [SerializeField] private Sprite pauseBtnResumeHov;
         [SerializeField] private Sprite pauseBtnExitNorm;
         [SerializeField] private Sprite pauseBtnExitHov;
+        [SerializeField] private Sprite pauseBtnRetreatNorm;
+        [SerializeField] private Sprite pauseBtnRetreatHov;
         [SerializeField] private Sprite pauseBtnFinalizeNorm;
         [SerializeField] private Sprite pauseBtnFinalizeHov;
         [SerializeField] private Sprite pauseBtnKeepFightingNorm;
         [SerializeField] private Sprite pauseBtnKeepFightingHov;
+        [SerializeField] private Sprite pauseConfirmFrame;
+        [SerializeField] private Sprite pauseBtnConfirmNorm;
+        [SerializeField] private Sprite pauseBtnConfirmHov;
+        [SerializeField] private Sprite pauseBtnCancelNorm;
+        [SerializeField] private Sprite pauseBtnCancelHov;
 
         private GameObject _confirmPauseGroup;
         private TMP_Text _pauseTitleText;
@@ -1125,33 +1132,11 @@ namespace TopDownGame
             EnsurePauseUIReferences();
             bool hasRetrieved = _retrievedCount > 0;
 
-            if (_confirmTitleText != null)
-            {
-                _confirmTitleText.text = hasRetrieved ? "Finalize battle?" : "Exit battle?";
-            }
-
             if (_confirmMessageText != null)
             {
                 _confirmMessageText.text = hasRetrieved
-                    ? $"You have retrieved <color=#8B2500><b>{_retrievedCount} of 5 artifacts</b></color>.\n\nExiting now will <b>immediately conclude</b> this trial and save your retrieved artifacts.\n\nThe room will be <b>locked</b> until you restore artifacts or inspect an unobtained pedestal in the museum.\n\nAre you sure you want to finalize now?"
-                    : "You have not retrieved any artifacts yet.\n\nExiting now will return you to the hallway without saving progress.\n\nAre you sure you want to exit to the hallway?";
-            }
-
-            if (_confirmExitButton != null)
-            {
-                var img = _confirmExitButton.GetComponent<Image>();
-                Sprite norm = hasRetrieved ? pauseBtnFinalizeNorm : pauseBtnExitNorm;
-                Sprite hov = hasRetrieved ? pauseBtnFinalizeHov : pauseBtnExitHov;
-
-                if (img != null && norm != null)
-                {
-                    img.sprite = norm;
-                    var ss = _confirmExitButton.spriteState;
-                    ss.highlightedSprite = hov;
-                    ss.pressedSprite = hov;
-                    ss.selectedSprite = hov;
-                    _confirmExitButton.spriteState = ss;
-                }
+                    ? $"You have recovered <color=#7A1B0C><b>{_retrievedCount} of 5 artifacts</b></color>.\n\nRetreating now will <b>conclude</b> this trial and preserve your relics.\n\nAre you sure you want to retreat to the hallway?"
+                    : "You have not recovered any artifacts yet.\n\nRetreating now will return you to the hallway without saving progress.\n\nAre you sure you want to retreat to the hallway?";
             }
 
             SetMainPauseViewActive(false);
@@ -1168,19 +1153,10 @@ namespace TopDownGame
         {
             if (settingsModal == null) return;
             var windowTr = settingsModal.transform.Find("Window");
-            if (windowTr == null) return;
-
-            var titleTr = windowTr.Find("Title");
-            if (titleTr != null) titleTr.gameObject.SetActive(false);
-
-            var statusTr = windowTr.Find("StatusText");
-            if (statusTr != null) statusTr.gameObject.SetActive(active);
-
-            var resumeTr = windowTr.Find("ResumeButton");
-            if (resumeTr != null) resumeTr.gameObject.SetActive(active);
-
-            var exitTr = windowTr.Find("ExitButton");
-            if (exitTr != null) exitTr.gameObject.SetActive(active);
+            if (windowTr != null)
+            {
+                windowTr.gameObject.SetActive(active);
+            }
         }
 
         private void UpdatePauseUI()
@@ -1191,32 +1167,25 @@ namespace TopDownGame
             if (_pauseStatusText != null)
             {
                 _pauseStatusText.text = hasRetrieved
-                    ? $"<color=#7A1B0C><b>Retrieved: {_retrievedCount} / 5 Artifacts</b></color>\n<size=80%><color=#3A2212>Exiting will finalize progress and conclude the trial.</color></size>"
-                    : "<color=#3A2212><b>Battle in Progress (0 / 5 Retrieved)</b></color>\n<size=80%><color=#5A3825>Exiting will cancel this battle attempt.</color></size>";
+                    ? $"<color=#7A1B0C><b>Retrieved: {_retrievedCount} / 5 Artifacts</b></color>"
+                    : "<color=#3A2212><b>Battle in Progress (0 / 5)</b></color>";
             }
 
             if (settingsExitHallwayButton != null)
             {
                 var img = settingsExitHallwayButton.GetComponent<Image>();
-                Sprite norm = hasRetrieved ? pauseBtnFinalizeNorm : pauseBtnExitNorm;
-                Sprite hov = hasRetrieved ? pauseBtnFinalizeHov : pauseBtnExitHov;
-
-                if (img != null && norm != null)
+                if (img != null && pauseBtnRetreatNorm != null)
                 {
-                    img.sprite = norm;
+                    img.sprite = pauseBtnRetreatNorm;
                     var ss = settingsExitHallwayButton.spriteState;
-                    ss.highlightedSprite = hov;
-                    ss.pressedSprite = hov;
-                    ss.selectedSprite = hov;
+                    ss.highlightedSprite = pauseBtnRetreatHov;
+                    ss.pressedSprite = pauseBtnRetreatHov;
+                    ss.selectedSprite = pauseBtnRetreatHov;
                     settingsExitHallwayButton.spriteState = ss;
                 }
 
                 var txt = settingsExitHallwayButton.GetComponentInChildren<TMP_Text>(true);
-                if (txt != null)
-                {
-                    txt.text = hasRetrieved ? "Finalize Battle" : "Exit Battle";
-                    txt.gameObject.SetActive(false);
-                }
+                if (txt != null) txt.gameObject.SetActive(false);
 
                 settingsExitHallwayButton.onClick.RemoveAllListeners();
                 settingsExitHallwayButton.onClick.AddListener(OnPauseExitClicked);
@@ -1232,12 +1201,13 @@ namespace TopDownGame
 #if UNITY_EDITOR
             if (pauseBtnResumeNorm == null) pauseBtnResumeNorm = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Pause/Pause_Btn_Resume_Normal.png");
             if (pauseBtnResumeHov == null) pauseBtnResumeHov = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Pause/Pause_Btn_Resume_Hover.png");
-            if (pauseBtnExitNorm == null) pauseBtnExitNorm = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Pause/Pause_Btn_Exit_Normal.png");
-            if (pauseBtnExitHov == null) pauseBtnExitHov = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Pause/Pause_Btn_Exit_Hover.png");
-            if (pauseBtnFinalizeNorm == null) pauseBtnFinalizeNorm = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Pause/Pause_Btn_Finalize_Normal.png");
-            if (pauseBtnFinalizeHov == null) pauseBtnFinalizeHov = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Pause/Pause_Btn_Finalize_Hover.png");
-            if (pauseBtnKeepFightingNorm == null) pauseBtnKeepFightingNorm = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Pause/Pause_Btn_KeepFighting_Normal.png");
-            if (pauseBtnKeepFightingHov == null) pauseBtnKeepFightingHov = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Pause/Pause_Btn_KeepFighting_Hover.png");
+            if (pauseBtnRetreatNorm == null) pauseBtnRetreatNorm = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Pause/Pause_Btn_Retreat_Normal.png");
+            if (pauseBtnRetreatHov == null) pauseBtnRetreatHov = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Pause/Pause_Btn_Retreat_Hover.png");
+            if (pauseConfirmFrame == null) pauseConfirmFrame = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Pause/Pause_Confirm_Frame.png");
+            if (pauseBtnConfirmNorm == null) pauseBtnConfirmNorm = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Pause/Pause_Btn_Confirm_Normal.png");
+            if (pauseBtnConfirmHov == null) pauseBtnConfirmHov = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Pause/Pause_Btn_Confirm_Hover.png");
+            if (pauseBtnCancelNorm == null) pauseBtnCancelNorm = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Pause/Pause_Btn_Cancel_Normal.png");
+            if (pauseBtnCancelHov == null) pauseBtnCancelHov = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Pause/Pause_Btn_Cancel_Hover.png");
 #endif
 
             // Hide Title text (the scroll frame already has PAUSE / MENU carved on it)
@@ -1258,12 +1228,12 @@ namespace TopDownGame
                 sRt.anchorMin = new Vector2(0.5f, 0.5f);
                 sRt.anchorMax = new Vector2(0.5f, 0.5f);
                 sRt.pivot = new Vector2(0.5f, 0.5f);
-                sRt.anchoredPosition = new Vector2(0f, 90f);
-                sRt.sizeDelta = new Vector2(540f, 45f);
+                sRt.anchoredPosition = new Vector2(0f, 85f);
+                sRt.sizeDelta = new Vector2(460f, 40f);
 
                 _pauseStatusText = sGo.GetComponent<TextMeshProUGUI>();
                 _pauseStatusText.alignment = TextAlignmentOptions.Center;
-                _pauseStatusText.fontSize = 16f;
+                _pauseStatusText.fontSize = 15f;
                 _pauseStatusText.raycastTarget = false;
             }
             else
@@ -1272,10 +1242,10 @@ namespace TopDownGame
                 if (_pauseStatusText != null)
                 {
                     var sRt = statusTr.GetComponent<RectTransform>();
-                    sRt.anchoredPosition = new Vector2(0f, 90f);
-                    sRt.sizeDelta = new Vector2(540f, 45f);
+                    sRt.anchoredPosition = new Vector2(0f, 85f);
+                    sRt.sizeDelta = new Vector2(460f, 40f);
                     _pauseStatusText.alignment = TextAlignmentOptions.Center;
-                    _pauseStatusText.fontSize = 16f;
+                    _pauseStatusText.fontSize = 15f;
                 }
             }
 
@@ -1285,7 +1255,7 @@ namespace TopDownGame
             {
                 var rRt = resumeTr.GetComponent<RectTransform>();
                 rRt.anchoredPosition = new Vector2(0f, 22f);
-                rRt.sizeDelta = new Vector2(300f, 95f);
+                rRt.sizeDelta = new Vector2(280f, 88f);
                 var rImg = resumeTr.GetComponent<Image>();
                 if (rImg != null)
                 {
@@ -1310,16 +1280,25 @@ namespace TopDownGame
             if (exitTr != null)
             {
                 var eRt = exitTr.GetComponent<RectTransform>();
-                eRt.anchoredPosition = new Vector2(0f, -95f);
-                eRt.sizeDelta = new Vector2(300f, 95f);
+                eRt.anchoredPosition = new Vector2(0f, -66f);
+                eRt.sizeDelta = new Vector2(280f, 88f);
                 var eImg = exitTr.GetComponent<Image>();
-                if (eImg != null) eImg.preserveAspect = true;
+                if (eImg != null)
+                {
+                    eImg.preserveAspect = true;
+                    if (pauseBtnRetreatNorm != null) eImg.sprite = pauseBtnRetreatNorm;
+                }
 
                 if (settingsExitHallwayButton == null)
                     settingsExitHallwayButton = exitTr.GetComponent<Button>();
 
                 if (settingsExitHallwayButton != null)
                 {
+                    var ss = settingsExitHallwayButton.spriteState;
+                    ss.highlightedSprite = pauseBtnRetreatHov;
+                    ss.pressedSprite = pauseBtnRetreatHov;
+                    ss.selectedSprite = pauseBtnRetreatHov;
+                    settingsExitHallwayButton.spriteState = ss;
                     settingsExitHallwayButton.onClick.RemoveAllListeners();
                     settingsExitHallwayButton.onClick.AddListener(OnPauseExitClicked);
                 }
@@ -1327,42 +1306,32 @@ namespace TopDownGame
                 if (eTxt != null) eTxt.gameObject.SetActive(false);
             }
 
-            // Find or create ConfirmPauseGroup
-            var confTr = windowTr.Find("ConfirmPauseGroup");
+            // Find or create ConfirmPauseGroup under settingsModal directly (sibling of Window)
+            var oldConfTr = windowTr.Find("ConfirmPauseGroup");
+            if (oldConfTr != null)
+            {
+                DestroyImmediate(oldConfTr.gameObject);
+            }
+
+            var confTr = settingsModal.transform.Find("ConfirmPauseGroup");
             if (confTr == null)
             {
-                var cGo = new GameObject("ConfirmPauseGroup", typeof(RectTransform));
-                cGo.transform.SetParent(windowTr, false);
+                var cGo = new GameObject("ConfirmPauseGroup", typeof(RectTransform), typeof(Image));
+                cGo.transform.SetParent(settingsModal.transform, false);
                 confTr = cGo.transform;
             }
             var cRt = confTr.GetComponent<RectTransform>();
-            cRt.anchorMin = Vector2.zero;
-            cRt.anchorMax = Vector2.one;
-            cRt.offsetMin = Vector2.zero;
-            cRt.offsetMax = Vector2.zero;
+            cRt.anchorMin = new Vector2(0.5f, 0.5f);
+            cRt.anchorMax = new Vector2(0.5f, 0.5f);
+            cRt.pivot = new Vector2(0.5f, 0.5f);
+            cRt.anchoredPosition = Vector2.zero;
+            cRt.sizeDelta = new Vector2(580f, 580f);
 
-            // ConfirmTitle
-            var cTitleTr = confTr.Find("ConfirmTitle");
-            if (cTitleTr == null)
-            {
-                var cTitleGo = new GameObject("ConfirmTitle", typeof(RectTransform), typeof(TextMeshProUGUI));
-                cTitleGo.transform.SetParent(confTr, false);
-                cTitleTr = cTitleGo.transform;
-            }
-            var ctRt = cTitleTr.GetComponent<RectTransform>();
-            ctRt.anchorMin = new Vector2(0.5f, 0.5f);
-            ctRt.anchorMax = new Vector2(0.5f, 0.5f);
-            ctRt.pivot = new Vector2(0.5f, 0.5f);
-            ctRt.anchoredPosition = new Vector2(0f, 60f);
-            ctRt.sizeDelta = new Vector2(500f, 35f);
-            _confirmTitleText = cTitleTr.GetComponent<TMP_Text>();
-            if (_confirmTitleText != null)
-            {
-                _confirmTitleText.fontSize = 21f;
-                _confirmTitleText.fontStyle = FontStyles.Bold;
-                _confirmTitleText.alignment = TextAlignmentOptions.Center;
-                _confirmTitleText.color = new Color(0.54f, 0.13f, 0.06f, 1f);
-            }
+            var cImg = confTr.GetComponent<Image>();
+            if (cImg == null) cImg = confTr.gameObject.AddComponent<Image>();
+            if (pauseConfirmFrame != null) cImg.sprite = pauseConfirmFrame;
+            cImg.preserveAspect = true;
+            cImg.color = Color.white;
 
             // ConfirmMessage
             var cMsgTr = confTr.Find("ConfirmMessage");
@@ -1376,18 +1345,23 @@ namespace TopDownGame
             cmRt.anchorMin = new Vector2(0.5f, 0.5f);
             cmRt.anchorMax = new Vector2(0.5f, 0.5f);
             cmRt.pivot = new Vector2(0.5f, 0.5f);
-            cmRt.anchoredPosition = new Vector2(0f, 10f);
-            cmRt.sizeDelta = new Vector2(520f, 75f);
+            cmRt.anchoredPosition = new Vector2(0f, 32f);
+            cmRt.sizeDelta = new Vector2(390f, 170f);
             _confirmMessageText = cMsgTr.GetComponent<TMP_Text>();
             if (_confirmMessageText != null)
             {
-                _confirmMessageText.fontSize = 15f;
+                _confirmMessageText.fontSize = 16f;
+                _confirmMessageText.fontStyle = FontStyles.Bold;
                 _confirmMessageText.alignment = TextAlignmentOptions.Center;
-                _confirmMessageText.color = new Color(0.23f, 0.13f, 0.07f, 1f);
+                _confirmMessageText.color = new Color(0.16f, 0.08f, 0.04f, 1f);
                 _confirmMessageText.lineSpacing = 4f;
+                if (string.IsNullOrEmpty(_confirmMessageText.text))
+                {
+                    _confirmMessageText.text = "You have not recovered any artifacts yet.\n\nRetreating will return you to the hallway without saving progress.\n\nAre you sure you want to retreat to the hallway?";
+                }
             }
 
-            // Confirm Exit Button
+            // Confirm Exit Button (CONFIRM)
             var ceBtnTr = confTr.Find("ConfirmExitButton");
             if (ceBtnTr == null)
             {
@@ -1399,23 +1373,32 @@ namespace TopDownGame
             cebRt.anchorMin = new Vector2(0.5f, 0.5f);
             cebRt.anchorMax = new Vector2(0.5f, 0.5f);
             cebRt.pivot = new Vector2(0.5f, 0.5f);
-            cebRt.anchoredPosition = new Vector2(0f, -55f);
-            cebRt.sizeDelta = new Vector2(280f, 88f);
+            cebRt.anchoredPosition = new Vector2(0f, -87f);
+            cebRt.sizeDelta = new Vector2(315f, 58f);
             var cebImg = ceBtnTr.GetComponent<Image>();
             if (cebImg == null) cebImg = ceBtnTr.gameObject.AddComponent<Image>();
+            if (pauseBtnConfirmNorm != null) cebImg.sprite = pauseBtnConfirmNorm;
             cebImg.preserveAspect = true;
             cebImg.color = Color.white;
             _confirmExitButton = ceBtnTr.GetComponent<Button>();
             if (_confirmExitButton == null) _confirmExitButton = ceBtnTr.gameObject.AddComponent<Button>();
             _confirmExitButton.targetGraphic = cebImg;
             _confirmExitButton.transition = Selectable.Transition.SpriteSwap;
+            if (pauseBtnConfirmHov != null)
+            {
+                var ss = _confirmExitButton.spriteState;
+                ss.highlightedSprite = pauseBtnConfirmHov;
+                ss.pressedSprite = pauseBtnConfirmHov;
+                ss.selectedSprite = pauseBtnConfirmHov;
+                _confirmExitButton.spriteState = ss;
+            }
             _confirmExitButton.navigation = new Navigation { mode = Navigation.Mode.None };
             _confirmExitButton.onClick.RemoveAllListeners();
             _confirmExitButton.onClick.AddListener(OnReturnToHallwayClicked);
             var ceTxt = ceBtnTr.Find("Text");
             if (ceTxt != null) ceTxt.gameObject.SetActive(false);
 
-            // Confirm Cancel Button (Keep Fighting)
+            // Confirm Cancel Button (CANCEL)
             var ccBtnTr = confTr.Find("ConfirmCancelButton");
             if (ccBtnTr == null)
             {
@@ -1427,22 +1410,25 @@ namespace TopDownGame
             ccbRt.anchorMin = new Vector2(0.5f, 0.5f);
             ccbRt.anchorMax = new Vector2(0.5f, 0.5f);
             ccbRt.pivot = new Vector2(0.5f, 0.5f);
-            ccbRt.anchoredPosition = new Vector2(0f, -145f);
-            ccbRt.sizeDelta = new Vector2(280f, 88f);
+            ccbRt.anchoredPosition = new Vector2(0f, -163f);
+            ccbRt.sizeDelta = new Vector2(315f, 58f);
             var ccbImg = ccBtnTr.GetComponent<Image>();
             if (ccbImg == null) ccbImg = ccBtnTr.gameObject.AddComponent<Image>();
-            ccbImg.sprite = pauseBtnKeepFightingNorm;
+            if (pauseBtnCancelNorm != null) ccbImg.sprite = pauseBtnCancelNorm;
             ccbImg.color = Color.white;
             ccbImg.preserveAspect = true;
             _confirmCancelButton = ccBtnTr.GetComponent<Button>();
             if (_confirmCancelButton == null) _confirmCancelButton = ccBtnTr.gameObject.AddComponent<Button>();
             _confirmCancelButton.targetGraphic = ccbImg;
             _confirmCancelButton.transition = Selectable.Transition.SpriteSwap;
-            var ccSs = _confirmCancelButton.spriteState;
-            ccSs.highlightedSprite = pauseBtnKeepFightingHov;
-            ccSs.pressedSprite = pauseBtnKeepFightingHov;
-            ccSs.selectedSprite = pauseBtnKeepFightingHov;
-            _confirmCancelButton.spriteState = ccSs;
+            if (pauseBtnCancelHov != null)
+            {
+                var ccSs = _confirmCancelButton.spriteState;
+                ccSs.highlightedSprite = pauseBtnCancelHov;
+                ccSs.pressedSprite = pauseBtnCancelHov;
+                ccSs.selectedSprite = pauseBtnCancelHov;
+                _confirmCancelButton.spriteState = ccSs;
+            }
             _confirmCancelButton.navigation = new Navigation { mode = Navigation.Mode.None };
             _confirmCancelButton.onClick.RemoveAllListeners();
             _confirmCancelButton.onClick.AddListener(OnCancelExitClicked);

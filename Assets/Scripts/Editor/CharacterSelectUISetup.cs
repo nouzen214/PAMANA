@@ -83,8 +83,8 @@ namespace TopDownGame.Editor
             containerRt.anchorMin = new Vector2(0.5f, 0f);
             containerRt.anchorMax = new Vector2(0.5f, 0f);
             containerRt.pivot = new Vector2(0.5f, 0f);
-            containerRt.anchoredPosition = new Vector2(0f, 125f);
-            containerRt.sizeDelta = new Vector2(440f, 85f);
+            containerRt.anchoredPosition = new Vector2(0f, 165f);
+            containerRt.sizeDelta = new Vector2(440f, 92f);
 
             // Setup StatusText (anchored to bottom, stacked above NameInputContainer)
             var statusTextObj = canvasObj.transform.Find("StatusText");
@@ -94,7 +94,7 @@ namespace TopDownGame.Editor
                 statusRt.anchorMin = new Vector2(0.5f, 0f);
                 statusRt.anchorMax = new Vector2(0.5f, 0f);
                 statusRt.pivot = new Vector2(0.5f, 0f);
-                statusRt.anchoredPosition = new Vector2(0f, 215f);
+                statusRt.anchoredPosition = new Vector2(0f, 265f);
                 statusRt.sizeDelta = new Vector2(600f, 35f);
             }
 

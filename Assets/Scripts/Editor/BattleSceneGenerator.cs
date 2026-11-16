@@ -1384,6 +1384,11 @@ namespace TopDownGame.Editor
             EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_Exit_Hover.png");
             EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_KeepFighting_Normal.png");
             EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_KeepFighting_Hover.png");
+            EnsureSpriteImport("Assets/UI/Pause/Pause_Confirm_Frame.png");
+            EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_Confirm_Normal.png");
+            EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_Confirm_Hover.png");
+            EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_Cancel_Normal.png");
+            EnsureSpriteImport("Assets/UI/Pause/Pause_Btn_Cancel_Hover.png");
 
             string[] battleScenes = new string[]
             {
@@ -1425,6 +1430,11 @@ namespace TopDownGame.Editor
             var sprExitHov = LoadSprite("Assets/UI/Pause/Pause_Btn_Exit_Hover.png");
             var sprKeepFightingNorm = LoadSprite("Assets/UI/Pause/Pause_Btn_KeepFighting_Normal.png");
             var sprKeepFightingHov = LoadSprite("Assets/UI/Pause/Pause_Btn_KeepFighting_Hover.png");
+            var sprConfirmFrame = LoadSprite("Assets/UI/Pause/Pause_Confirm_Frame.png");
+            var sprConfirmNorm = LoadSprite("Assets/UI/Pause/Pause_Btn_Confirm_Normal.png");
+            var sprConfirmHov = LoadSprite("Assets/UI/Pause/Pause_Btn_Confirm_Hover.png");
+            var sprCancelNorm = LoadSprite("Assets/UI/Pause/Pause_Btn_Cancel_Normal.png");
+            var sprCancelHov = LoadSprite("Assets/UI/Pause/Pause_Btn_Cancel_Hover.png");
 
             var sm = GameObject.Find("SettingsModal");
             if (sm == null)
@@ -1463,7 +1473,7 @@ namespace TopDownGame.Editor
             var windowImg = windowTr.GetComponent<Image>();
             if (windowImg == null) windowImg = windowTr.gameObject.AddComponent<Image>();
 
-            windowRt.sizeDelta = new Vector2(720f, 520f);
+            windowRt.sizeDelta = new Vector2(750f, 540f);
             windowRt.anchoredPosition = Vector2.zero;
             windowImg.sprite = sprScroll;
             windowImg.color = Color.white;
@@ -1478,7 +1488,7 @@ namespace TopDownGame.Editor
             {
                 var resumeRt = resumeTr.GetComponent<RectTransform>();
                 resumeRt.anchoredPosition = new Vector2(0f, 22f);
-                resumeRt.sizeDelta = new Vector2(320f, 101f);
+                resumeRt.sizeDelta = new Vector2(280f, 88f);
                 var rImg = resumeTr.GetComponent<Image>();
                 if (rImg == null) rImg = resumeTr.gameObject.AddComponent<Image>();
                 rImg.sprite = sprResumeNorm;
@@ -1504,8 +1514,8 @@ namespace TopDownGame.Editor
             if (exitTr != null)
             {
                 var exitRt = exitTr.GetComponent<RectTransform>();
-                exitRt.anchoredPosition = new Vector2(0f, -95f);
-                exitRt.sizeDelta = new Vector2(320f, 101f);
+                exitRt.anchoredPosition = new Vector2(0f, -66f);
+                exitRt.sizeDelta = new Vector2(280f, 88f);
                 var eImg = exitTr.GetComponent<Image>();
                 if (eImg == null) eImg = exitTr.gameObject.AddComponent<Image>();
                 eImg.sprite = sprRetreatNorm;
@@ -1534,12 +1544,19 @@ namespace TopDownGame.Editor
                 if (exitBtn != null) qbm.GetType().GetField("settingsExitHallwayButton", flags)?.SetValue(qbm, exitBtn);
                 qbm.GetType().GetField("pauseBtnResumeNorm", flags)?.SetValue(qbm, sprResumeNorm);
                 qbm.GetType().GetField("pauseBtnResumeHov", flags)?.SetValue(qbm, sprResumeHov);
+                qbm.GetType().GetField("pauseBtnRetreatNorm", flags)?.SetValue(qbm, sprRetreatNorm);
+                qbm.GetType().GetField("pauseBtnRetreatHov", flags)?.SetValue(qbm, sprRetreatHov);
                 qbm.GetType().GetField("pauseBtnFinalizeNorm", flags)?.SetValue(qbm, sprFinalizeNorm);
                 qbm.GetType().GetField("pauseBtnFinalizeHov", flags)?.SetValue(qbm, sprFinalizeHov);
                 qbm.GetType().GetField("pauseBtnExitNorm", flags)?.SetValue(qbm, sprExitNorm);
                 qbm.GetType().GetField("pauseBtnExitHov", flags)?.SetValue(qbm, sprExitHov);
                 qbm.GetType().GetField("pauseBtnKeepFightingNorm", flags)?.SetValue(qbm, sprKeepFightingNorm);
                 qbm.GetType().GetField("pauseBtnKeepFightingHov", flags)?.SetValue(qbm, sprKeepFightingHov);
+                qbm.GetType().GetField("pauseConfirmFrame", flags)?.SetValue(qbm, sprConfirmFrame);
+                qbm.GetType().GetField("pauseBtnConfirmNorm", flags)?.SetValue(qbm, sprConfirmNorm);
+                qbm.GetType().GetField("pauseBtnConfirmHov", flags)?.SetValue(qbm, sprConfirmHov);
+                qbm.GetType().GetField("pauseBtnCancelNorm", flags)?.SetValue(qbm, sprCancelNorm);
+                qbm.GetType().GetField("pauseBtnCancelHov", flags)?.SetValue(qbm, sprCancelHov);
                 qbm.GetType().GetMethod("EnsurePauseUIReferences", flags)?.Invoke(qbm, null);
                 EditorUtility.SetDirty(qbm);
             }

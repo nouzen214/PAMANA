@@ -56,6 +56,27 @@ namespace TopDownGame
             if (!_canTransition || _isTransitioning) return;
             if (!other.CompareTag("Player")) return;
 
+            // Tutorial check: Do not allow entering West Wing before reading the Field Guide
+            string currentScene = SceneManager.GetActiveScene().name;
+            if (currentScene == "Lobby" && targetSceneName == "LeftHallway" && !GameProgression.HasCompletedTutorial)
+            {
+                bool isBookDone = GameProgression.IsBookUnlocked || GameProgression.IsBookTopicReviewed(1);
+                if (!isBookDone)
+                {
+                    NotificationBannerUI.Show(
+                        "FIELD GUIDE REQUIRED",
+                        "Inspect the Museum Field Guide on the pedestal before entering the West Wing!",
+                        3.5f,
+                        new Color(0.24f, 0.14f, 0.07f, 1f),
+                        "i"
+                    );
+                    var rb = other.attachedRigidbody;
+                    if (rb != null) rb.linearVelocity = Vector2.zero;
+                    other.transform.position = new Vector3(other.transform.position.x + 0.8f, other.transform.position.y, other.transform.position.z);
+                    return;
+                }
+            }
+
             _isTransitioning = true;
             Debug.Log($"[SceneTransition] Transitioning from {SceneManager.GetActiveScene().name} to {targetSceneName} at spawn {targetSpawnPosition}");
 

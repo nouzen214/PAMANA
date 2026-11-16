@@ -939,7 +939,7 @@ namespace TopDownGame
                     leftSubtitle = "Cry of Pugad Lawin & Initiation",
                     leftBody = "In August 1896, members of the Katipunan rejected Spanish authority during the Cry of Pugad Lawin by <color=#1B6833><b>tearing their cédulas</b></color>, symbolizing their rejection of colonial rule.\n\nNew members also underwent initiation rituals, including a <color=#1B6833><b>blood compact or blood-signing ceremony</b></color> to show their commitment to the organization.",
                     rightSubtitle = "Revolutionary Government & Battles",
-                    rightBody = "The revolutionary movement later experienced political divisions. At the Tejeros Convention in March 1897, <color=#1B6833><b>Emilio Aguinaldo</b></color> was elected president of the revolutionary government.\n\nOn August 30, 1896, Katipunan forces fought the Spanish army in the <color=#1B6833><b>Battle of San Juan del Monte</b></color>.\n\nIn 1899, <color=#1B6833><b>Gregorio del Pillar</b></color> led Filipino forces in the Battle of Tirad Pass, where they held off American troops."
+                    rightBody = "On June 12, 1898, at <color=#1B6833><b>Emilio Aguinaldo</b></color>’s home in Kawit, Cavite, Philippine independence was formally proclaimed.\n\nOn August 30, 1896, Katipunan forces fought the Spanish army in the <color=#1B6833><b>Battle of San Juan del Monte</b></color>.\n\nIn 1899, <color=#1B6833><b>Gregorio del Pilar</b></color> led Filipino forces in the Battle of Tirad Pass, where they held off American troops."
                 },
 
                 // TOPIC 9

@@ -96,7 +96,7 @@ namespace TopDownGame.Editor
                 UnityEditor.Events.UnityEventTools.AddPersistentListener(btnBagComp.onClick, menuCtrl.OnBagClicked);
 
                 var btnBook = GetOrCreateChild(prefabRoot.transform, "BookButton");
-                ConfigureIconButton(btnBook, sprBook, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-270f, -70f), new Vector2(90f, 90f));
+                ConfigureIconButton(btnBook, sprBook, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-270f, -74f), new Vector2(85f, 85f));
                 var btnBookComp = btnBook.GetComponent<Button>();
                 btnBookComp.onClick = new Button.ButtonClickedEvent();
                 UnityEditor.Events.UnityEventTools.AddPersistentListener(btnBookComp.onClick, menuCtrl.OnBookClicked);
@@ -1614,7 +1614,7 @@ namespace TopDownGame.Editor
                     UnityEditor.Events.UnityEventTools.AddPersistentListener(btnBagComp.onClick, menuCtrl.OnBagClicked);
 
                     var btnBook = GetOrCreateChild(existingCanvas.transform, "BookButton");
-                    ConfigureIconButton(btnBook, sprBook, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-270f, -70f), new Vector2(90f, 90f));
+                    ConfigureIconButton(btnBook, sprBook, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-270f, -74f), new Vector2(85f, 85f));
                     btnBook.SetActive(false);
                     var btnBookComp = btnBook.GetComponent<Button>();
                     btnBookComp.onClick = new Button.ButtonClickedEvent();

@@ -653,6 +653,7 @@ namespace TopDownGame
             PlayerPrefs.DeleteKey(KEY_ROOM1_ARTIFACT_INTERACTED);
             PlayerPrefs.DeleteKey("HasAcknowledgedPortalInDialogue");
             PlayerPrefs.DeleteKey(KEY_TUTORIAL_COMPLETED);
+            PlayerPrefs.DeleteKey("GameProgression_TutorialPhase");
             PlayerPrefs.DeleteKey(KEY_ROOM1_ARTIFACT_RETRIEVED);
             PlayerPrefs.DeleteKey(KEY_ROOM1_BATTLE_COMPLETED);
             PlayerPrefs.DeleteKey(KEY_ROOM1_ARTIFACT_RETURNED);

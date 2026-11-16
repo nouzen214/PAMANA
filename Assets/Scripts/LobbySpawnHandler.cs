@@ -13,6 +13,8 @@ namespace TopDownGame
 
         private void Start()
         {
+            GameTutorialGuide.EnsureInstance();
+
             if (playerTransform == null)
             {
                 var player = GameObject.FindWithTag("Player");

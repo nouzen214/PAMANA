@@ -1089,8 +1089,8 @@ namespace TopDownGame.Editor
             vlg.childForceExpandHeight = false;
 
             var btnRestoreObj  = CreateChoiceButton("RestoreArtifactButton", "Place from bag", Vector2.zero, choiceBox, plaqueSprite);
-            var btnArtifactObj = CreateChoiceButton("InspectArtifactButton", "inspect artifact", Vector2.zero, choiceBox, plaqueSprite);
-            var btnPlaqueObj   = CreateChoiceButton("InspectPlaqueButton",   "inspect plaque",   Vector2.zero, choiceBox, plaqueSprite);
+            var btnArtifactObj = CreateChoiceButton("InspectArtifactButton", "Inspect Artifact", Vector2.zero, choiceBox, plaqueSprite);
+            var btnPlaqueObj   = CreateChoiceButton("InspectPlaqueButton",   "Inspect Plaque",   Vector2.zero, choiceBox, plaqueSprite);
 
             // 4. Plaque Popup
             var plaquePopupObj = new GameObject("PlaquePopup", typeof(RectTransform), typeof(Image));
@@ -1358,6 +1358,46 @@ namespace TopDownGame.Editor
             }
         }
 
+        private static float CalculateArtifactY(GameObject tableObj, Sprite sprite)
+        {
+            float tableY = tableObj.transform.position.y;
+            float defaultY = tableY + 0.51f;
+            if (sprite == null) return defaultY;
+
+            string assetPath = AssetDatabase.GetAssetPath(sprite);
+            if (string.IsNullOrEmpty(assetPath) || !System.IO.File.Exists(assetPath)) return defaultY;
+
+            try
+            {
+                byte[] bytes = System.IO.File.ReadAllBytes(assetPath);
+                Texture2D tex = new Texture2D(2, 2);
+                tex.LoadImage(bytes);
+
+                int minY = tex.height;
+                Color32[] pixels = tex.GetPixels32();
+                for (int y = 0; y < tex.height; y++)
+                {
+                    for (int x = 0; x < tex.width; x++)
+                    {
+                        if (pixels[y * tex.width + x].a > 20)
+                        {
+                            if (y < minY) minY = y;
+                        }
+                    }
+                }
+                Object.DestroyImmediate(tex);
+
+                // Scale is 0.13, pivot is (0.5, 0.5) i.e. 512
+                float bottomOffset = (minY - 512f) * (0.13f / 100f);
+                float desiredY = tableY + 0.28f - bottomOffset;
+                return Mathf.Max(defaultY, desiredY);
+            }
+            catch
+            {
+                return defaultY;
+            }
+        }
+
         private static void SetupVisualArtifacts(string[] tablePaths, string[] artifactObjectNames, Sprite[] sprites)
         {
             var existingRoot = GameObject.Find("RoomArtifacts");
@@ -1377,7 +1417,8 @@ namespace TopDownGame.Editor
 
                 var artObj = new GameObject(artifactObjectNames[i], typeof(SpriteRenderer), typeof(TableItemSort));
                 artObj.transform.SetParent(root.transform, false);
-                artObj.transform.position = new Vector3(tableObj.transform.position.x, tableObj.transform.position.y + 0.51f, 0f);
+                float artY = CalculateArtifactY(tableObj, sprites[i]);
+                artObj.transform.position = new Vector3(tableObj.transform.position.x, artY, 0f);
                 artObj.transform.localScale = new Vector3(0.13f, 0.13f, 1f);
 
                 var sr = artObj.GetComponent<SpriteRenderer>();

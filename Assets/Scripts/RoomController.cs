@@ -93,14 +93,18 @@ namespace TopDownGame
                 }
                 else if (!GameProgression.AreAllPlaquesRead(currentRoom))
                 {
-                    int readCount = GameProgression.GetPlaquesReadCount(currentRoom);
-                    NotificationBannerUI.Show(
-                        $"ROOM {currentRoom}",
-                        $"Study all 5 artifact plaques and review Topic {currentRoom} in your Field Guide! ({readCount}/5 plaques studied)",
-                        5.0f,
-                        new Color(0.24f, 0.14f, 0.07f, 1f),
-                        "i"
-                    );
+                    // Suppress redundant notification banner during Room 1 tutorial since the tutorial guide handles it
+                    if (GameProgression.HasCompletedTutorial || currentRoom != 1)
+                    {
+                        int readCount = GameProgression.GetPlaquesReadCount(currentRoom);
+                        NotificationBannerUI.Show(
+                            $"ROOM {currentRoom}",
+                            $"Study all 5 artifact plaques and review Topic {currentRoom} in your Field Guide! ({readCount}/5 plaques studied)",
+                            5.0f,
+                            new Color(0.24f, 0.14f, 0.07f, 1f),
+                            "i"
+                        );
+                    }
                 }
                 else if (!GameProgression.IsBookTopicReviewed(currentRoom))
                 {

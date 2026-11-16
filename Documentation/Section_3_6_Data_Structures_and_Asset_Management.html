@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Section 3.6 Data Structures and Asset Management - PAMANA</title>
+<style>
+  @page {
+    size: letter;
+    margin: 0.6in 0.8in 0.6in 0.8in;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #000;
+    margin: 0;
+    padding: 0;
+  }
+
+  .manuscript-page {
+    page-break-after: always;
+    height: 9.7in;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .manuscript-page:last-child {
+    page-break-after: avoid;
+  }
+
+  .header {
+    text-align: center;
+    border-bottom: 2px solid #000;
+    padding-bottom: 5px;
+    margin-bottom: 16px;
+    line-height: 1.25;
+  }
+
+  .header .school-name {
+    font-weight: bold;
+    font-size: 11pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .header .contact-info {
+    font-size: 8.5pt;
+    margin-top: 2px;
+  }
+
+  .header .web-url {
+    font-weight: bold;
+    font-size: 9pt;
+    margin-top: 2px;
+  }
+
+  .page-footer {
+    position: absolute;
+    bottom: 0.1in;
+    right: 0;
+    font-size: 11pt;
+  }
+
+  .page-content {
+    flex: 1;
+  }
+
+  h2 {
+    font-size: 12pt;
+    font-weight: bold;
+    margin-top: 4px;
+    margin-bottom: 12px;
+    text-align: left;
+  }
+
+  h3 {
+    font-size: 11.5pt;
+    font-weight: bold;
+    margin-top: 14px;
+    margin-bottom: 8px;
+  }
+
+  p {
+    text-indent: 0.5in;
+    margin-top: 0;
+    margin-bottom: 12px;
+    text-align: justify;
+  }
+
+  .table-title {
+    text-align: center;
+    font-weight: bold;
+    font-size: 11pt;
+    margin-top: 14px;
+    margin-bottom: 8px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+    font-size: 10pt;
+  }
+
+  th, td {
+    border: 1px solid #000;
+    padding: 6px 10px;
+    vertical-align: middle;
+  }
+
+  th {
+    font-weight: bold;
+    text-align: center;
+    background-color: #f7f7f7;
+  }
+
+  .table-main-header {
+    font-weight: bold;
+    text-align: center;
+    font-size: 10.5pt;
+    background-color: #ededed;
+    letter-spacing: 0.5px;
+  }
+
+  .col-folder {
+    width: 25%;
+    font-weight: 500;
+  }
+
+  .col-type {
+    width: 18%;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  .col-desc {
+    width: 37%;
+  }
+
+  .col-file {
+    width: 20%;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 9pt;
+  }
+
+  ol {
+    margin-top: 6px;
+    margin-bottom: 12px;
+    padding-left: 0.6in;
+  }
+
+  li {
+    margin-bottom: 6px;
+    text-align: justify;
+  }
+</style>
+</head>
+<body>
+
+  <!-- PAGE 1 (Page 95) -->
+  <div class="manuscript-page">
+    <div class="header">
+      <div class="school-name">University of Perpetual Help System DALTA — Biñan Campus</div>
+      <div class="contact-info">City of Biñan, Laguna, Philippines, 4024 &bull; (02) 779-5310 &bull; (049) 554-5150</div>
+      <div class="web-url">www.uphsl.edu.ph &bull; College of Computer Studies</div>
+    </div>
+
+    <div class="page-content">
+      <h2>3.6 Data Structures and Asset Management</h2>
+
+      <p>
+        The Data Structures and Asset Management in <em>Pamana: A Museum Management System Preserving Philippine History and Culture</em> refers to the organized handling and storage of system data and game resources to support smooth operation, maintainability, and efficient performance. During development, structured data formats are utilized to manage quiz content, user progress, and gameplay logic, while a centralized system is implemented to organize assets such as sprites, user interface elements, audio files, scripts, and prefabs. This approach ensures seamless integration between the Unity game engine and the system's components, enabling consistent data flow, easier updates, and an optimized development workflow.
+      </p>
+
+      <div class="table-title">Table 5: Main Assets of PAMANA</div>
+      <table>
+        <thead>
+          <tr>
+            <th colspan="2" class="table-main-header">Main Assets</th>
+          </tr>
+          <tr>
+            <th style="width: 28%;">Asset Folder</th>
+            <th style="width: 72%;">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>TextMesh Pro</strong></td>
+            <td>Contains the fonts that are used in the game.</td>
+          </tr>
+          <tr>
+            <td><strong>Animation</strong></td>
+            <td>Contains the player movement and interactive portal animations used in the game.</td>
+          </tr>
+          <tr>
+            <td><strong>Sprites</strong></td>
+            <td>Contains the 2D sprites, historical artifacts, character avatars, room backgrounds, and environmental structures used in the game.</td>
+          </tr>
+          <tr>
+            <td><strong>Prefabs</strong></td>
+            <td>Contains the reusable game object templates such as the player controller, pedestals, and user interface canvas used in the game.</td>
+          </tr>
+          <tr>
+            <td><strong>Audio Effect</strong></td>
+            <td>Contains the background music (BGM) and sound effects (SFX) used in the game.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        The Main Assets directory serves as the foundational architecture for the project's resource management, organizing all essential game components into specialized sub-folders for streamlined development. This structure categorizes visual elements, such as the TextMesh fonts, Animation sequences, and 2D character and artifact Sprites, alongside environmental assets and specific Prefabs for interactive pedestals and player models. Additionally, the Audio Effect folder centralizes all sound design elements, ensuring that every sensory component of the game is logically mapped and easily accessible for implementation.
+      </p>
+    </div>
+
+    <div class="page-footer">95</div>
+  </div>
+
+  <!-- PAGE 2 (Page 96) -->
+  <div class="manuscript-page">
+    <div class="header">
+      <div class="school-name">University of Perpetual Help System DALTA — Biñan Campus</div>
+      <div class="contact-info">City of Biñan, Laguna, Philippines, 4024 &bull; (02) 779-5310 &bull; (049) 554-5150</div>
+      <div class="web-url">www.uphsl.edu.ph &bull; College of Computer Studies</div>
+    </div>
+
+    <div class="page-content">
+      <div class="table-title">Table 6: Text Mesh Assets of PAMANA</div>
+      <table>
+        <thead>
+          <tr>
+            <th colspan="4" class="table-main-header">Text Mesh</th>
+          </tr>
+          <tr>
+            <th class="col-folder">Asset_Folder</th>
+            <th class="col-type">Type</th>
+            <th class="col-desc">Description</th>
+            <th class="col-file">File Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>TextMesh Pro</td>
+            <td style="text-align: center;">TrueType Fonts</td>
+            <td>Vector-based fonts that maintain quality at any size</td>
+            <td>LiberationSans.ttf</td>
+          </tr>
+          <tr>
+            <td>TextMesh Pro</td>
+            <td style="text-align: center;">ASSET</td>
+            <td>TextMeshPro (SDF) asset for text rendering solution with high-quality text</td>
+            <td>LiberationSans SDF.asset</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        Table 6 shows the content of the Text Mesh Assets that serves as the central repository for the game's typography, housing all font files and character sets required for the user interface and in-game displays.
+      </p>
+
+      <div class="table-title">Table 7: Animation Assets of PAMANA</div>
+      <table>
+        <thead>
+          <tr>
+            <th colspan="4" class="table-main-header">Animation</th>
+          </tr>
+          <tr>
+            <th class="col-folder">Asset_Folder</th>
+            <th class="col-type">Type</th>
+            <th class="col-desc">Description</th>
+            <th class="col-file">File Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Animation</td>
+            <td style="text-align: center;">CONTROLLER</td>
+            <td>Animator controller for male player movement (idle and 4-directional walk)</td>
+            <td>Boy_Walk.controller</td>
+          </tr>
+          <tr>
+            <td>Animation</td>
+            <td style="text-align: center;">CONTROLLER</td>
+            <td>Animator controller for female player movement (idle and 4-directional walk)</td>
+            <td>Girl_Walk.controller</td>
+          </tr>
+          <tr>
+            <td>Animation</td>
+            <td style="text-align: center;">CONTROLLER</td>
+            <td>Animator controller for the mystical swirling portal in the Grand Lobby</td>
+            <td>Portal_Spin.controller</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        Table 7 lists the animation assets and controllers that manage dynamic sprite transitions, ensuring smooth character movement and engaging visual effects during exploration and scene transitions.
+      </p>
+    </div>
+
+    <div class="page-footer">96</div>
+  </div>
+
+  <!-- PAGE 3 (Page 97) -->
+  <div class="manuscript-page">
+    <div class="header">
+      <div class="school-name">University of Perpetual Help System DALTA — Biñan Campus</div>
+      <div class="contact-info">City of Biñan, Laguna, Philippines, 4024 &bull; (02) 779-5310 &bull; (049) 554-5150</div>
+      <div class="web-url">www.uphsl.edu.ph &bull; College of Computer Studies</div>
+    </div>
+
+    <div class="page-content">
+      <div class="table-title">Table 8: Sprite and Visual Assets of PAMANA</div>
+      <table>
+        <thead>
+          <tr>
+            <th colspan="4" class="table-main-header">Sprites and Visuals</th>
+          </tr>
+          <tr>
+            <th class="col-folder">Asset_Folder</th>
+            <th class="col-type">Type</th>
+            <th class="col-desc">Description</th>
+            <th class="col-file">File Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Sprites/Artifacts</td>
+            <td style="text-align: center;">Sprite (2D and UI)</td>
+            <td>60 historical artifact display sprites across 12 museum rooms</td>
+            <td>ManunggulJar.png,<br>GoldenTara.png,<br>Balangay.png</td>
+          </tr>
+          <tr>
+            <td>Sprites/Characters</td>
+            <td style="text-align: center;">Sprite (2D and UI)</td>
+            <td>Player curator avatars and Alterworld guardian battle portraits</td>
+            <td>Avatar_Boy.png,<br>Avatar_Girl.png,<br>Avatar_Monster.png</td>
+          </tr>
+          <tr>
+            <td>Sprites/RoomStages</td>
+            <td style="text-align: center;">Sprite (2D and UI)</td>
+            <td>4-tier museum room stage illustrations (Dilapidated to Restored)</td>
+            <td>Room_Area_Ruined.png,<br>Room_Area_33Percent.png,<br>Room_Area_Restored.png</td>
+          </tr>
+          <tr>
+            <td>Sprites/UI</td>
+            <td style="text-align: center;">Sprite (2D and UI)</td>
+            <td>Interactive interface frames, inventory bag, dialogue boxes, and buttons</td>
+            <td>BagInventory_Frame.png,<br>Btn_Interact_Normal.png,<br>Settings_Scroll_Frame.png</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        Table 8 presents the Sprite and visual assets that form the visual identity of Pamana. These assets represent the authentic Philippine historical artifacts, player avatars, multi-tier room backgrounds, and thematic user interface elements that immerse students in the museum curation experience.
+      </p>
+    </div>
+
+    <div class="page-footer">97</div>
+  </div>
+
+  <!-- PAGE 4 (Page 98) -->
+  <div class="manuscript-page">
+    <div class="header">
+      <div class="school-name">University of Perpetual Help System DALTA — Biñan Campus</div>
+      <div class="contact-info">City of Biñan, Laguna, Philippines, 4024 &bull; (02) 779-5310 &bull; (049) 554-5150</div>
+      <div class="web-url">www.uphsl.edu.ph &bull; College of Computer Studies</div>
+    </div>
+
+    <div class="page-content">
+      <div class="table-title">Table 9: Prefab Assets of PAMANA</div>
+      <table>
+        <thead>
+          <tr>
+            <th colspan="4" class="table-main-header">Prefabs</th>
+          </tr>
+          <tr>
+            <th class="col-folder">Asset_Folder</th>
+            <th class="col-type">Type</th>
+            <th class="col-desc">Description</th>
+            <th class="col-file">File Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Prefabs</td>
+            <td style="text-align: center;">PREFAB</td>
+            <td>Reusable player controller with movement, collision, and interaction detector</td>
+            <td>Player.prefab</td>
+          </tr>
+          <tr>
+            <td>Prefabs</td>
+            <td style="text-align: center;">PREFAB</td>
+            <td>Display table pedestal equipped with restoration state triggers and artifact mounting logic</td>
+            <td>TablePedestal.prefab</td>
+          </tr>
+          <tr>
+            <td>Prefabs</td>
+            <td style="text-align: center;">PREFAB</td>
+            <td>Core user interface overlay containing the virtual joystick, interaction prompt, and settings</td>
+            <td>InGameCanvas.prefab</td>
+          </tr>
+          <tr>
+            <td>Prefabs</td>
+            <td style="text-align: center;">PREFAB</td>
+            <td>Doorway and gateway trigger facilitating seamless scene transitions between rooms and wings</td>
+            <td>PortalDoor.prefab</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        Table 9 highlights the Prefabs used in the game. Prefabs serve as pre-configured, reusable GameObjects that combine visual meshes, colliders, and C# functional scripts into single standardized templates, allowing efficient scene setup and consistent behavior across all 12 museum chambers.
+      </p>
+    </div>
+
+    <div class="page-footer">98</div>
+  </div>
+
+  <!-- PAGE 5 (Page 99) -->
+  <div class="manuscript-page">
+    <div class="header">
+      <div class="school-name">University of Perpetual Help System DALTA — Biñan Campus</div>
+      <div class="contact-info">City of Biñan, Laguna, Philippines, 4024 &bull; (02) 779-5310 &bull; (049) 554-5150</div>
+      <div class="web-url">www.uphsl.edu.ph &bull; College of Computer Studies</div>
+    </div>
+
+    <div class="page-content">
+      <div class="table-title">Table 10: Audio Assets of PAMANA</div>
+      <table>
+        <thead>
+          <tr>
+            <th colspan="4" class="table-main-header">Audio Effects</th>
+          </tr>
+          <tr>
+            <th class="col-folder">Asset_Folder</th>
+            <th class="col-type">Type</th>
+            <th class="col-desc">Description</th>
+            <th class="col-file">File Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Audio/BGM</td>
+            <td style="text-align: center;">Audio Clip</td>
+            <td>Ambient background music evoking a peaceful museum atmosphere</td>
+            <td>Museum_Lobby_Theme.wav</td>
+          </tr>
+          <tr>
+            <td>Audio/BGM</td>
+            <td style="text-align: center;">Audio Clip</td>
+            <td>High-tempo orchestral track for intense Alterworld quiz battles</td>
+            <td>QuizBattle_Theme.wav</td>
+          </tr>
+          <tr>
+            <td>Audio/SFX</td>
+            <td style="text-align: center;">Audio Clip</td>
+            <td>Feedback chime played when selecting the correct answer in battle</td>
+            <td>CorrectAnswer_SFX.wav</td>
+          </tr>
+          <tr>
+            <td>Audio/SFX</td>
+            <td style="text-align: center;">Audio Clip</td>
+            <td>Impact sound played when an incorrect answer is submitted or health is lost</td>
+            <td>WrongAnswer_SFX.wav</td>
+          </tr>
+          <tr>
+            <td>Audio/SFX</td>
+            <td style="text-align: center;">Audio Clip</td>
+            <td>Celebration sound played upon successfully mounting an artifact and restoring a pedestal</td>
+            <td>Artifact_Restored.wav</td>
+          </tr>
+          <tr>
+            <td>Audio/SFX</td>
+            <td style="text-align: center;">Audio Clip</td>
+            <td>Tactile sound played when flipping pages in the History Book or pressing UI buttons</td>
+            <td>Book_PageFlip.wav,<br>UI_ButtonClick.wav</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        Table 10 details the audio assets implemented in Pamana. These sound design elements provide vital sensory feedback to players, reinforcing positive reinforcement during quiz victories and establishing distinct audio ambiances between serene museum halls and high-stakes Alterworld encounters.
+      </p>
+    </div>
+
+    <div class="page-footer">99</div>
+  </div>
+
+  <!-- PAGE 6 (Page 100) -->
+  <div class="manuscript-page">
+    <div class="header">
+      <div class="school-name">University of Perpetual Help System DALTA — Biñan Campus</div>
+      <div class="contact-info">City of Biñan, Laguna, Philippines, 4024 &bull; (02) 779-5310 &bull; (049) 554-5150</div>
+      <div class="web-url">www.uphsl.edu.ph &bull; College of Computer Studies</div>
+    </div>
+
+    <div class="page-content">
+      <h2>3.6.1 Data</h2>
+
+      <div class="table-title">Table 11: Data Architecture and Management</div>
+      <table>
+        <thead>
+          <tr>
+            <th colspan="2" class="table-main-header">Data</th>
+          </tr>
+          <tr>
+            <th style="width: 30%;">Category</th>
+            <th style="width: 70%;">Specification</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Question Bank</strong></td>
+            <td>60 verified curriculum-aligned multiple-choice questions covering 12 historical periods (Pre-Colonial, Spanish, Revolutionary, American, WWII, and Modern Eras), structured with question prompts, four answer options, and verified answer keys.</td>
+          </tr>
+          <tr>
+            <td><strong>Historical Plaque Descriptions</strong></td>
+            <td>60 curated academic narratives detailing the provenance, historical context, and cultural significance of each Philippine artifact.</td>
+          </tr>
+          <tr>
+            <td><strong>Cloud Database System</strong></td>
+            <td>Google Firebase Realtime Database (accessed via REST API) for storing user profile names, character choices, unlocked chambers, collected inventory artifacts, restored pedestals, and room restoration stages.</td>
+          </tr>
+          <tr>
+            <td><strong>Local Session Storage</strong></td>
+            <td>Unity PlayerPrefs and static GameProgression manager for fast, in-memory state tracking, seamless scene loading, and temporary guest session progress.</td>
+          </tr>
+          <tr>
+            <td><strong>User Authentication</strong></td>
+            <td>Google Identity Services (OAuth 2.0) integrated through WebGL for secure student sign-in and cloud profile linking.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        Table 11 summarizes the data architecture employed within Pamana to deliver educational content and manage player data. By embedding historical questions and descriptions directly within client-side data structures, interactions remain instant while cloud synchronization handles user account continuity in the background.
+      </p>
+    </div>
+
+    <div class="page-footer">100</div>
+  </div>
+
+  <!-- PAGE 7 (Page 101) -->
+  <div class="manuscript-page">
+    <div class="header">
+      <div class="school-name">University of Perpetual Help System DALTA — Biñan Campus</div>
+      <div class="contact-info">City of Biñan, Laguna, Philippines, 4024 &bull; (02) 779-5310 &bull; (049) 554-5150</div>
+      <div class="web-url">www.uphsl.edu.ph &bull; College of Computer Studies</div>
+    </div>
+
+    <div class="page-content">
+      <h3>Progress and Restoration Tracking System</h3>
+
+      <p>
+        The progress tracking system in <em>Pamana</em> ensures that a player's journey through the museum is saved smoothly and automatically. During active gameplay, Unity's PlayerPrefs and the static manager GameProgression handle fast, in-memory state tracking. For guest players, this manages their progress throughout their play session without requiring an account. For registered players who sign in with their Google account, their data is automatically synchronized to Google Firebase Realtime Database in the cloud.
+      </p>
+
+      <p>
+        Progress is saved whenever important milestones occur—such as completing an Alterworld quiz battle, placing a restored artifact onto a pedestal, unlocking a new museum wing, or moving between chambers. The database keeps track of:
+      </p>
+
+      <ol>
+        <li><strong>Profile Information:</strong> The player's chosen character gender (Curator Boy or Girl) and custom curator name.</li>
+        <li><strong>Room & Wing Progress:</strong> Which of the 12 exhibition rooms and hallway wings have been unlocked and visited.</li>
+        <li><strong>Restoration Stages:</strong> The restoration level of each room (from ruined 0% up to fully restored 100%), which updates the visuals of the floors, walls, and lighting.</li>
+        <li><strong>Pedestal & Artifact Status:</strong> Which of the 60 historical artifacts have been recovered from Alterworld guardians and placed on their respective pedestals.</li>
+        <li><strong>Inventory Items:</strong> Any artifacts that have been won from quiz battles but not yet placed on display pedestals.</li>
+      </ol>
+
+      <p>
+        By pairing instant local memory updates with cloud synchronization in the background, the game provides seamless transitions between rooms and battles while ensuring students never lose their hard-earned progress.
+      </p>
+    </div>
+
+    <div class="page-footer">101</div>
+  </div>
+
+</body>
+</html>

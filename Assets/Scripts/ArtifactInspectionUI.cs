@@ -92,6 +92,8 @@ namespace TopDownGame
             if (inspectPlaqueButton != null)
                 inspectPlaqueButton.onClick.AddListener(OnInspectPlaqueClicked);
 
+            EnsureChoiceButtonLabels();
+
             EnsureRestoreButton();
             if (restoreArtifactButton != null)
                 restoreArtifactButton.onClick.AddListener(OnRestoreArtifactClicked);
@@ -420,6 +422,26 @@ namespace TopDownGame
                     txt.text = "Place from bag";
                 }
                 restoreArtifactButton.gameObject.SetActive(true);
+            }
+        }
+
+        private void EnsureChoiceButtonLabels()
+        {
+            if (inspectArtifactButton != null)
+            {
+                var txt = inspectArtifactButton.GetComponentInChildren<TMP_Text>();
+                if (txt != null && string.Equals(txt.text, "inspect artifact", StringComparison.OrdinalIgnoreCase))
+                {
+                    txt.text = "Inspect Artifact";
+                }
+            }
+            if (inspectPlaqueButton != null)
+            {
+                var txt = inspectPlaqueButton.GetComponentInChildren<TMP_Text>();
+                if (txt != null && string.Equals(txt.text, "inspect plaque", StringComparison.OrdinalIgnoreCase))
+                {
+                    txt.text = "Inspect Plaque";
+                }
             }
         }
 
@@ -802,6 +824,7 @@ namespace TopDownGame
             }
             if (inspectArtifactButton != null) inspectArtifactButton.gameObject.SetActive(true);
             if (inspectPlaqueButton != null) inspectPlaqueButton.gameObject.SetActive(true);
+            EnsureChoiceButtonLabels();
 
             EnsureMobileLeaveButton();
             EnsureMobileDialogueCloseButton();
