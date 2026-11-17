@@ -26,7 +26,7 @@ namespace TopDownGame
                     {
                         var go = new GameObject("ScreenFader");
                         _instance = go.AddComponent<ScreenFader>();
-                        DontDestroyOnLoad(go);
+                        if (Application.isPlaying) DontDestroyOnLoad(go);
                     }
                 }
                 return _instance;
@@ -50,7 +50,7 @@ namespace TopDownGame
                 return;
             }
             _instance = this;
-            DontDestroyOnLoad(gameObject);
+            if (Application.isPlaying) DontDestroyOnLoad(gameObject);
             EnsureUI();
         }
 
@@ -157,7 +157,7 @@ namespace TopDownGame
             {
                 while (elapsed < duration)
                 {
-                    elapsed += Time.deltaTime;
+                    elapsed += Time.unscaledDeltaTime;
                     float t = Mathf.Clamp01(elapsed / duration);
                     // Smooth quadratic ease in-out
                     float smoothT = t * t * (3f - 2f * t);

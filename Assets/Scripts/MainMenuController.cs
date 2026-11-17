@@ -47,6 +47,17 @@ namespace TopDownGame
 
         private static bool _hasActiveSession = false;
         public static void MarkSessionActive() => _hasActiveSession = true;
+        public static bool HasActiveSession => _hasActiveSession;
+
+        public static bool IsUserLoggedIn()
+        {
+            if (!_hasActiveSession) return false;
+            if (FirebaseAuthManager.Instance != null && (FirebaseAuthManager.Instance.IsGoogleUser || FirebaseAuthManager.Instance.IsGuest))
+            {
+                return true;
+            }
+            return false;
+        }
 
         private void OnEnable()
         {
@@ -108,29 +119,43 @@ namespace TopDownGame
                 FirebaseAuthManager.Instance.RestoreSessionFromPrefs();
             }
 
-            bool isGoogle = (FirebaseAuthManager.Instance != null && FirebaseAuthManager.Instance.IsGoogleUser);
+            bool loggedIn = IsUserLoggedIn();
 
-            // Hide New Game button if logged into Google; show if logged out
-            if (newGameButton != null)
+            // Continue is active only when logged in (replacing New Game)
+            if (continueButton != null)
             {
-                newGameButton.gameObject.SetActive(!isGoogle);
+                continueButton.gameObject.SetActive(loggedIn);
             }
 
-            // Adjust button positions so there is no awkward gap when New Game is hidden
-            AdjustMainMenuButtonPositions(isGoogle);
+            // New Game is active only when logged out / fresh start
+            if (newGameButton != null)
+            {
+                newGameButton.gameObject.SetActive(!loggedIn);
+            }
+
+            // Adjust button positions so the active primary button occupies (0, 6)
+            AdjustMainMenuButtonPositions(loggedIn);
 
             if (logoutButton != null)
             {
-                logoutButton.gameObject.SetActive(isGoogle);
+                logoutButton.gameObject.SetActive(loggedIn);
             }
+
             if (accountStatusText != null)
             {
-                if (isGoogle)
+                if (loggedIn && FirebaseAuthManager.Instance != null)
                 {
-                    string name = !string.IsNullOrEmpty(FirebaseAuthManager.Instance.Username) 
-                        ? FirebaseAuthManager.Instance.Username 
-                        : FirebaseAuthManager.Instance.Email;
-                    accountStatusText.text = $"Logged in as: {name}";
+                    if (FirebaseAuthManager.Instance.IsGoogleUser)
+                    {
+                        string name = !string.IsNullOrEmpty(FirebaseAuthManager.Instance.Username) 
+                            ? FirebaseAuthManager.Instance.Username 
+                            : FirebaseAuthManager.Instance.Email;
+                        accountStatusText.text = $"Logged in as: {name}";
+                    }
+                    else // Guest
+                    {
+                        accountStatusText.text = "Playing as: Guest";
+                    }
                     accountStatusText.gameObject.SetActive(true);
                 }
                 else
@@ -140,27 +165,44 @@ namespace TopDownGame
             }
         }
 
-        private void AdjustMainMenuButtonPositions(bool isGoogle)
+        private void AdjustMainMenuButtonPositions(bool loggedIn)
         {
-            if (continueButton != null)
+            if (loggedIn)
             {
-                var rt = continueButton.GetComponent<RectTransform>();
-                if (rt != null) rt.anchoredPosition = new Vector2(0f, 6f);
+                if (continueButton != null)
+                {
+                    var rt = continueButton.GetComponent<RectTransform>();
+                    if (rt != null) rt.anchoredPosition = new Vector2(0f, 6f);
+                }
+                if (newGameButton != null)
+                {
+                    var rt = newGameButton.GetComponent<RectTransform>();
+                    if (rt != null) rt.anchoredPosition = new Vector2(0f, -126f);
+                }
             }
-            if (newGameButton != null)
+            else
             {
-                var rt = newGameButton.GetComponent<RectTransform>();
-                if (rt != null) rt.anchoredPosition = new Vector2(0f, -126f);
+                if (newGameButton != null)
+                {
+                    var rt = newGameButton.GetComponent<RectTransform>();
+                    if (rt != null) rt.anchoredPosition = new Vector2(0f, 6f);
+                }
+                if (continueButton != null)
+                {
+                    var rt = continueButton.GetComponent<RectTransform>();
+                    if (rt != null) rt.anchoredPosition = new Vector2(0f, 6f);
+                }
             }
+
             if (settingsButton != null)
             {
                 var rt = settingsButton.GetComponent<RectTransform>();
-                if (rt != null) rt.anchoredPosition = isGoogle ? new Vector2(0f, -126f) : new Vector2(0f, -257f);
+                if (rt != null) rt.anchoredPosition = new Vector2(0f, -126f);
             }
             if (exitButton != null)
             {
                 var rt = exitButton.GetComponent<RectTransform>();
-                if (rt != null) rt.anchoredPosition = isGoogle ? new Vector2(0f, -257f) : new Vector2(0f, -388f);
+                if (rt != null) rt.anchoredPosition = new Vector2(0f, -257f);
             }
         }
 
@@ -187,9 +229,14 @@ namespace TopDownGame
                 return;
             }
 
-            // Not signed into Google (Guest / unauthenticated):
-            // Open account modal in Continue mode
-            OpenAccountModal(AccountModalMode.Continue);
+            // If signed into Guest, straight up resume guest game!
+            if (FirebaseAuthManager.Instance != null && FirebaseAuthManager.Instance.IsGuest)
+            {
+                OnGuestContinueClicked();
+                return;
+            }
+
+            ProceedToGame();
         }
 
         public void OnNewGameClicked()
@@ -323,9 +370,26 @@ namespace TopDownGame
             }
         }
 
+        private bool _isLoggingOut = false;
+
         public void OnLogoutClicked()
         {
-            Debug.Log("[MainMenuController] Logout clicked");
+            if (_isLoggingOut) return;
+            Debug.Log("[MainMenuController] Logout clicked - starting portal-like transition");
+            StartCoroutine(LogoutRoutine());
+        }
+
+        private System.Collections.IEnumerator LogoutRoutine()
+        {
+            _isLoggingOut = true;
+
+            // Portal-like smooth fade to black
+            if (ScreenFader.Instance != null)
+            {
+                yield return ScreenFader.Instance.FadeOutCoroutine(0.45f, Color.black);
+            }
+
+            // Clear session data in darkness
             if (FirebaseAuthManager.Instance != null)
             {
                 FirebaseAuthManager.Instance.SignOut();
@@ -338,8 +402,21 @@ namespace TopDownGame
             PlayerPrefs.DeleteKey("GuestUserId");
             PlayerPrefs.Save();
             _hasActiveSession = false;
+
+            // Reset menu buttons: New Game shown, Continue/Logout hidden
             UpdateMenuAccountState();
-            SetStatus("Logged out of Google account.", isError: false);
+            SetStatus("", isError: false);
+
+            // Brief pause in darkness (mimicking portal suction/arrival transition)
+            yield return new WaitForSecondsRealtime(0.2f);
+
+            // Smooth fade back in
+            if (ScreenFader.Instance != null)
+            {
+                yield return ScreenFader.Instance.FadeInCoroutine(0.45f);
+            }
+
+            _isLoggingOut = false;
         }
 
         private void EnsureVersionDisplay()
@@ -469,6 +546,7 @@ namespace TopDownGame
                 if (success)
                 {
                     SetStatus("Google login successful! Loading...", isError: false);
+                    _hasActiveSession = true;
                     PlayerPrefs.SetInt("HasGuestSave", 0);
                     PlayerPrefs.DeleteKey("GuestUserId");
                     PlayerPrefs.Save();
@@ -500,8 +578,10 @@ namespace TopDownGame
                 if (success)
                 {
                     SetStatus("Welcome, Guest! Loading game...", isError: false);
+                    _hasActiveSession = true;
                     PlayerPrefs.SetInt("HasGuestSave", 1);
                     PlayerPrefs.Save();
+                    UpdateMenuAccountState();
                     FirebaseDatabaseManager.Instance.ClearAllLocalGameData();
                     var guestData = FirebaseDatabaseManager.Instance.CreateFreshPlayerData();
                     FirebaseDatabaseManager.Instance.ApplyDataToGame(guestData);
