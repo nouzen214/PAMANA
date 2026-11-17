@@ -275,15 +275,44 @@ namespace TopDownGame
                 // Account is currently connected to Google -> UNBIND
                 string prevUser = FirebaseAuthManager.Instance.Username;
 
-                // Sync and save progress to the current Google account before unbinding
-                if (FirebaseDatabaseManager.Instance != null)
+                if (connectGoogleButton != null)
                 {
-                    FirebaseDatabaseManager.Instance.SyncFromGameAndSave(null);
+                    connectGoogleButton.interactable = false;
+                }
+                if (connectGoogleText != null)
+                {
+                    connectGoogleText.text = "SAVING...";
                 }
 
-                FirebaseAuthManager.Instance.UnbindGoogle();
-                UpdateGoogleConnectUI();
-                NotificationBannerUI.Show("Google Unbound", $"Disconnected from {prevUser}. You can now connect a different Google account or play as guest.");
+                // Sync and save progress to the current Google account BEFORE unbinding
+                if (FirebaseDatabaseManager.Instance != null)
+                {
+                    FirebaseDatabaseManager.Instance.SyncFromGameAndSave((saveSuccess, saveMsg) =>
+                    {
+                        if (connectGoogleButton != null)
+                        {
+                            connectGoogleButton.interactable = true;
+                        }
+
+                        FirebaseAuthManager.Instance.UnbindGoogle();
+                        UpdateGoogleConnectUI();
+                        if (saveSuccess)
+                        {
+                            NotificationBannerUI.Show("Google Unbound", $"Progress saved to {prevUser}! You can now play as guest or connect a different account.");
+                        }
+                        else
+                        {
+                            NotificationBannerUI.Show("Google Unbound", $"Disconnected from {prevUser}. You can now connect a different Google account or play as guest.");
+                        }
+                    });
+                }
+                else
+                {
+                    if (connectGoogleButton != null) connectGoogleButton.interactable = true;
+                    FirebaseAuthManager.Instance.UnbindGoogle();
+                    UpdateGoogleConnectUI();
+                    NotificationBannerUI.Show("Google Unbound", $"Disconnected from {prevUser}. You can now connect a different Google account or play as guest.");
+                }
                 return;
             }
 
@@ -341,7 +370,7 @@ namespace TopDownGame
                         {
                             // Account is ALREADY REGISTERED with existing game progress!
                             // DO NOT overwrite! Present conflict modal allowing user to Load Cloud Save or Cancel.
-                            ShowAccountConflictModal(cloudData, googleUsername, prevGuestId, prevGuestName);
+                            ShowAccountConflictModal(cloudData, googleUserId, googleUsername, googleToken, prevGuestId, prevGuestName);
                         }
                     });
                 }
@@ -355,7 +384,7 @@ namespace TopDownGame
 
         private GameObject _accountConflictModal;
 
-        private void ShowAccountConflictModal(PlayerData cloudData, string googleUsername, string prevGuestId, string prevGuestName)
+        private void ShowAccountConflictModal(PlayerData cloudData, string googleUserId, string googleUsername, string googleToken, string prevGuestId, string prevGuestName)
         {
             if (_accountConflictModal != null)
             {
@@ -530,6 +559,12 @@ namespace TopDownGame
             {
                 if (_accountConflictModal != null) Destroy(_accountConflictModal);
                 if (settingsPanel != null) settingsPanel.SetActive(false);
+
+                // Explicitly activate Google session credentials
+                if (FirebaseAuthManager.Instance != null)
+                {
+                    FirebaseAuthManager.Instance.SetGoogleSession(googleUserId, cloudData.email ?? "", googleUsername, googleToken);
+                }
 
                 PlayerPrefs.SetInt("HasGuestSave", 0);
                 PlayerPrefs.DeleteKey("GuestUserId");

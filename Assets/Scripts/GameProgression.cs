@@ -462,18 +462,44 @@ namespace TopDownGame
         public static bool IsPedestalRestored(int roomNumber, string artifactName)
         {
             if (string.IsNullOrEmpty(artifactName)) return false;
-            return PlayerPrefs.GetInt(GetPedestalKey(roomNumber, artifactName), 0) == 1;
+            string key = GetPedestalKey(roomNumber, artifactName);
+            if (PlayerPrefs.GetInt(key, 0) == 1) return true;
+
+            // Also check stripped variant (no spaces, dashes, or apostrophes)
+            string stripped = artifactName.Replace(" ", "").Replace("_", "").Replace("-", "").Replace("'", "");
+            if (PlayerPrefs.GetInt($"GameProgression_Room{roomNumber}_Pedestal_{stripped}_Restored", 0) == 1) return true;
+
+            // Also check against RestoredArtifactsList
+            string listKey = $"GameProgression_Room{roomNumber}_RestoredArtifactsList";
+            string currentList = PlayerPrefs.GetString(listKey, "");
+            if (!string.IsNullOrEmpty(currentList))
+            {
+                string[] restoredItems = currentList.Split(';');
+                string aClean = stripped.ToLowerInvariant();
+                foreach (var r in restoredItems)
+                {
+                    if (string.IsNullOrEmpty(r)) continue;
+                    string rClean = r.Replace(" ", "").Replace("_", "").Replace("-", "").Replace("'", "").ToLowerInvariant();
+                    if (rClean == aClean) return true;
+                    if (rClean.Length >= 4 && aClean.Length >= 4 && (rClean.Contains(aClean) || aClean.Contains(rClean))) return true;
+                }
+            }
+
+            return false;
         }
 
         public static bool RestorePedestal(int roomNumber, string artifactName)
         {
             if (string.IsNullOrEmpty(artifactName)) return false;
             string key = GetPedestalKey(roomNumber, artifactName);
-            if (PlayerPrefs.GetInt(key, 0) == 1) return false;
+            if (IsPedestalRestored(roomNumber, artifactName)) return false;
 
             int oldStage = GetRoomRestorationStage(roomNumber);
 
             PlayerPrefs.SetInt(key, 1);
+            string stripped = artifactName.Replace(" ", "").Replace("_", "").Replace("-", "").Replace("'", "");
+            PlayerPrefs.SetInt($"GameProgression_Room{roomNumber}_Pedestal_{stripped}_Restored", 1);
+
             int current = GetPedestalsRestoredCount(roomNumber) + 1;
             PlayerPrefs.SetInt($"GameProgression_Room{roomNumber}_RestoredPedestalsCount", current);
 

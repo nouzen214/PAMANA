@@ -300,12 +300,24 @@ namespace TopDownGame
                     var data = JsonUtility.FromJson<PlayerData>(response);
                     if (data != null)
                     {
-                        bool hasProgress = data.hasSelectedCharacter ||
-                                           !string.IsNullOrEmpty(data.selectedCharacter) ||
-                                           (data.roomProgress != null && data.roomProgress.Count > 0) ||
+                        bool hasAnyRoomProgress = false;
+                        if (data.roomProgress != null)
+                        {
+                            foreach (var rp in data.roomProgress)
+                            {
+                                if (rp != null && (rp.battleCompleted || rp.artifactRetrieved || rp.returnedToRealWorld || rp.restoredPedestalsCount > 0 || rp.retrievedCount > 0))
+                                {
+                                    hasAnyRoomProgress = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        bool hasProgress = (data.hasSelectedCharacter && !string.IsNullOrEmpty(data.selectedCharacter)) ||
+                                           hasAnyRoomProgress ||
                                            (data.reviewedBookTopics != null && data.reviewedBookTopics.Count > 0) ||
                                            data.hasCompletedTutorial ||
-                                           data.isPortalUnlocked ||
+                                           data.isRoom1BattleCompleted ||
                                            (data.inventoryArtifacts != null && data.inventoryArtifacts.Count > 0);
 
                         onComplete?.Invoke(true, hasProgress, data);
@@ -379,25 +391,59 @@ namespace TopDownGame
 
         public void ApplyDataToGame(PlayerData data, bool clearExisting = true)
         {
-            // Clear all local game state first if requested (for clean cloud load / fresh account isolation)
+            if (data == null) return;
+
+            // 1. Capture current Google authentication credentials before clearing local data
+            bool isGoogleUser = (FirebaseAuthManager.Instance != null && FirebaseAuthManager.Instance.IsGoogleUser) ||
+                                (PlayerPrefs.GetString("AuthType", "") == "google");
+            string authUid = FirebaseAuthManager.Instance != null && !FirebaseAuthManager.Instance.IsGuest
+                ? FirebaseAuthManager.Instance.UserId
+                : PlayerPrefs.GetString("AuthUserId", "");
+            string authEmail = !string.IsNullOrEmpty(data.email) && !data.email.Contains("@pamana.game")
+                ? data.email
+                : (FirebaseAuthManager.Instance != null ? FirebaseAuthManager.Instance.Email : PlayerPrefs.GetString("AuthEmail", ""));
+            string authUsername = !string.IsNullOrEmpty(data.username) && data.username != "Guest"
+                ? data.username
+                : (FirebaseAuthManager.Instance != null ? FirebaseAuthManager.Instance.Username : PlayerPrefs.GetString("PlayerUsername", ""));
+            string authToken = FirebaseAuthManager.Instance != null ? FirebaseAuthManager.Instance.IdToken : PlayerPrefs.GetString("AuthIdToken", "");
+
+            // 2. Clear all local game state if requested (for clean cloud load / fresh account isolation)
             if (clearExisting)
             {
                 ClearAllLocalGameData();
             }
 
-            if (data == null) return;
             CurrentPlayerData = data;
+
+            // 3. Restore Google authentication session in PlayerPrefs and in-memory manager
+            if (isGoogleUser && !string.IsNullOrEmpty(authUid))
+            {
+                if (FirebaseAuthManager.Instance != null)
+                {
+                    FirebaseAuthManager.Instance.SetGoogleSession(authUid, authEmail, authUsername, authToken);
+                }
+                else
+                {
+                    PlayerPrefs.SetString("AuthType", "google");
+                    PlayerPrefs.SetString("AuthUserId", authUid);
+                    PlayerPrefs.SetString("AuthEmail", authEmail);
+                    PlayerPrefs.SetString("PlayerUsername", authUsername);
+                    if (!string.IsNullOrEmpty(authToken)) PlayerPrefs.SetString("AuthIdToken", authToken);
+                    PlayerPrefs.SetInt("HasGuestSave", 0);
+                    PlayerPrefs.DeleteKey("GuestUserId");
+                }
+            }
 
             if (!string.IsNullOrEmpty(data.username))
             {
                 PlayerPrefs.SetString("PlayerUsername", data.username);
             }
 
-            if (!string.IsNullOrEmpty(data.characterName))
+            if (!string.IsNullOrEmpty(data.characterName) && data.characterName != "Guest")
             {
                 PlayerPrefs.SetString("CustomCharacterName", data.characterName);
             }
-            else if (!string.IsNullOrEmpty(data.username))
+            else if (!string.IsNullOrEmpty(data.username) && data.username != "Guest")
             {
                 PlayerPrefs.SetString("CustomCharacterName", data.username);
             }
@@ -426,8 +472,6 @@ namespace TopDownGame
                     }
                 }
             }
-            GameProgression.HasCompletedTutorial = data.hasCompletedTutorial;
-            GameProgression.IsRoom1BattleCompleted = data.isRoom1BattleCompleted;
 
             if (!string.IsNullOrEmpty(data.returnSceneName))
             {
@@ -438,7 +482,8 @@ namespace TopDownGame
                 RoomTransitionManager.SaveToPrefs();
             }
 
-            // Restore all 12 rooms progress
+            // 4. Restore all 12 rooms progress
+            bool room1RestoredOrBattleDone = data.isRoom1BattleCompleted;
             if (data.roomProgress != null)
             {
                 foreach (var r in data.roomProgress)
@@ -446,31 +491,95 @@ namespace TopDownGame
                     if (r == null || r.roomNumber <= 0) continue;
                     int num = r.roomNumber;
 
-                    PlayerPrefs.SetInt($"GameProgression_Room{num}BattleCompleted", r.battleCompleted ? 1 : 0);
-                    if (num == 1)
+                    int restoredCount = r.restoredPedestalsCount;
+                    int retrievedCount = r.retrievedCount;
+                    bool battleCompleted = r.battleCompleted;
+                    bool artifactRetrieved = r.artifactRetrieved;
+                    bool returnedToRealWorld = r.returnedToRealWorld;
+
+                    if (restoredCount >= 5)
                     {
-                        GameProgression.IsRoom1BattleCompleted = r.battleCompleted;
-                        GameProgression.HasRetrievedRoom1Artifact = r.artifactRetrieved;
-                        GameProgression.HasReturnedRoom1ArtifactToRealWorld = r.returnedToRealWorld;
+                        battleCompleted = true;
+                        artifactRetrieved = true;
+                        returnedToRealWorld = true;
+                        if (retrievedCount < 5) retrievedCount = 5;
+                    }
+                    else if (restoredCount > 0)
+                    {
+                        returnedToRealWorld = true;
+                        if (retrievedCount < restoredCount) retrievedCount = restoredCount;
                     }
 
-                    PlayerPrefs.SetInt($"GameProgression_Room{num}ArtifactRetrieved", r.artifactRetrieved ? 1 : 0);
-                    PlayerPrefs.SetInt($"GameProgression_Room{num}ArtifactReturnedToRealWorld", r.returnedToRealWorld ? 1 : 0);
-                    PlayerPrefs.SetInt($"GameProgression_Room{num}_RetrievedCount", r.retrievedCount);
-                    PlayerPrefs.SetInt($"GameProgression_Room{num}_RestoredPedestalsCount", r.restoredPedestalsCount);
-                    PlayerPrefs.SetString($"GameProgression_Room{num}_PlaquesList", r.plaquesList ?? "");
-
-                    if (r.restoredPedestalArtifacts != null && r.restoredPedestalArtifacts.Count > 0)
+                    if (num == 1 && (battleCompleted || restoredCount > 0 || returnedToRealWorld))
                     {
-                        foreach (var art in r.restoredPedestalArtifacts)
+                        room1RestoredOrBattleDone = true;
+                    }
+
+                    // Write counts to PlayerPrefs first so properties dependent on count evaluate correctly
+                    PlayerPrefs.SetInt($"GameProgression_Room{num}_RestoredPedestalsCount", restoredCount);
+                    PlayerPrefs.SetInt($"GameProgression_Room{num}_RetrievedCount", retrievedCount);
+
+                    PlayerPrefs.SetInt($"GameProgression_Room{num}BattleCompleted", battleCompleted ? 1 : 0);
+                    PlayerPrefs.SetInt($"GameProgression_Room{num}ArtifactRetrieved", artifactRetrieved ? 1 : 0);
+                    PlayerPrefs.SetInt($"GameProgression_Room{num}ArtifactReturnedToRealWorld", returnedToRealWorld ? 1 : 0);
+
+                    if (num == 1)
+                    {
+                        GameProgression.IsRoom1BattleCompleted = battleCompleted;
+                        GameProgression.HasRetrievedRoom1Artifact = artifactRetrieved;
+                        GameProgression.HasReturnedRoom1ArtifactToRealWorld = returnedToRealWorld;
+                    }
+
+                    // Plaques list
+                    string plaques = r.plaquesList;
+                    if (string.IsNullOrEmpty(plaques) && num == 1 && restoredCount > 0)
+                    {
+                        plaques = "Wire-rimmed Spectacles;University Wax Seal Stamp;Travel Notebook;Dip Pen Nib;Gold Locket Pendant";
+                    }
+                    PlayerPrefs.SetString($"GameProgression_Room{num}_PlaquesList", plaques ?? "");
+
+                    // Individual pedestal artifacts
+                    var restoredArtifacts = r.restoredPedestalArtifacts ?? new List<string>();
+                    if (num == 1 && restoredCount >= 5 && restoredArtifacts.Count < 5)
+                    {
+                        restoredArtifacts = new List<string> {
+                            "Wire-rimmed Spectacles",
+                            "University Wax Seal Stamp",
+                            "Travel Notebook",
+                            "Dip Pen Nib",
+                            "Gold Locket Pendant"
+                        };
+                    }
+
+                    if (restoredArtifacts.Count > 0)
+                    {
+                        foreach (var art in restoredArtifacts)
                         {
                             if (string.IsNullOrEmpty(art)) continue;
                             string clean = art.Replace(" ", "_").Replace("'", "");
+                            string stripped = art.Replace(" ", "").Replace("_", "").Replace("-", "").Replace("'", "");
                             PlayerPrefs.SetInt($"GameProgression_Room{num}_Pedestal_{clean}_Restored", 1);
+                            PlayerPrefs.SetInt($"GameProgression_Room{num}_Pedestal_{stripped}_Restored", 1);
                         }
-                        PlayerPrefs.SetString($"GameProgression_Room{num}_RestoredArtifactsList", string.Join(";", r.restoredPedestalArtifacts));
+                        PlayerPrefs.SetString($"GameProgression_Room{num}_RestoredArtifactsList", string.Join(";", restoredArtifacts));
                     }
                 }
+            }
+
+            // 5. Restore Tutorial state
+            bool tutorialCompleted = data.hasCompletedTutorial || room1RestoredOrBattleDone;
+            GameProgression.HasCompletedTutorial = tutorialCompleted;
+            PlayerPrefs.SetInt("GameProgression_TutorialCompleted", tutorialCompleted ? 1 : 0);
+            if (tutorialCompleted)
+            {
+                PlayerPrefs.SetInt("GameProgression_TutorialPhase", 7);
+                GameProgression.SetBookUnlocked(true);
+                GameProgression.UnlockPortal();
+                if (GameTutorialGuide.Instance != null)
+                {
+                    GameTutorialGuide.Instance.DismissAndDestroy();
+                }
+                GameTutorialGuide.PurgeAllTutorialObjects();
             }
 
             // Restore Player Inventory
@@ -490,7 +599,7 @@ namespace TopDownGame
             }
 
             PlayerPrefs.Save();
-            Debug.Log($"[FirebaseDatabaseManager] Applied player data to game for '{data.username}' (hasSelectedCharacter: {data.hasSelectedCharacter}, char: '{data.selectedCharacter}')");
+            Debug.Log($"[FirebaseDatabaseManager] Applied player data to game for '{data.username}' (hasSelectedCharacter: {data.hasSelectedCharacter}, char: '{data.selectedCharacter}', tutCompleted: {tutorialCompleted})");
         }
 
         public void SyncFromGameAndSave(Action<bool, string> onComplete = null)
@@ -500,6 +609,20 @@ namespace TopDownGame
             data.selectedCharacter = PlayerPrefs.GetString("SelectedCharacter", data.selectedCharacter);
             data.characterName = PlayerPrefs.GetString("CustomCharacterName", data.characterName);
             data.hasSelectedCharacter = PlayerPrefs.GetInt("HasSelectedCharacter", 0) == 1 || data.hasSelectedCharacter;
+
+            // Preserve authentic Google account identity if Google user
+            if (FirebaseAuthManager.Instance != null && FirebaseAuthManager.Instance.IsGoogleUser)
+            {
+                if (!string.IsNullOrEmpty(FirebaseAuthManager.Instance.Email))
+                {
+                    data.email = FirebaseAuthManager.Instance.Email;
+                }
+                if (!string.IsNullOrEmpty(FirebaseAuthManager.Instance.Username))
+                {
+                    data.username = FirebaseAuthManager.Instance.Username;
+                }
+            }
+
             data.masterVolume = AudioSettingsManager.MasterVolume;
             data.sfxVolume = AudioSettingsManager.SFXVolume;
             data.bgmVolume = AudioSettingsManager.BGMVolume;
@@ -513,8 +636,10 @@ namespace TopDownGame
                     data.reviewedBookTopics.Add(t);
                 }
             }
-            data.hasCompletedTutorial = GameProgression.HasCompletedTutorial;
-            data.isRoom1BattleCompleted = GameProgression.IsRoom1BattleCompleted;
+
+            int room1RestoredCount = GameProgression.GetPedestalsRestoredCount(1);
+            data.isRoom1BattleCompleted = GameProgression.IsRoom1BattleCompleted || room1RestoredCount >= 5;
+            data.hasCompletedTutorial = GameProgression.HasCompletedTutorial || room1RestoredCount > 0 || data.isRoom1BattleCompleted;
 
             string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
             if (activeScene != "MainMenu" && activeScene != "CharacterSelect")
@@ -581,15 +706,50 @@ namespace TopDownGame
                     restoredList.AddRange(currentList.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
                 }
 
+                int restoredCount = GameProgression.GetPedestalsRestoredCount(r);
+                if (restoredList.Count > restoredCount) restoredCount = restoredList.Count;
+
+                int retrievedCount = GameProgression.GetRoomRetrievedCount(r);
+                if (restoredCount > retrievedCount) retrievedCount = restoredCount;
+
+                bool battleCompleted = GameProgression.IsRoomBattleCompleted(r);
+                bool artifactRetrieved = GameProgression.HasRetrievedRoomArtifact(r);
+                bool returnedToRealWorld = GameProgression.HasReturnedRoomArtifactsToRealWorld(r) || (restoredCount > 0);
+
+                if (restoredCount >= 5)
+                {
+                    battleCompleted = true;
+                    artifactRetrieved = true;
+                    returnedToRealWorld = true;
+                    if (retrievedCount < 5) retrievedCount = 5;
+                }
+
+                if (r == 1 && restoredCount >= 5 && restoredList.Count < 5)
+                {
+                    restoredList = new List<string> {
+                        "Wire-rimmed Spectacles",
+                        "University Wax Seal Stamp",
+                        "Travel Notebook",
+                        "Dip Pen Nib",
+                        "Gold Locket Pendant"
+                    };
+                }
+
+                string plaques = PlayerPrefs.GetString($"GameProgression_Room{r}_PlaquesList", "");
+                if (string.IsNullOrEmpty(plaques) && r == 1 && restoredCount > 0)
+                {
+                    plaques = "Wire-rimmed Spectacles;University Wax Seal Stamp;Travel Notebook;Dip Pen Nib;Gold Locket Pendant";
+                }
+
                 var entry = new RoomProgressData
                 {
                     roomNumber = r,
-                    battleCompleted = GameProgression.IsRoomBattleCompleted(r),
-                    artifactRetrieved = GameProgression.HasRetrievedRoomArtifact(r),
-                    returnedToRealWorld = GameProgression.HasReturnedRoomArtifactsToRealWorld(r),
-                    retrievedCount = GameProgression.GetRoomRetrievedCount(r),
-                    restoredPedestalsCount = GameProgression.GetPedestalsRestoredCount(r),
-                    plaquesList = PlayerPrefs.GetString($"GameProgression_Room{r}_PlaquesList", ""),
+                    battleCompleted = battleCompleted,
+                    artifactRetrieved = artifactRetrieved,
+                    returnedToRealWorld = returnedToRealWorld,
+                    retrievedCount = retrievedCount,
+                    restoredPedestalsCount = restoredCount,
+                    plaquesList = plaques,
                     restoredPedestalArtifacts = restoredList
                 };
                 data.roomProgress.Add(entry);

@@ -69,6 +69,23 @@ namespace TopDownGame
             }
         }
 
+        public void SetGoogleSession(string uid, string email, string username, string token)
+        {
+            UserId = uid;
+            Email = email;
+            Username = !string.IsNullOrEmpty(username) ? username : "Player";
+            IdToken = token;
+            PlayerPrefs.SetString("AuthType", "google");
+            PlayerPrefs.SetString("AuthUserId", uid);
+            PlayerPrefs.SetString("AuthEmail", email);
+            PlayerPrefs.SetString("PlayerUsername", Username);
+            if (!string.IsNullOrEmpty(token)) PlayerPrefs.SetString("AuthIdToken", token);
+            PlayerPrefs.SetInt("HasGuestSave", 0);
+            PlayerPrefs.DeleteKey("GuestUserId");
+            PlayerPrefs.Save();
+            Debug.Log($"[FirebaseAuthManager] Google session explicitly set for {Username} ({uid}).");
+        }
+
         public void UnbindGoogle()
         {
             string guestId = "guest_" + Guid.NewGuid().ToString("N").Substring(0, 8);
