@@ -719,7 +719,10 @@ namespace TopDownGame
             if (settingsPanel != null)
             {
                 InitializeSliders();
-                UpdateGoogleConnectUI();
+                if (connectGoogleButton != null)
+                {
+                    connectGoogleButton.gameObject.SetActive(false);
+                }
                 settingsPanel.SetActive(true);
                 if (UnityEngine.EventSystems.EventSystem.current != null)
                 {

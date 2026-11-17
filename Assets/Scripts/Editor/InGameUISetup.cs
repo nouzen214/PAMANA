@@ -19,6 +19,7 @@ namespace TopDownGame.Editor
 
         // Settings UI Assets
         private const string SprScrollCleanTracksPath = "Assets/UI/Settings/Settings_Scroll_Clean_Tracks.png";
+        private const string SprScrollMainMenuPath = "Assets/UI/Settings/Settings_Scroll_MainMenu.png";
         private const string SprKnobPath = "Assets/UI/Settings/Settings_Slider_Knob.png";
         private const string SprCloseCleanPath = "Assets/UI/Settings/Settings_Btn_Close_Clean.png";
         private const string SprSettingsIconGoogleNormalPath = "Assets/UI/Settings/Settings_Icon_Google_Normal.png";
@@ -1897,7 +1898,8 @@ namespace TopDownGame.Editor
 
             var dialogImg = dialogObj.GetComponent<Image>();
             if (dialogImg == null) dialogImg = dialogObj.AddComponent<Image>();
-            var sprScroll = AssetDatabase.LoadAssetAtPath<Sprite>(SprScrollCleanTracksPath);
+            EnsureSpriteImport(SprScrollMainMenuPath);
+            var sprScroll = AssetDatabase.LoadAssetAtPath<Sprite>(SprScrollMainMenuPath);
             dialogImg.sprite = sprScroll;
             dialogImg.type = Image.Type.Simple;
             dialogImg.preserveAspect = true;
@@ -1946,14 +1948,7 @@ namespace TopDownGame.Editor
             var btnDefault = btnDefaultObj.GetComponent<Button>();
             UnityEditor.Events.UnityEventTools.AddPersistentListener(btnDefault.onClick, menuCtrl.OnDefaultSettingsClicked);
 
-            var btnMenuObj = CreateOverlayButton("Button_ExitToMenu", new Vector2(-177f, -574.5f), new Vector2(309f, 54f), dialogObj.transform);
-            var btnMenu = btnMenuObj.GetComponent<Button>();
-            UnityEditor.Events.UnityEventTools.AddPersistentListener(btnMenu.onClick, menuCtrl.OnCloseSettingsClicked);
-
-            var btnGoogleObj = CreateGoogleConnectOverlayButton("Button_ConnectToGoogle", new Vector2(176f, -574.5f), new Vector2(309f, 54f), dialogObj.transform);
-            var btnGoogle = btnGoogleObj.GetComponent<Button>();
-            UnityEditor.Events.UnityEventTools.AddPersistentListener(btnGoogle.onClick, menuCtrl.OnConnectToGoogleClicked);
-            var txtGoogle = btnGoogleObj.transform.Find("Text")?.GetComponent<TextMeshProUGUI>();
+            // In Main Menu, "Return to Main Menu" and "Connect to Google" are omitted (only available in gameplay settings)
 
             // Setup LoginPanel
             GenerateLoginBaseTexture();
@@ -1996,10 +1991,10 @@ namespace TopDownGame.Editor
             if (spBGM != null) spBGM.objectReferenceValue = bgmSlider;
 
             var spGoogleBtn = so.FindProperty("connectGoogleButton");
-            if (spGoogleBtn != null) spGoogleBtn.objectReferenceValue = btnGoogle;
+            if (spGoogleBtn != null) spGoogleBtn.objectReferenceValue = null;
 
             var spGoogleTxt = so.FindProperty("connectGoogleText");
-            if (spGoogleTxt != null) spGoogleTxt.objectReferenceValue = txtGoogle;
+            if (spGoogleTxt != null) spGoogleTxt.objectReferenceValue = null;
 
             so.ApplyModifiedProperties();
 
