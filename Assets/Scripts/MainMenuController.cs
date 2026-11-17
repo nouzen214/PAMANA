@@ -425,25 +425,32 @@ namespace TopDownGame
             if (canvas == null) return;
 
             var existing = canvas.transform.Find("VersionLabel");
-            if (existing == null)
+            if (existing != null)
             {
-                var go = new GameObject("VersionLabel", typeof(RectTransform), typeof(TextMeshProUGUI));
-                go.transform.SetParent(canvas.transform, false);
-                var rt = go.GetComponent<RectTransform>();
-                rt.anchorMin = new Vector2(1f, 0f);
-                rt.anchorMax = new Vector2(1f, 0f);
-                rt.pivot = new Vector2(1f, 0f);
-                rt.anchoredPosition = new Vector2(-16f, 12f);
-                rt.sizeDelta = new Vector2(160f, 30f);
-
-                var tmp = go.GetComponent<TextMeshProUGUI>();
-                tmp.text = $"v{Application.version}";
-                tmp.fontSize = 16f;
-                tmp.fontStyle = FontStyles.Bold;
-                tmp.alignment = TextAlignmentOptions.BottomRight;
-                tmp.color = new Color(0.95f, 0.95f, 0.95f, 0.85f);
-                tmp.raycastTarget = false;
+                var tmpExisting = existing.GetComponent<TextMeshProUGUI>();
+                if (tmpExisting != null)
+                {
+                    tmpExisting.text = $"v{Application.version}";
+                }
+                return;
             }
+
+            var go = new GameObject("VersionLabel", typeof(RectTransform), typeof(TextMeshProUGUI));
+            go.transform.SetParent(canvas.transform, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(1f, 0f);
+            rt.anchorMax = new Vector2(1f, 0f);
+            rt.pivot = new Vector2(1f, 0f);
+            rt.anchoredPosition = new Vector2(-16f, 12f);
+            rt.sizeDelta = new Vector2(160f, 30f);
+
+            var tmp = go.GetComponent<TextMeshProUGUI>();
+            tmp.text = $"v{Application.version}";
+            tmp.fontSize = 16f;
+            tmp.fontStyle = FontStyles.Bold;
+            tmp.alignment = TextAlignmentOptions.BottomRight;
+            tmp.color = new Color(0.95f, 0.95f, 0.95f, 0.85f);
+            tmp.raycastTarget = false;
         }
 
         private void InitializeSliders()
