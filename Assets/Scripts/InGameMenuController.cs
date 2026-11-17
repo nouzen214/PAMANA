@@ -377,6 +377,12 @@ namespace TopDownGame
                 return;
             }
 
+            // Hide the SettingsPanel so it doesn't clutter behind the conflict modal
+            if (settingsPanel != null)
+            {
+                settingsPanel.SetActive(false);
+            }
+
             // Dark semi-transparent blocker overlay
             var overlayGo = new GameObject("AccountConflictModal", typeof(RectTransform), typeof(CanvasGroup), typeof(Image));
             overlayGo.transform.SetParent(targetCanvas.transform, false);
@@ -385,14 +391,14 @@ namespace TopDownGame
             var overlayRt = overlayGo.GetComponent<RectTransform>();
             overlayRt.anchorMin = Vector2.zero;
             overlayRt.anchorMax = Vector2.one;
-            overlayRt.sizeDelta = Vector2.zero;
-            overlayRt.anchoredPosition = Vector2.zero;
+            overlayRt.offsetMin = Vector2.zero;
+            overlayRt.offsetMax = Vector2.zero;
 
             var overlayImg = overlayGo.GetComponent<Image>();
-            overlayImg.color = new Color(0f, 0f, 0f, 0.78f);
+            overlayImg.color = new Color(0f, 0f, 0f, 0.85f);
             overlayImg.raycastTarget = true;
 
-            // Frame container (ornate frame)
+            // Frame container (Royal Parchment Scroll Frame: 780 x 562)
             var frameGo = new GameObject("Frame", typeof(RectTransform), typeof(Image));
             frameGo.transform.SetParent(overlayGo.transform, false);
 
@@ -400,15 +406,20 @@ namespace TopDownGame
             frameRt.anchorMin = new Vector2(0.5f, 0.5f);
             frameRt.anchorMax = new Vector2(0.5f, 0.5f);
             frameRt.pivot = new Vector2(0.5f, 0.5f);
-            frameRt.sizeDelta = new Vector2(520f, 390f);
+            frameRt.sizeDelta = new Vector2(780f, 562f);
             frameRt.anchoredPosition = Vector2.zero;
 
             var frameImg = frameGo.GetComponent<Image>();
-            Sprite confirmSprite = Resources.Load<Sprite>("UI/Pause_Confirm_Frame");
-            if (confirmSprite != null)
+            Sprite scrollSprite = Resources.Load<Sprite>("UI/AccountConflict_Scroll_Frame");
+            if (scrollSprite == null)
             {
-                frameImg.sprite = confirmSprite;
-                frameImg.type = Image.Type.Sliced;
+                scrollSprite = Resources.Load<Sprite>("UI/Pause_Scroll_Frame");
+            }
+            if (scrollSprite != null)
+            {
+                frameImg.sprite = scrollSprite;
+                frameImg.type = Image.Type.Simple;
+                frameImg.preserveAspect = true;
                 frameImg.color = Color.white;
             }
             else
@@ -416,26 +427,25 @@ namespace TopDownGame
                 frameImg.color = new Color(0.15f, 0.10f, 0.05f, 0.96f);
             }
 
-            var frameOutline = frameGo.AddComponent<Outline>();
-            frameOutline.effectColor = new Color(0.85f, 0.65f, 0.25f, 0.85f);
-            frameOutline.effectDistance = new Vector2(2f, -2f);
-
-            // Title
+            // Title directly inside the carved wooden plaque
             var titleGo = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
             titleGo.transform.SetParent(frameGo.transform, false);
             var titleRt = titleGo.GetComponent<RectTransform>();
-            titleRt.anchorMin = new Vector2(0f, 1f);
-            titleRt.anchorMax = new Vector2(1f, 1f);
-            titleRt.pivot = new Vector2(0.5f, 1f);
-            titleRt.anchoredPosition = new Vector2(0f, -28f);
-            titleRt.sizeDelta = new Vector2(-40f, 36f);
+            titleRt.anchorMin = new Vector2(0.5f, 1f);
+            titleRt.anchorMax = new Vector2(0.5f, 1f);
+            titleRt.pivot = new Vector2(0.5f, 0.5f);
+            titleRt.anchoredPosition = new Vector2(0f, -122f);
+            titleRt.sizeDelta = new Vector2(260f, 32f);
 
             var titleTmp = titleGo.GetComponent<TextMeshProUGUI>();
-            titleTmp.text = "ACCOUNT ALREADY REGISTERED";
-            titleTmp.fontSize = 20f;
+            titleTmp.text = "CLOUD SAVE FOUND";
+            titleTmp.fontSize = 17.5f;
             titleTmp.fontStyle = FontStyles.Bold;
-            titleTmp.color = new Color(1f, 0.82f, 0.35f, 1f);
+            titleTmp.color = new Color(1f, 0.88f, 0.52f, 1f);
             titleTmp.alignment = TextAlignmentOptions.Center;
+            var titleShadow = titleGo.AddComponent<Shadow>();
+            titleShadow.effectColor = new Color(0.12f, 0.08f, 0.05f, 0.95f);
+            titleShadow.effectDistance = new Vector2(1.5f, -1.5f);
 
             // Description / Details
             string charDesc = !string.IsNullOrEmpty(cloudData.characterName)
@@ -453,28 +463,68 @@ namespace TopDownGame
 
             string sceneName = !string.IsNullOrEmpty(cloudData.currentScene) ? cloudData.currentScene : "Lobby";
 
-            var descGo = new GameObject("Desc", typeof(RectTransform), typeof(TextMeshProUGUI));
-            descGo.transform.SetParent(frameGo.transform, false);
-            var descRt = descGo.GetComponent<RectTransform>();
-            descRt.anchorMin = new Vector2(0f, 0f);
-            descRt.anchorMax = new Vector2(1f, 1f);
-            descRt.offsetMin = new Vector2(32f, 90f);
-            descRt.offsetMax = new Vector2(-32f, -70f);
+            // Recessed Inset Card for Cloud Details
+            var cardGo = new GameObject("DetailsCard", typeof(RectTransform), typeof(Image), typeof(Outline));
+            cardGo.transform.SetParent(frameGo.transform, false);
 
-            var descTmp = descGo.GetComponent<TextMeshProUGUI>();
-            descTmp.text = $"This Google account (<b>{googleUsername}</b>) is already registered with existing cloud progress:\n\n" +
-                           $"• <b>Character:</b> {charDesc}\n" +
-                           $"• <b>Saved Scene:</b> {sceneName}\n" +
-                           $"• <b>Progress:</b> {roomsCleared} Room(s) Explored\n\n" +
-                           $"Would you like to <b>Load Cloud Save</b> to restore your previous game, or <b>Cancel</b> to stay as Guest without overwriting anything?";
-            descTmp.fontSize = 14f;
-            descTmp.lineSpacing = 6f;
-            descTmp.color = new Color(0.95f, 0.90f, 0.82f, 1f);
-            descTmp.alignment = TextAlignmentOptions.Center;
+            var cardRt = cardGo.GetComponent<RectTransform>();
+            cardRt.anchorMin = new Vector2(0.5f, 0.5f);
+            cardRt.anchorMax = new Vector2(0.5f, 0.5f);
+            cardRt.pivot = new Vector2(0.5f, 0.5f);
+            cardRt.sizeDelta = new Vector2(510f, 142f);
+            cardRt.anchoredPosition = new Vector2(0f, 40f);
+
+            var cardImg = cardGo.GetComponent<Image>();
+            cardImg.color = new Color(0.90f, 0.81f, 0.67f, 0.75f);
+
+            var cardOutline = cardGo.GetComponent<Outline>();
+            cardOutline.effectColor = new Color(0.48f, 0.32f, 0.18f, 0.85f);
+            cardOutline.effectDistance = new Vector2(1.5f, -1.5f);
+
+            // Details Text inside Card
+            var detailsGo = new GameObject("DetailsText", typeof(RectTransform), typeof(TextMeshProUGUI));
+            detailsGo.transform.SetParent(cardGo.transform, false);
+
+            var detailsRt = detailsGo.GetComponent<RectTransform>();
+            detailsRt.anchorMin = Vector2.zero;
+            detailsRt.anchorMax = Vector2.one;
+            detailsRt.offsetMin = new Vector2(18f, 10f);
+            detailsRt.offsetMax = new Vector2(-18f, -10f);
+
+            var detailsTmp = detailsGo.GetComponent<TextMeshProUGUI>();
+            detailsTmp.fontSize = 15.5f;
+            detailsTmp.lineSpacing = 8f;
+            detailsTmp.color = new Color(0.24f, 0.15f, 0.08f, 1f);
+            detailsTmp.alignment = TextAlignmentOptions.Center;
+            detailsTmp.text = "<b><color=#723d14>REGISTERED GOOGLE ACCOUNT</color></b>\n" +
+                              $"<b>Account:</b> <color=#944a10><b>{googleUsername}</b></color>\n" +
+                              $"<b>Character:</b> {charDesc}  •  <b>Saved Location:</b> {sceneName}\n" +
+                              $"<b>Progress:</b> <color=#286828><b>{roomsCleared} Room(s) Explored</b></color>";
+
+            // Prompt Text below Card
+            var promptGo = new GameObject("PromptText", typeof(RectTransform), typeof(TextMeshProUGUI));
+            promptGo.transform.SetParent(frameGo.transform, false);
+
+            var promptRt = promptGo.GetComponent<RectTransform>();
+            promptRt.anchorMin = new Vector2(0.5f, 0.5f);
+            promptRt.anchorMax = new Vector2(0.5f, 0.5f);
+            promptRt.pivot = new Vector2(0.5f, 0.5f);
+            promptRt.sizeDelta = new Vector2(510f, 52f);
+            promptRt.anchoredPosition = new Vector2(0f, -68f);
+
+            var promptTmp = promptGo.GetComponent<TextMeshProUGUI>();
+            promptTmp.fontSize = 14f;
+            promptTmp.lineSpacing = 5f;
+            promptTmp.color = new Color(0.28f, 0.18f, 0.10f, 0.95f);
+            promptTmp.alignment = TextAlignmentOptions.Center;
+            promptTmp.text = "Would you like to <b>Load Cloud Save</b> to restore your previous progress,\nor <b>Stay as Guest</b> to continue playing without overwriting anything?";
+
+            Sprite sprBtnNormal = Resources.Load<Sprite>("UI/Btn_WoodPlank_Blank_Normal");
+            Sprite sprBtnHover = Resources.Load<Sprite>("UI/Btn_WoodPlank_Blank_Hover");
 
             // Button 1: Load Cloud Save
-            var loadBtnGo = CreateModalButton(frameGo.transform, "LoadSaveButton", "LOAD CLOUD SAVE", new Vector2(-115f, -145f), new Vector2(200f, 44f),
-                new Color(0.12f, 0.32f, 0.16f, 0.95f), new Color(0.35f, 0.85f, 0.45f, 1f));
+            var loadBtnGo = CreateWoodenModalButton(frameGo.transform, "Button_LoadCloud", "LOAD CLOUD SAVE",
+                new Vector2(-130f, -148f), new Vector2(235f, 62f), sprBtnNormal, sprBtnHover, new Color(1f, 0.88f, 0.45f, 1f));
             var loadBtn = loadBtnGo.GetComponent<Button>();
             loadBtn.onClick.AddListener(() =>
             {
@@ -497,8 +547,8 @@ namespace TopDownGame
             });
 
             // Button 2: Cancel (Stay as Guest)
-            var cancelBtnGo = CreateModalButton(frameGo.transform, "CancelButton", "CANCEL", new Vector2(115f, -145f), new Vector2(180f, 44f),
-                new Color(0.35f, 0.12f, 0.12f, 0.95f), new Color(0.90f, 0.35f, 0.35f, 1f));
+            var cancelBtnGo = CreateWoodenModalButton(frameGo.transform, "Button_StayGuest", "STAY AS GUEST",
+                new Vector2(130f, -148f), new Vector2(235f, 62f), sprBtnNormal, sprBtnHover, new Color(0.96f, 0.92f, 0.86f, 1f));
             var cancelBtn = cancelBtnGo.GetComponent<Button>();
             cancelBtn.onClick.AddListener(() =>
             {
@@ -509,11 +559,12 @@ namespace TopDownGame
                 PlayerPrefs.SetInt("HasGuestSave", 1);
                 PlayerPrefs.Save();
                 UpdateGoogleConnectUI();
+                if (settingsPanel != null) settingsPanel.SetActive(true);
                 NotificationBannerUI.Show("Account Already Registered", "Cloud save preserved. Kept playing as Guest.");
             });
         }
 
-        private GameObject CreateModalButton(Transform parent, string name, string label, Vector2 anchoredPos, Vector2 size, Color bgColor, Color outlineColor)
+        private GameObject CreateWoodenModalButton(Transform parent, string name, string label, Vector2 anchoredPos, Vector2 size, Sprite sprNormal, Sprite sprHover, Color textColor)
         {
             var btnGo = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
             btnGo.transform.SetParent(parent, false);
@@ -526,19 +577,20 @@ namespace TopDownGame
             rt.sizeDelta = size;
 
             var img = btnGo.GetComponent<Image>();
-            img.color = bgColor;
+            img.sprite = sprNormal;
+            img.type = Image.Type.Simple;
+            img.preserveAspect = false;
             img.raycastTarget = true;
 
-            var outline = btnGo.AddComponent<Outline>();
-            outline.effectColor = outlineColor;
-            outline.effectDistance = new Vector2(1.5f, -1.5f);
-
             var btn = btnGo.GetComponent<Button>();
-            var colors = btn.colors;
-            colors.normalColor = Color.white;
-            colors.highlightedColor = new Color(1.2f, 1.2f, 1.2f, 1f);
-            colors.pressedColor = new Color(0.75f, 0.75f, 0.75f, 1f);
-            btn.colors = colors;
+            if (sprHover != null)
+            {
+                btn.transition = Selectable.Transition.SpriteSwap;
+                var state = btn.spriteState;
+                state.highlightedSprite = sprHover;
+                state.pressedSprite = sprNormal;
+                btn.spriteState = state;
+            }
 
             var txtGo = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
             txtGo.transform.SetParent(btnGo.transform, false);
@@ -549,10 +601,14 @@ namespace TopDownGame
 
             var tmp = txtGo.GetComponent<TextMeshProUGUI>();
             tmp.text = label;
-            tmp.fontSize = 13.5f;
+            tmp.fontSize = 14.5f;
             tmp.fontStyle = FontStyles.Bold;
-            tmp.color = Color.white;
+            tmp.color = textColor;
             tmp.alignment = TextAlignmentOptions.Center;
+
+            var shadow = txtGo.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.90f);
+            shadow.effectDistance = new Vector2(1.5f, -1.5f);
 
             return btnGo;
         }
