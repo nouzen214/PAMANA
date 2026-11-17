@@ -26,6 +26,12 @@ namespace TopDownGame
         [SerializeField] private float autoSaveInterval = 45f;
         [SerializeField] private float minSaveCooldown = 5f;
 
+        /// <summary>
+        /// When true, all autosaves (focus lost, periodic, scene transitions) are paused.
+        /// Used during Google account binding/conflict resolution to avoid wiping cloud saves.
+        /// </summary>
+        public static bool IsAutoSavePaused { get; set; } = false;
+
         private float _lastSaveTime = -999f;
         private bool _isSavingNow = false;
         private bool _hasPendingSave = false;
@@ -109,6 +115,12 @@ namespace TopDownGame
 
         public void TriggerAutoSave(string reason = "AutoSave")
         {
+            if (IsAutoSavePaused)
+            {
+                Debug.Log($"[AutoSaveManager] AutoSave skipped (Paused) - Reason: {reason}");
+                return;
+            }
+
             // Never autosave in MainMenu or CharacterSelect
             string activeScene = SceneManager.GetActiveScene().name;
             if (activeScene == "MainMenu" || activeScene == "CharacterSelect")

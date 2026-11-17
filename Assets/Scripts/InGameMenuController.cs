@@ -141,9 +141,30 @@ namespace TopDownGame
             }
         }
 
+        private static bool IsAnyInputFieldFocused()
+        {
+            if (UnityEngine.EventSystems.EventSystem.current != null)
+            {
+                var selected = UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject;
+                if (selected != null)
+                {
+                    if (selected.GetComponent<TMPro.TMP_InputField>() != null || selected.GetComponent<UnityEngine.UI.InputField>() != null)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         private void Update()
         {
             if (ArtifactInspectionUI.Instance != null && ArtifactInspectionUI.Instance.IsOpen)
+            {
+                return;
+            }
+
+            if (IsAnyInputFieldFocused())
             {
                 return;
             }
@@ -154,7 +175,7 @@ namespace TopDownGame
             {
                 hPressed = true;
             }
-            else
+            if (!hPressed)
             {
                 try { if (Input.GetKeyDown(KeyCode.H)) hPressed = true; } catch { }
             }
@@ -172,7 +193,7 @@ namespace TopDownGame
             {
                 bPressed = true;
             }
-            else
+            if (!bPressed)
             {
                 try { if (Input.GetKeyDown(KeyCode.B) || Input.GetKeyDown(KeyCode.I)) bPressed = true; } catch { }
             }
@@ -189,7 +210,7 @@ namespace TopDownGame
             {
                 escapePressed = true;
             }
-            else
+            if (!escapePressed)
             {
                 try { if (Input.GetKeyDown(KeyCode.Escape)) escapePressed = true; } catch { }
             }
@@ -320,6 +341,9 @@ namespace TopDownGame
             string prevGuestId = FirebaseAuthManager.Instance != null ? FirebaseAuthManager.Instance.UserId : "";
             string prevGuestName = FirebaseAuthManager.Instance != null ? FirebaseAuthManager.Instance.Username : "Guest";
 
+            // Pause AutoSave during Google Sign-In and conflict modal verification
+            AutoSaveManager.IsAutoSavePaused = true;
+
             if (connectGoogleText != null)
             {
                 connectGoogleText.text = "CONNECTING...";
@@ -329,6 +353,7 @@ namespace TopDownGame
             {
                 if (!success)
                 {
+                    AutoSaveManager.IsAutoSavePaused = false;
                     UpdateGoogleConnectUI();
                     NotificationBannerUI.Show("Google Sign-In", msg);
                     return;
@@ -347,6 +372,7 @@ namespace TopDownGame
                         if (!checkSuccess)
                         {
                             // Could not verify cloud data; defensively revert to guest to avoid overwriting
+                            AutoSaveManager.IsAutoSavePaused = false;
                             FirebaseAuthManager.Instance.RestoreGuestSession(prevGuestId, prevGuestName);
                             UpdateGoogleConnectUI();
                             NotificationBannerUI.Show("Connection Error", "Could not check cloud save data. Preserved guest session.");
@@ -362,6 +388,7 @@ namespace TopDownGame
 
                             FirebaseDatabaseManager.Instance.SyncFromGameAndSave((saveSuccess, saveMsg) =>
                             {
+                                AutoSaveManager.IsAutoSavePaused = false;
                                 UpdateGoogleConnectUI();
                                 NotificationBannerUI.Show("Account Bound!", $"Connected as {googleUsername}! Progress saved to cloud.");
                             });
@@ -369,6 +396,7 @@ namespace TopDownGame
                         else
                         {
                             // Account is ALREADY REGISTERED with existing game progress!
+                            // Keep AutoSave paused so background events cannot overwrite cloud save.
                             // DO NOT overwrite! Present conflict modal allowing user to Load Cloud Save or Cancel.
                             ShowAccountConflictModal(cloudData, googleUserId, googleUsername, googleToken, prevGuestId, prevGuestName);
                         }
@@ -376,6 +404,7 @@ namespace TopDownGame
                 }
                 else
                 {
+                    AutoSaveManager.IsAutoSavePaused = false;
                     UpdateGoogleConnectUI();
                     NotificationBannerUI.Show("Account Bound!", $"Connected as {googleUsername}!");
                 }
@@ -575,6 +604,8 @@ namespace TopDownGame
                 UpdateGoogleConnectUI();
                 NotificationBannerUI.Show("Cloud Save Loaded!", $"Welcome back, {googleUsername}! Restored your saved game.");
 
+                AutoSaveManager.IsAutoSavePaused = false;
+
                 // Transition to the player's saved scene
                 string targetScene = !string.IsNullOrEmpty(cloudData.currentScene) ? cloudData.currentScene : "Lobby";
                 Time.timeScale = 1f;
@@ -595,6 +626,7 @@ namespace TopDownGame
                 PlayerPrefs.Save();
                 UpdateGoogleConnectUI();
                 if (settingsPanel != null) settingsPanel.SetActive(true);
+                AutoSaveManager.IsAutoSavePaused = false;
                 NotificationBannerUI.Show("Account Already Registered", "Cloud save preserved. Kept playing as Guest.");
             });
         }
@@ -665,6 +697,8 @@ namespace TopDownGame
 
         public void OnCloseSettingsClicked()
         {
+            AutoSaveManager.IsAutoSavePaused = false;
+
             if (_accountConflictModal != null)
             {
                 Destroy(_accountConflictModal);

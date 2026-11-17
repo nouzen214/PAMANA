@@ -7,7 +7,19 @@ namespace TopDownGame
 {
     public class BagModalUI : MonoBehaviour
     {
-        public static BagModalUI Instance { get; private set; }
+        private static BagModalUI _instance;
+        public static BagModalUI Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = FindFirstObjectByType<BagModalUI>(FindObjectsInactive.Include);
+                }
+                return _instance;
+            }
+            private set => _instance = value;
+        }
 
         [Header("Modal Root")]
         [SerializeField] private GameObject modalRoot;
@@ -373,6 +385,11 @@ namespace TopDownGame
 
         public void OpenBag()
         {
+            if (BookModalUI.Instance != null && BookModalUI.Instance.IsOpen)
+            {
+                BookModalUI.Instance.CloseBook();
+            }
+
             if (modalRoot != null)
             {
                 modalRoot.SetActive(true);

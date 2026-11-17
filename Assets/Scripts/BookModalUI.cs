@@ -29,7 +29,19 @@ namespace TopDownGame
     /// </summary>
     public class BookModalUI : MonoBehaviour
     {
-        public static BookModalUI Instance { get; private set; }
+        private static BookModalUI _instance;
+        public static BookModalUI Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = FindFirstObjectByType<BookModalUI>(FindObjectsInactive.Include);
+                }
+                return _instance;
+            }
+            private set => _instance = value;
+        }
 
         [Header("Modal Components")]
         [SerializeField] private GameObject modalRoot;

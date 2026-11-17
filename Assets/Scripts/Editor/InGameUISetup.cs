@@ -95,12 +95,14 @@ namespace TopDownGame.Editor
                 var btnBagComp = btnBag.GetComponent<Button>();
                 btnBagComp.onClick = new Button.ButtonClickedEvent();
                 UnityEditor.Events.UnityEventTools.AddPersistentListener(btnBagComp.onClick, menuCtrl.OnBagClicked);
+                AddKeyBadge(btnBag, "B");
 
                 var btnBook = GetOrCreateChild(prefabRoot.transform, "BookButton");
                 ConfigureIconButton(btnBook, sprBook, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-270f, -74f), new Vector2(85f, 85f));
                 var btnBookComp = btnBook.GetComponent<Button>();
                 btnBookComp.onClick = new Button.ButtonClickedEvent();
                 UnityEditor.Events.UnityEventTools.AddPersistentListener(btnBookComp.onClick, menuCtrl.OnBookClicked);
+                AddKeyBadge(btnBook, "H");
 
                 var settingsPanel = BuildSettingsModal(prefabRoot.transform, menuCtrl, isGameplay: true);
                 var bagModalObj = BuildBagModal(prefabRoot.transform, sprParchment, sprBtnFrame);
@@ -237,6 +239,41 @@ namespace TopDownGame.Editor
             colors.selectedColor = Color.white;
             colors.colorMultiplier = 1f;
             btn.colors = colors;
+        }
+
+        private static void AddKeyBadge(GameObject parent, string keyText)
+        {
+            var badgeGo = GetOrCreateChild(parent.transform, "KeyBadge");
+            var rt = badgeGo.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(1f, 0f);
+            rt.anchorMax = new Vector2(1f, 0f);
+            rt.pivot = new Vector2(1f, 0f);
+            rt.anchoredPosition = new Vector2(2f, -2f);
+            rt.sizeDelta = new Vector2(26f, 22f);
+
+            var img = badgeGo.GetComponent<Image>();
+            if (img == null) img = badgeGo.AddComponent<Image>();
+            img.color = new Color(0.14f, 0.09f, 0.05f, 0.88f);
+
+            var outline = badgeGo.GetComponent<Outline>();
+            if (outline == null) outline = badgeGo.AddComponent<Outline>();
+            outline.effectColor = new Color(0.85f, 0.70f, 0.38f, 0.95f);
+            outline.effectDistance = new Vector2(1f, -1f);
+
+            var txtGo = GetOrCreateChild(badgeGo.transform, "Text");
+            var txtRt = txtGo.GetComponent<RectTransform>();
+            txtRt.anchorMin = Vector2.zero;
+            txtRt.anchorMax = Vector2.one;
+            txtRt.offsetMin = Vector2.zero;
+            txtRt.offsetMax = Vector2.zero;
+
+            var tmp = txtGo.GetComponent<TextMeshProUGUI>();
+            if (tmp == null) tmp = txtGo.AddComponent<TextMeshProUGUI>();
+            tmp.text = keyText;
+            tmp.fontSize = 13f;
+            tmp.fontStyle = FontStyles.Bold;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.color = new Color(1f, 0.92f, 0.75f, 1f);
         }
 
         private static GameObject BuildSettingsModal(Transform parent, InGameMenuController menuCtrl, bool isGameplay)
