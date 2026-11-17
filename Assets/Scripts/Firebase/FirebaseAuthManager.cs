@@ -38,6 +38,37 @@ namespace TopDownGame
         public bool IsGuest => !string.IsNullOrEmpty(UserId) && UserId.StartsWith("guest_");
         public bool IsGoogleUser => !string.IsNullOrEmpty(UserId) && !UserId.StartsWith("guest_");
 
+        public void RestoreSessionFromPrefs()
+        {
+            if (!string.IsNullOrEmpty(UserId)) return;
+
+            string authType = PlayerPrefs.GetString("AuthType", "");
+            if (authType == "google")
+            {
+                string uid = PlayerPrefs.GetString("AuthUserId", "");
+                if (!string.IsNullOrEmpty(uid))
+                {
+                    UserId = uid;
+                    Email = PlayerPrefs.GetString("AuthEmail", "");
+                    Username = PlayerPrefs.GetString("PlayerUsername", "");
+                    IdToken = PlayerPrefs.GetString("AuthIdToken", "");
+                    Debug.Log($"[FirebaseAuthManager] Restored Google session for {Username} ({UserId}) from prefs.");
+                }
+            }
+            else if (authType == "guest")
+            {
+                string guestId = PlayerPrefs.GetString("GuestUserId", "");
+                if (!string.IsNullOrEmpty(guestId))
+                {
+                    UserId = guestId;
+                    Email = $"{guestId}@pamana.game";
+                    Username = PlayerPrefs.GetString("PlayerUsername", "Guest");
+                    IdToken = "";
+                    Debug.Log($"[FirebaseAuthManager] Restored Guest session ({UserId}) from prefs.");
+                }
+            }
+        }
+
         public void UnbindGoogle()
         {
             string guestId = "guest_" + Guid.NewGuid().ToString("N").Substring(0, 8);
@@ -45,8 +76,10 @@ namespace TopDownGame
             Email = $"{guestId}@pamana.game";
             Username = "Guest";
             IdToken = "";
+            PlayerPrefs.SetString("AuthType", "guest");
             PlayerPrefs.SetString("GuestUserId", guestId);
             PlayerPrefs.SetString("PlayerUsername", Username);
+            PlayerPrefs.SetInt("HasGuestSave", 1);
             PlayerPrefs.Save();
             Debug.Log($"[FirebaseAuthManager] Google account unbound. Session reverted to guest ({guestId}).");
         }
@@ -66,8 +99,10 @@ namespace TopDownGame
             Username = string.IsNullOrEmpty(guestUsername) ? "Guest" : guestUsername;
             Email = $"{guestId}@pamana.game";
             IdToken = "";
+            PlayerPrefs.SetString("AuthType", "guest");
             PlayerPrefs.SetString("GuestUserId", guestId);
             PlayerPrefs.SetString("PlayerUsername", Username);
+            PlayerPrefs.SetInt("HasGuestSave", 1);
             PlayerPrefs.Save();
             Debug.Log($"[FirebaseAuthManager] Restored guest session ({guestId}, {Username}).");
         }
@@ -93,6 +128,7 @@ namespace TopDownGame
             _instance = this;
             DontDestroyOnLoad(gameObject);
 
+            RestoreSessionFromPrefs();
             InitFirebaseWebGL();
         }
 
@@ -624,7 +660,13 @@ namespace TopDownGame
                 Username = !string.IsNullOrEmpty(data.displayName) ? data.displayName : FirebaseConfig.ExtractUsername(data.email);
                 IdToken = data.idToken;
 
+                PlayerPrefs.SetString("AuthType", "google");
+                PlayerPrefs.SetString("AuthUserId", UserId);
+                PlayerPrefs.SetString("AuthEmail", Email);
                 PlayerPrefs.SetString("PlayerUsername", Username);
+                PlayerPrefs.SetString("AuthIdToken", IdToken);
+                PlayerPrefs.SetInt("HasGuestSave", 0);
+                PlayerPrefs.DeleteKey("GuestUserId");
                 PlayerPrefs.Save();
 
                 _pendingGoogleCallback?.Invoke(true, "Google sign-in successful!");
@@ -654,6 +696,14 @@ namespace TopDownGame
             IdToken = "";
             Email = "";
             Username = "";
+            PlayerPrefs.DeleteKey("AuthType");
+            PlayerPrefs.DeleteKey("AuthUserId");
+            PlayerPrefs.DeleteKey("AuthEmail");
+            PlayerPrefs.DeleteKey("AuthIdToken");
+            PlayerPrefs.DeleteKey("PlayerUsername");
+            PlayerPrefs.DeleteKey("GuestUserId");
+            PlayerPrefs.SetInt("HasGuestSave", 0);
+            PlayerPrefs.Save();
             if (FirebaseDatabaseManager.Instance != null)
             {
                 FirebaseDatabaseManager.Instance.ClearAllLocalGameData();
@@ -667,7 +717,6 @@ namespace TopDownGame
             {
                 guestId = "guest_" + System.Guid.NewGuid().ToString("N").Substring(0, 8);
                 PlayerPrefs.SetString("GuestUserId", guestId);
-                PlayerPrefs.Save();
             }
 
             UserId = guestId;
@@ -675,7 +724,10 @@ namespace TopDownGame
             Username = "Guest";
             IdToken = "";
 
+            PlayerPrefs.SetString("AuthType", "guest");
+            PlayerPrefs.SetString("GuestUserId", guestId);
             PlayerPrefs.SetString("PlayerUsername", Username);
+            PlayerPrefs.SetInt("HasGuestSave", 1);
             PlayerPrefs.Save();
 
             Debug.Log($"[FirebaseAuthManager] Signed in as Guest: {UserId}");

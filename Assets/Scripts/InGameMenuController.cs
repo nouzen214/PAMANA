@@ -327,6 +327,10 @@ namespace TopDownGame
                         if (!hasProgress)
                         {
                             // Fresh Google account with no previous game progress -> Safe to bind guest progress!
+                            PlayerPrefs.SetInt("HasGuestSave", 0);
+                            PlayerPrefs.DeleteKey("GuestUserId");
+                            PlayerPrefs.Save();
+
                             FirebaseDatabaseManager.Instance.SyncFromGameAndSave((saveSuccess, saveMsg) =>
                             {
                                 UpdateGoogleConnectUI();
@@ -477,6 +481,10 @@ namespace TopDownGame
                 if (_accountConflictModal != null) Destroy(_accountConflictModal);
                 if (settingsPanel != null) settingsPanel.SetActive(false);
 
+                PlayerPrefs.SetInt("HasGuestSave", 0);
+                PlayerPrefs.DeleteKey("GuestUserId");
+                PlayerPrefs.Save();
+
                 // Apply the saved cloud data to the game
                 FirebaseDatabaseManager.Instance.ApplyDataToGame(cloudData, clearExisting: true);
                 UpdateGoogleConnectUI();
@@ -498,6 +506,8 @@ namespace TopDownGame
 
                 // Revert back to the guest session so cloud save is preserved untouched
                 FirebaseAuthManager.Instance.RestoreGuestSession(prevGuestId, prevGuestName);
+                PlayerPrefs.SetInt("HasGuestSave", 1);
+                PlayerPrefs.Save();
                 UpdateGoogleConnectUI();
                 NotificationBannerUI.Show("Account Already Registered", "Cloud save preserved. Kept playing as Guest.");
             });

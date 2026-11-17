@@ -80,9 +80,45 @@ namespace TopDownGame
             UpdateMenuAccountState();
         }
 
+        public static bool HasGuestAccount()
+        {
+            if (FirebaseAuthManager.Instance != null && FirebaseAuthManager.Instance.IsGoogleUser)
+            {
+                return false;
+            }
+
+            if (PlayerPrefs.GetInt("HasGuestSave", 0) == 1)
+            {
+                string guestId = PlayerPrefs.GetString("GuestUserId", "");
+                if (!string.IsNullOrEmpty(guestId)) return true;
+            }
+
+            if (FirebaseAuthManager.Instance != null && FirebaseAuthManager.Instance.IsGuest && _hasActiveSession)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public void UpdateMenuAccountState()
         {
+            if (FirebaseAuthManager.Instance != null)
+            {
+                FirebaseAuthManager.Instance.RestoreSessionFromPrefs();
+            }
+
             bool isGoogle = (FirebaseAuthManager.Instance != null && FirebaseAuthManager.Instance.IsGoogleUser);
+
+            // Hide New Game button if logged into Google; show if logged out
+            if (newGameButton != null)
+            {
+                newGameButton.gameObject.SetActive(!isGoogle);
+            }
+
+            // Adjust button positions so there is no awkward gap when New Game is hidden
+            AdjustMainMenuButtonPositions(isGoogle);
+
             if (logoutButton != null)
             {
                 logoutButton.gameObject.SetActive(isGoogle);
@@ -104,11 +140,36 @@ namespace TopDownGame
             }
         }
 
+        private void AdjustMainMenuButtonPositions(bool isGoogle)
+        {
+            if (continueButton != null)
+            {
+                var rt = continueButton.GetComponent<RectTransform>();
+                if (rt != null) rt.anchoredPosition = new Vector2(0f, 6f);
+            }
+            if (newGameButton != null)
+            {
+                var rt = newGameButton.GetComponent<RectTransform>();
+                if (rt != null) rt.anchoredPosition = new Vector2(0f, -126f);
+            }
+            if (settingsButton != null)
+            {
+                var rt = settingsButton.GetComponent<RectTransform>();
+                if (rt != null) rt.anchoredPosition = isGoogle ? new Vector2(0f, -126f) : new Vector2(0f, -257f);
+            }
+            if (exitButton != null)
+            {
+                var rt = exitButton.GetComponent<RectTransform>();
+                if (rt != null) rt.anchoredPosition = isGoogle ? new Vector2(0f, -257f) : new Vector2(0f, -388f);
+            }
+        }
+
         public void OnContinueClicked()
         {
             Debug.Log("[MainMenuController] Continue clicked");
 
-            // If already signed into Google, load cloud save directly
+            // If already signed into Google, straight up start the game!
+            // Do not open the modal to pick an account option since the player is already logged in.
             if (FirebaseAuthManager.Instance != null && FirebaseAuthManager.Instance.IsGoogleUser)
             {
                 SetStatus("Loading cloud save...", isError: false);
@@ -127,7 +188,7 @@ namespace TopDownGame
             }
 
             // Not signed into Google (Guest / unauthenticated):
-            // Open account modal in Continue mode, giving player the choice to Continue as Guest or Sign in with Google
+            // Open account modal in Continue mode
             OpenAccountModal(AccountModalMode.Continue);
         }
 
@@ -147,42 +208,85 @@ namespace TopDownGame
             {
                 EnsureModalSpritesLoaded();
 
-                // Find Button_PlayAsGuest image and button component
+                // Find Button_PlayAsGuest and Button_GoogleSignIn
                 Transform guestBtnTr = null;
+                Transform googleBtnTr = null;
                 var buttons = loginPanel.GetComponentsInChildren<Button>(true);
                 foreach (var b in buttons)
                 {
-                    if (b.name == "Button_PlayAsGuest")
-                    {
-                        guestBtnTr = b.transform;
-                        break;
-                    }
+                    if (b.name == "Button_PlayAsGuest") guestBtnTr = b.transform;
+                    if (b.name == "Button_GoogleSignIn") googleBtnTr = b.transform;
                 }
 
-                if (guestBtnTr != null)
-                {
-                    var img = guestBtnTr.GetComponent<Image>();
-                    var btn = guestBtnTr.GetComponent<Button>();
+                bool hasGuest = HasGuestAccount();
 
-                    if (_accountModalMode == AccountModalMode.Continue)
+                if (_accountModalMode == AccountModalMode.Continue)
+                {
+                    // "Continue as guest" ONLY shows up if the player has an active guest account!
+                    // Once connected/bound to Google, or on fresh boot without guest account, it is hidden.
+                    if (hasGuest && guestBtnTr != null)
                     {
+                        guestBtnTr.gameObject.SetActive(true);
+                        var guestRt = guestBtnTr.GetComponent<RectTransform>();
+                        if (guestRt != null) guestRt.anchoredPosition = new Vector2(0f, -167f);
+
+                        var img = guestBtnTr.GetComponent<Image>();
+                        var btn = guestBtnTr.GetComponent<Button>();
                         if (img != null && continueGuestNormal != null) img.sprite = continueGuestNormal;
                         if (btn != null && continueGuestHover != null)
                         {
                             var ss = btn.spriteState;
                             ss.highlightedSprite = continueGuestHover;
+                            ss.pressedSprite = continueGuestHover;
+                            ss.selectedSprite = continueGuestHover;
                             btn.spriteState = ss;
+                        }
+
+                        if (googleBtnTr != null)
+                        {
+                            var gRt = googleBtnTr.GetComponent<RectTransform>();
+                            if (gRt != null) gRt.anchoredPosition = new Vector2(0f, 170f);
                         }
                     }
                     else
                     {
+                        if (guestBtnTr != null)
+                        {
+                            guestBtnTr.gameObject.SetActive(false);
+                        }
+                        // Center Google Sign-In button on the scroll parchment
+                        if (googleBtnTr != null)
+                        {
+                            var gRt = googleBtnTr.GetComponent<RectTransform>();
+                            if (gRt != null) gRt.anchoredPosition = new Vector2(0f, 0f);
+                        }
+                    }
+                }
+                else // AccountModalMode.NewGame
+                {
+                    if (guestBtnTr != null)
+                    {
+                        guestBtnTr.gameObject.SetActive(true);
+                        var guestRt = guestBtnTr.GetComponent<RectTransform>();
+                        if (guestRt != null) guestRt.anchoredPosition = new Vector2(0f, -167f);
+
+                        var img = guestBtnTr.GetComponent<Image>();
+                        var btn = guestBtnTr.GetComponent<Button>();
                         if (img != null && playAsGuestNormal != null) img.sprite = playAsGuestNormal;
                         if (btn != null && playAsGuestHover != null)
                         {
                             var ss = btn.spriteState;
                             ss.highlightedSprite = playAsGuestHover;
+                            ss.pressedSprite = playAsGuestHover;
+                            ss.selectedSprite = playAsGuestHover;
                             btn.spriteState = ss;
                         }
+                    }
+
+                    if (googleBtnTr != null)
+                    {
+                        var gRt = googleBtnTr.GetComponent<RectTransform>();
+                        if (gRt != null) gRt.anchoredPosition = new Vector2(0f, 170f);
                     }
                 }
 
@@ -230,6 +334,9 @@ namespace TopDownGame
             {
                 FirebaseDatabaseManager.Instance.ClearAllLocalGameData();
             }
+            PlayerPrefs.SetInt("HasGuestSave", 0);
+            PlayerPrefs.DeleteKey("GuestUserId");
+            PlayerPrefs.Save();
             _hasActiveSession = false;
             UpdateMenuAccountState();
             SetStatus("Logged out of Google account.", isError: false);
@@ -362,6 +469,10 @@ namespace TopDownGame
                 if (success)
                 {
                     SetStatus("Google login successful! Loading...", isError: false);
+                    PlayerPrefs.SetInt("HasGuestSave", 0);
+                    PlayerPrefs.DeleteKey("GuestUserId");
+                    PlayerPrefs.Save();
+                    UpdateMenuAccountState();
                     FirebaseDatabaseManager.Instance.ClearAllLocalGameData();
                     FirebaseDatabaseManager.Instance.LoadPlayerData((loadSuccess, data) =>
                     {
@@ -389,6 +500,8 @@ namespace TopDownGame
                 if (success)
                 {
                     SetStatus("Welcome, Guest! Loading game...", isError: false);
+                    PlayerPrefs.SetInt("HasGuestSave", 1);
+                    PlayerPrefs.Save();
                     FirebaseDatabaseManager.Instance.ClearAllLocalGameData();
                     var guestData = FirebaseDatabaseManager.Instance.CreateFreshPlayerData();
                     FirebaseDatabaseManager.Instance.ApplyDataToGame(guestData);
