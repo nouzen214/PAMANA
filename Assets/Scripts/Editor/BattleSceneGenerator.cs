@@ -1486,6 +1486,7 @@ namespace TopDownGame.Editor
             var resumeTr = windowTr.Find("ResumeButton");
             if (resumeTr != null)
             {
+                resumeTr.gameObject.SetActive(true);
                 var resumeRt = resumeTr.GetComponent<RectTransform>();
                 resumeRt.anchoredPosition = new Vector2(0f, 22f);
                 resumeRt.sizeDelta = new Vector2(280f, 88f);
@@ -1494,9 +1495,11 @@ namespace TopDownGame.Editor
                 rImg.sprite = sprResumeNorm;
                 rImg.color = Color.white;
                 rImg.preserveAspect = true;
+                rImg.raycastTarget = true;
 
                 resumeBtn = resumeTr.GetComponent<Button>();
                 if (resumeBtn == null) resumeBtn = resumeTr.gameObject.AddComponent<Button>();
+                resumeBtn.interactable = true;
                 resumeBtn.targetGraphic = rImg;
                 resumeBtn.transition = Selectable.Transition.SpriteSwap;
                 var ss = resumeBtn.spriteState;
@@ -1513,6 +1516,7 @@ namespace TopDownGame.Editor
             var exitTr = windowTr.Find("ExitButton");
             if (exitTr != null)
             {
+                exitTr.gameObject.SetActive(true);
                 var exitRt = exitTr.GetComponent<RectTransform>();
                 exitRt.anchoredPosition = new Vector2(0f, -66f);
                 exitRt.sizeDelta = new Vector2(280f, 88f);
@@ -1521,9 +1525,11 @@ namespace TopDownGame.Editor
                 eImg.sprite = sprRetreatNorm;
                 eImg.color = Color.white;
                 eImg.preserveAspect = true;
+                eImg.raycastTarget = true;
 
                 exitBtn = exitTr.GetComponent<Button>();
                 if (exitBtn == null) exitBtn = exitTr.gameObject.AddComponent<Button>();
+                exitBtn.interactable = true;
                 exitBtn.targetGraphic = eImg;
                 exitBtn.transition = Selectable.Transition.SpriteSwap;
                 var ss = exitBtn.spriteState;

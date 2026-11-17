@@ -1042,7 +1042,14 @@ namespace TopDownGame
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Escape))
+            bool escapePressed = Input.GetKeyDown(KeyCode.Escape);
+#if ENABLE_INPUT_SYSTEM
+            if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
+            {
+                escapePressed = true;
+            }
+#endif
+            if (escapePressed)
             {
                 if (settingsModal != null && settingsModal.activeSelf)
                 {
@@ -1140,7 +1147,14 @@ namespace TopDownGame
             }
 
             SetMainPauseViewActive(false);
-            if (_confirmPauseGroup != null) _confirmPauseGroup.SetActive(true);
+            if (_confirmPauseGroup != null)
+            {
+                _confirmPauseGroup.SetActive(true);
+                var ceBtn = _confirmPauseGroup.transform.Find("ConfirmExitButton");
+                if (ceBtn != null) ceBtn.gameObject.SetActive(true);
+                var ccBtn = _confirmPauseGroup.transform.Find("ConfirmCancelButton");
+                if (ccBtn != null) ccBtn.gameObject.SetActive(true);
+            }
         }
 
         public void OnCancelExitClicked()
@@ -1156,6 +1170,15 @@ namespace TopDownGame
             if (windowTr != null)
             {
                 windowTr.gameObject.SetActive(active);
+                if (active)
+                {
+                    var resumeTr = windowTr.Find("ResumeButton");
+                    if (resumeTr != null) resumeTr.gameObject.SetActive(true);
+                    var exitTr = windowTr.Find("ExitButton");
+                    if (exitTr != null) exitTr.gameObject.SetActive(true);
+                    var statusTr = windowTr.Find("StatusText");
+                    if (statusTr != null) statusTr.gameObject.SetActive(true);
+                }
             }
         }
 
@@ -1166,17 +1189,50 @@ namespace TopDownGame
 
             if (_pauseStatusText != null)
             {
+                _pauseStatusText.gameObject.SetActive(true);
                 _pauseStatusText.text = hasRetrieved
                     ? $"<color=#7A1B0C><b>Retrieved: {_retrievedCount} / 5 Artifacts</b></color>"
                     : "<color=#3A2212><b>Battle in Progress (0 / 5)</b></color>";
             }
 
+            if (settingsCloseButton != null)
+            {
+                settingsCloseButton.gameObject.SetActive(true);
+                var img = settingsCloseButton.GetComponent<Image>();
+                if (img != null)
+                {
+                    img.raycastTarget = true;
+                    if (pauseBtnResumeNorm != null) img.sprite = pauseBtnResumeNorm;
+                }
+                settingsCloseButton.interactable = true;
+                settingsCloseButton.transition = Selectable.Transition.SpriteSwap;
+                settingsCloseButton.targetGraphic = img;
+                if (pauseBtnResumeHov != null)
+                {
+                    var ss = settingsCloseButton.spriteState;
+                    ss.highlightedSprite = pauseBtnResumeHov;
+                    ss.pressedSprite = pauseBtnResumeHov;
+                    ss.selectedSprite = pauseBtnResumeHov;
+                    settingsCloseButton.spriteState = ss;
+                }
+                settingsCloseButton.onClick.RemoveAllListeners();
+                settingsCloseButton.onClick.AddListener(OnCloseSettingsClicked);
+            }
+
             if (settingsExitHallwayButton != null)
             {
+                settingsExitHallwayButton.gameObject.SetActive(true);
                 var img = settingsExitHallwayButton.GetComponent<Image>();
-                if (img != null && pauseBtnRetreatNorm != null)
+                if (img != null)
                 {
-                    img.sprite = pauseBtnRetreatNorm;
+                    img.raycastTarget = true;
+                    if (pauseBtnRetreatNorm != null) img.sprite = pauseBtnRetreatNorm;
+                }
+                settingsExitHallwayButton.interactable = true;
+                settingsExitHallwayButton.transition = Selectable.Transition.SpriteSwap;
+                settingsExitHallwayButton.targetGraphic = img;
+                if (pauseBtnRetreatHov != null)
+                {
                     var ss = settingsExitHallwayButton.spriteState;
                     ss.highlightedSprite = pauseBtnRetreatHov;
                     ss.pressedSprite = pauseBtnRetreatHov;
@@ -1197,6 +1253,17 @@ namespace TopDownGame
             if (settingsModal == null) return;
             var windowTr = settingsModal.transform.Find("Window");
             if (windowTr == null) return;
+
+            // Load fallback sprites from Resources or AssetDatabase
+            if (pauseBtnResumeNorm == null) pauseBtnResumeNorm = Resources.Load<Sprite>("UI/Pause_Btn_Resume_Normal");
+            if (pauseBtnResumeHov == null) pauseBtnResumeHov = Resources.Load<Sprite>("UI/Pause_Btn_Resume_Hover");
+            if (pauseBtnRetreatNorm == null) pauseBtnRetreatNorm = Resources.Load<Sprite>("UI/Pause_Btn_Retreat_Normal");
+            if (pauseBtnRetreatHov == null) pauseBtnRetreatHov = Resources.Load<Sprite>("UI/Pause_Btn_Retreat_Hover");
+            if (pauseConfirmFrame == null) pauseConfirmFrame = Resources.Load<Sprite>("UI/Pause_Confirm_Frame");
+            if (pauseBtnConfirmNorm == null) pauseBtnConfirmNorm = Resources.Load<Sprite>("UI/Pause_Btn_Confirm_Normal");
+            if (pauseBtnConfirmHov == null) pauseBtnConfirmHov = Resources.Load<Sprite>("UI/Pause_Btn_Confirm_Hover");
+            if (pauseBtnCancelNorm == null) pauseBtnCancelNorm = Resources.Load<Sprite>("UI/Pause_Btn_Cancel_Normal");
+            if (pauseBtnCancelHov == null) pauseBtnCancelHov = Resources.Load<Sprite>("UI/Pause_Btn_Cancel_Hover");
 
 #if UNITY_EDITOR
             if (pauseBtnResumeNorm == null) pauseBtnResumeNorm = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Pause/Pause_Btn_Resume_Normal.png");
@@ -1238,6 +1305,7 @@ namespace TopDownGame
             }
             else
             {
+                statusTr.gameObject.SetActive(true);
                 _pauseStatusText = statusTr.GetComponent<TMP_Text>();
                 if (_pauseStatusText != null)
                 {
@@ -1249,10 +1317,11 @@ namespace TopDownGame
                 }
             }
 
-            // Adjust ResumeButton position
+            // Adjust ResumeButton position & wire
             var resumeTr = windowTr.Find("ResumeButton");
             if (resumeTr != null)
             {
+                resumeTr.gameObject.SetActive(true);
                 var rRt = resumeTr.GetComponent<RectTransform>();
                 rRt.anchoredPosition = new Vector2(0f, 22f);
                 rRt.sizeDelta = new Vector2(280f, 88f);
@@ -1260,16 +1329,28 @@ namespace TopDownGame
                 if (rImg != null)
                 {
                     rImg.preserveAspect = true;
+                    rImg.raycastTarget = true;
                     if (pauseBtnResumeNorm != null) rImg.sprite = pauseBtnResumeNorm;
                 }
-                var rBtn = resumeTr.GetComponent<Button>();
-                if (rBtn != null && pauseBtnResumeHov != null)
+
+                if (settingsCloseButton == null)
+                    settingsCloseButton = resumeTr.GetComponent<Button>();
+
+                if (settingsCloseButton != null)
                 {
-                    var ss = rBtn.spriteState;
-                    ss.highlightedSprite = pauseBtnResumeHov;
-                    ss.pressedSprite = pauseBtnResumeHov;
-                    ss.selectedSprite = pauseBtnResumeHov;
-                    rBtn.spriteState = ss;
+                    settingsCloseButton.interactable = true;
+                    settingsCloseButton.targetGraphic = rImg;
+                    settingsCloseButton.transition = Selectable.Transition.SpriteSwap;
+                    if (pauseBtnResumeHov != null)
+                    {
+                        var ss = settingsCloseButton.spriteState;
+                        ss.highlightedSprite = pauseBtnResumeHov;
+                        ss.pressedSprite = pauseBtnResumeHov;
+                        ss.selectedSprite = pauseBtnResumeHov;
+                        settingsCloseButton.spriteState = ss;
+                    }
+                    settingsCloseButton.onClick.RemoveAllListeners();
+                    settingsCloseButton.onClick.AddListener(OnCloseSettingsClicked);
                 }
                 var rTxt = resumeTr.Find("Text");
                 if (rTxt != null) rTxt.gameObject.SetActive(false);
@@ -1279,6 +1360,7 @@ namespace TopDownGame
             var exitTr = windowTr.Find("ExitButton");
             if (exitTr != null)
             {
+                exitTr.gameObject.SetActive(true);
                 var eRt = exitTr.GetComponent<RectTransform>();
                 eRt.anchoredPosition = new Vector2(0f, -66f);
                 eRt.sizeDelta = new Vector2(280f, 88f);
@@ -1286,6 +1368,7 @@ namespace TopDownGame
                 if (eImg != null)
                 {
                     eImg.preserveAspect = true;
+                    eImg.raycastTarget = true;
                     if (pauseBtnRetreatNorm != null) eImg.sprite = pauseBtnRetreatNorm;
                 }
 
@@ -1294,11 +1377,17 @@ namespace TopDownGame
 
                 if (settingsExitHallwayButton != null)
                 {
-                    var ss = settingsExitHallwayButton.spriteState;
-                    ss.highlightedSprite = pauseBtnRetreatHov;
-                    ss.pressedSprite = pauseBtnRetreatHov;
-                    ss.selectedSprite = pauseBtnRetreatHov;
-                    settingsExitHallwayButton.spriteState = ss;
+                    settingsExitHallwayButton.interactable = true;
+                    settingsExitHallwayButton.targetGraphic = eImg;
+                    settingsExitHallwayButton.transition = Selectable.Transition.SpriteSwap;
+                    if (pauseBtnRetreatHov != null)
+                    {
+                        var ss = settingsExitHallwayButton.spriteState;
+                        ss.highlightedSprite = pauseBtnRetreatHov;
+                        ss.pressedSprite = pauseBtnRetreatHov;
+                        ss.selectedSprite = pauseBtnRetreatHov;
+                        settingsExitHallwayButton.spriteState = ss;
+                    }
                     settingsExitHallwayButton.onClick.RemoveAllListeners();
                     settingsExitHallwayButton.onClick.AddListener(OnPauseExitClicked);
                 }
