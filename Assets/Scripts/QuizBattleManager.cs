@@ -1018,25 +1018,70 @@ namespace TopDownGame
             if (defeatModal == null) return;
             var windowImg = defeatModal.transform.Find("Window")?.GetComponent<UnityEngine.UI.Image>();
             string framePath = isTrialEnded ? "UI/TrialEndedModal_Frame" : "UI/DefeatModal_Frame";
-            string normPath = isTrialEnded ? "UI/Btn_TrialEnded_Return_Normal" : "UI/Btn_ReturnToHallway_Normal";
-            string pressPath = isTrialEnded ? "UI/Btn_TrialEnded_Return_Pressed" : "UI/Btn_ReturnToHallway_Pressed";
+            string normPath = isTrialEnded ? "UI/Btn_TrialEnded_Return_Normal" : "UI/Btn_TryAgain_Normal";
+            string pressPath = isTrialEnded ? "UI/Btn_TrialEnded_Return_Pressed" : "UI/Btn_TryAgain_Pressed";
 
             var frameSprite = Resources.Load<Sprite>(framePath);
+#if UNITY_EDITOR
+            if (frameSprite == null) frameSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/{framePath}.png");
+#endif
             if (windowImg != null && frameSprite != null) windowImg.sprite = frameSprite;
+
+            // Ensure retry button is hidden so only the single center action button is displayed
+            if (defeatRetryButton != null)
+            {
+                defeatRetryButton.gameObject.SetActive(false);
+            }
 
             if (defeatExitButton != null)
             {
+                defeatExitButton.gameObject.SetActive(true);
+
+                var rt = defeatExitButton.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    rt.sizeDelta = new Vector2(299f, 80f);
+                    rt.anchoredPosition = new Vector2(0f, -140f);
+                }
+
                 var btnImg = defeatExitButton.GetComponent<UnityEngine.UI.Image>();
                 var normSprite = Resources.Load<Sprite>(normPath);
                 var pressSprite = Resources.Load<Sprite>(pressPath);
-                if (btnImg != null && normSprite != null) btnImg.sprite = normSprite;
+#if UNITY_EDITOR
+                if (normSprite == null) normSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/{normPath}.png");
+                if (pressSprite == null) pressSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/{pressPath}.png");
+#endif
+                if (btnImg != null && normSprite != null)
+                {
+                    btnImg.sprite = normSprite;
+                    btnImg.preserveAspect = true;
+                }
 
                 defeatExitButton.transition = UnityEngine.UI.Selectable.Transition.SpriteSwap;
                 var ss = new UnityEngine.UI.SpriteState();
-                ss.highlightedSprite = normSprite;
+                ss.highlightedSprite = pressSprite != null ? pressSprite : normSprite;
                 ss.pressedSprite = pressSprite;
                 ss.selectedSprite = normSprite;
                 defeatExitButton.spriteState = ss;
+
+                // Hide text child component to prevent overlapping text over stylized sprite
+                var btnTxt = defeatExitButton.GetComponentInChildren<TMP_Text>(true);
+                if (btnTxt != null)
+                {
+                    btnTxt.gameObject.SetActive(false);
+                }
+
+                // If defeated with 0 artifacts: force immediate retry of the battle!
+                // If trial ended with >= 1 artifact: return to hallway to place artifacts.
+                defeatExitButton.onClick.RemoveAllListeners();
+                if (isTrialEnded)
+                {
+                    defeatExitButton.onClick.AddListener(OnReturnToHallwayClicked);
+                }
+                else
+                {
+                    defeatExitButton.onClick.AddListener(OnRetryClicked);
+                }
             }
         }
 
