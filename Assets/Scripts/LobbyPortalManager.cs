@@ -54,7 +54,13 @@ namespace TopDownGame
         {
             if (portalBlocker == null)
             {
-                portalBlocker = GameObject.Find("Lobby_PortalBlocker");
+                var walls = GameObject.Find("RoomWalls");
+                if (walls != null)
+                {
+                    var tr = walls.transform.Find("Lobby_PortalBlocker");
+                    if (tr != null) portalBlocker = tr.gameObject;
+                }
+                if (portalBlocker == null) portalBlocker = GameObject.Find("Lobby_PortalBlocker");
             }
 
             if (portalBlocker == null)
@@ -88,7 +94,14 @@ namespace TopDownGame
         {
             if (portalObject == null)
             {
-                portalObject = GameObject.Find("Portal");
+                var roots = gameObject.scene.GetRootGameObjects();
+                foreach (var r in roots)
+                {
+                    if (r.name == "Portal") { portalObject = r; break; }
+                    var tr = r.transform.Find("Portal");
+                    if (tr != null) { portalObject = tr.gameObject; break; }
+                }
+                if (portalObject == null) portalObject = GameObject.Find("Portal");
             }
 
             EnsurePortalBlocker();
@@ -107,6 +120,14 @@ namespace TopDownGame
             if (portalObject != null)
             {
                 portalObject.SetActive(isUnlocked);
+                if (isUnlocked)
+                {
+                    var pc = portalObject.GetComponent<PortalController>();
+                    if (pc != null)
+                    {
+                        pc.ForceEnableActivation();
+                    }
+                }
             }
 
             if (portalBlocker != null)

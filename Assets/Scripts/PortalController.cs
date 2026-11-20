@@ -63,6 +63,71 @@ namespace TopDownGame
         private void Awake()
         {
             EnsureSideWalls();
+            GameProgression.OnPortalUnlocked += HandleProgressionPortalUnlocked;
+        }
+
+        private void OnDestroy()
+        {
+            GameProgression.OnPortalUnlocked -= HandleProgressionPortalUnlocked;
+        }
+
+        private void HandleProgressionPortalUnlocked()
+        {
+            if (requireProgressionUnlock && targetSceneName == "AltLobby")
+            {
+                ForceEnableActivation();
+            }
+        }
+
+        private void OnEnable()
+        {
+            if (requireProgressionUnlock && targetSceneName == "AltLobby")
+            {
+                bool unlocked = GameProgression.IsPortalUnlocked;
+                if (!unlocked)
+                {
+                    _canActivate = false;
+                    return;
+                }
+            }
+
+            bool arrivedFromPortal = RoomTransitionManager.IsPortalTransition || ScreenFader.IsFadedOut;
+            if (arrivedFromPortal)
+            {
+                RoomTransitionManager.IsPortalTransition = false;
+                StartCoroutine(ArrivalRoutine());
+            }
+            else
+            {
+                ForceEnableActivation();
+            }
+        }
+
+        public void ForceEnableActivation()
+        {
+            _canActivate = true;
+            _hasReleasedWSinceArrival = true;
+            _isTeleporting = false;
+
+            // If player is already touching/inside the portal trigger, activate immediately
+            var col = GetComponent<Collider2D>();
+            if (col != null && col.enabled && gameObject.activeInHierarchy)
+            {
+                var contactFilter = new ContactFilter2D();
+                contactFilter.NoFilter();
+                var results = new System.Collections.Generic.List<Collider2D>();
+                if (col.Overlap(contactFilter, results) > 0)
+                {
+                    foreach (var hit in results)
+                    {
+                        if (hit != null && hit.CompareTag("Player"))
+                        {
+                            TryActivatePortal(hit);
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
         public void EnsureSideWalls()
@@ -109,20 +174,26 @@ namespace TopDownGame
             if (requireProgressionUnlock && targetSceneName == "AltLobby")
             {
                 bool unlocked = GameProgression.IsPortalUnlocked;
-                gameObject.SetActive(unlocked);
-                if (!unlocked) return;
+                if (!unlocked)
+                {
+                    gameObject.SetActive(false);
+                    _canActivate = false;
+                    return;
+                }
             }
 
-            bool arrivedFromPortal = RoomTransitionManager.IsPortalTransition || ScreenFader.IsFadedOut;
-            if (arrivedFromPortal)
+            if (!_canActivate && !_isTeleporting)
             {
-                RoomTransitionManager.IsPortalTransition = false;
-                StartCoroutine(ArrivalRoutine());
-            }
-            else
-            {
-                _canActivate = true;
-                _hasReleasedWSinceArrival = true;
+                bool arrivedFromPortal = RoomTransitionManager.IsPortalTransition || ScreenFader.IsFadedOut;
+                if (arrivedFromPortal)
+                {
+                    RoomTransitionManager.IsPortalTransition = false;
+                    StartCoroutine(ArrivalRoutine());
+                }
+                else
+                {
+                    ForceEnableActivation();
+                }
             }
         }
 
@@ -226,8 +297,9 @@ namespace TopDownGame
             {
                 var inputHandler = other.GetComponent<PlayerInputHandler>();
                 bool isMovingUp = inputHandler == null || inputHandler.MoveInput.y > 0.1f;
+                bool isInsidePortal = Vector2.Distance(other.transform.position, transform.position) < 0.85f;
 
-                if (!requireUpwardMovement || isMovingUp)
+                if (!requireUpwardMovement || isMovingUp || isInsidePortal)
                 {
                     StartCoroutine(TeleportRoutine(other.gameObject));
                 }
